@@ -1,0 +1,854 @@
+INFO 2025-06-01 11:23:39,379 autoreload 17696 14896 Watching for file changes with StatReloader
+INFO 2025-06-02 00:04:51,701 autoreload 204 13112 Watching for file changes with StatReloader
+INFO 2025-06-02 00:24:00,757 autoreload 12872 7124 Watching for file changes with StatReloader
+INFO 2025-06-02 00:31:45,230 autoreload 3176 7512 Watching for file changes with StatReloader
+INFO 2025-06-02 00:33:18,431 autoreload 13832 12508 Watching for file changes with StatReloader
+INFO 2025-06-02 00:41:38,079 autoreload 13976 12968 Watching for file changes with StatReloader
+INFO 2025-06-02 00:47:40,206 autoreload 12772 1200 Watching for file changes with StatReloader
+INFO 2025-06-02 00:51:55,798 autoreload 9436 13700 Watching for file changes with StatReloader
+INFO 2025-06-02 01:28:50,740 autoreload 13336 12968 Watching for file changes with StatReloader
+INFO 2025-06-02 01:36:53,463 autoreload 11916 15236 Watching for file changes with StatReloader
+INFO 2025-06-02 01:41:18,470 autoreload 11360 7652 Watching for file changes with StatReloader
+INFO 2025-06-02 10:28:10,984 autoreload 18020 13180 Watching for file changes with StatReloader
+INFO 2025-06-02 10:42:26,217 autoreload 15156 12620 Watching for file changes with StatReloader
+INFO 2025-06-02 10:49:24,688 autoreload 15156 12620 C:\Users\psi\Desktop\originalEDUHUB\backend\EDUHUB\EDUHUB\settings\base.py changed, reloading.
+INFO 2025-06-02 10:49:26,571 autoreload 10712 13768 Watching for file changes with StatReloader
+INFO 2025-06-02 10:49:31,395 autoreload 10712 13768 C:\Users\psi\Desktop\originalEDUHUB\backend\EDUHUB\EDUHUB\settings\base.py changed, reloading.
+INFO 2025-06-02 10:50:02,567 autoreload 16980 17624 Watching for file changes with StatReloader
+INFO 2025-06-02 10:52:27,806 autoreload 10804 14092 Watching for file changes with StatReloader
+INFO 2025-06-02 10:53:13,559 autoreload 10804 14092 C:\Users\psi\Desktop\originalEDUHUB\backend\EDUHUB\EDUHUB\urls.py changed, reloading.
+INFO 2025-06-02 10:53:15,618 autoreload 15272 17596 Watching for file changes with StatReloader
+INFO 2025-06-02 10:53:34,419 autoreload 15272 17596 C:\Users\psi\Desktop\originalEDUHUB\backend\EDUHUB\EDUHUB\urls.py changed, reloading.
+INFO 2025-06-02 10:53:36,390 autoreload 14696 15444 Watching for file changes with StatReloader
+INFO 2025-06-02 10:53:48,229 autoreload 14696 15444 C:\Users\psi\Desktop\originalEDUHUB\backend\EDUHUB\EDUHUB\urls.py changed, reloading.
+INFO 2025-06-02 10:53:50,263 autoreload 13912 14960 Watching for file changes with StatReloader
+INFO 2025-06-02 10:54:04,856 autoreload 13912 14960 C:\Users\psi\Desktop\originalEDUHUB\backend\EDUHUB\EDUHUB\settings\base.py changed, reloading.
+INFO 2025-06-02 10:54:06,525 autoreload 7652 16372 Watching for file changes with StatReloader
+INFO 2025-06-02 10:54:21,504 middleware 7652 10200 Request: GET /
+INFO 2025-06-02 10:54:21,674 middleware 7652 10200 Response: 404 - Duration: 0.17s
+WARNING 2025-06-02 10:54:21,683 log 7652 10200 Not Found: /
+WARNING 2025-06-02 10:54:21,688 basehttp 7652 10200 "GET / HTTP/1.1" 404 3136
+INFO 2025-06-02 10:54:21,915 middleware 7652 10200 Request: GET /favicon.ico
+INFO 2025-06-02 10:54:21,926 middleware 7652 10200 Response: 404 - Duration: 0.01s
+WARNING 2025-06-02 10:54:21,928 log 7652 10200 Not Found: /favicon.ico
+WARNING 2025-06-02 10:54:21,930 basehttp 7652 10200 "GET /favicon.ico HTTP/1.1" 404 3187
+INFO 2025-06-02 10:54:42,610 middleware 7652 10200 Request: GET /api
+INFO 2025-06-02 10:54:42,623 middleware 7652 10200 Response: 404 - Duration: 0.01s
+WARNING 2025-06-02 10:54:42,625 log 7652 10200 Not Found: /api
+WARNING 2025-06-02 10:54:42,627 basehttp 7652 10200 "GET /api HTTP/1.1" 404 3163
+INFO 2025-06-02 10:54:57,255 middleware 7652 10200 Request: GET /api
+INFO 2025-06-02 10:54:57,263 middleware 7652 10200 Response: 404 - Duration: 0.01s
+WARNING 2025-06-02 10:54:57,265 log 7652 10200 Not Found: /api
+WARNING 2025-06-02 10:54:57,270 basehttp 7652 10200 "GET /api HTTP/1.1" 404 3163
+INFO 2025-06-02 10:55:04,578 middleware 7652 10200 Request: GET /api
+INFO 2025-06-02 10:55:04,587 middleware 7652 10200 Response: 404 - Duration: 0.01s
+WARNING 2025-06-02 10:55:04,594 log 7652 10200 Not Found: /api
+WARNING 2025-06-02 10:55:04,597 basehttp 7652 10200 "GET /api HTTP/1.1" 404 3163
+INFO 2025-06-02 10:55:33,109 middleware 7652 10200 Request: GET /admin
+INFO 2025-06-02 10:55:33,119 middleware 7652 10200 Response: 404 - Duration: 0.01s
+INFO 2025-06-02 10:55:33,122 basehttp 7652 10200 "GET /admin HTTP/1.1" 301 0
+INFO 2025-06-02 10:55:33,141 middleware 7652 11696 Request: GET /admin/
+INFO 2025-06-02 10:55:33,207 middleware 7652 11696 Response: 302 - Duration: 0.07s
+INFO 2025-06-02 10:55:33,209 basehttp 7652 11696 "GET /admin/ HTTP/1.1" 302 0
+INFO 2025-06-02 10:55:33,215 middleware 7652 11696 Request: GET /admin/login/
+INFO 2025-06-02 10:55:33,646 middleware 7652 11696 Response: 200 - Duration: 0.43s
+INFO 2025-06-02 10:55:33,651 basehttp 7652 11696 "GET /admin/login/?next=/admin/ HTTP/1.1" 200 4174
+INFO 2025-06-02 10:55:34,682 basehttp 7652 16444 "GET /static/admin/css/dark_mode.css HTTP/1.1" 200 2808
+INFO 2025-06-02 10:55:34,683 basehttp 7652 11696 "GET /static/admin/css/base.css HTTP/1.1" 200 22120
+INFO 2025-06-02 10:55:34,689 basehttp 7652 14700 "GET /static/admin/css/nav_sidebar.css HTTP/1.1" 200 2810
+INFO 2025-06-02 10:55:34,717 basehttp 7652 17652 "GET /static/admin/js/theme.js HTTP/1.1" 200 1653
+INFO 2025-06-02 10:55:34,725 basehttp 7652 12116 "GET /static/admin/css/login.css HTTP/1.1" 200 951
+INFO 2025-06-02 10:55:34,755 basehttp 7652 9244 "GET /static/admin/css/responsive.css HTTP/1.1" 200 16565
+INFO 2025-06-02 10:55:34,802 basehttp 7652 12116 "GET /static/admin/js/nav_sidebar.js HTTP/1.1" 200 3063
+INFO 2025-06-02 10:55:41,717 middleware 7652 12116 Request: POST /admin/login/
+INFO 2025-06-02 10:55:43,383 middleware 7652 12116 Response: 200 - Duration: 1.67s
+INFO 2025-06-02 10:55:43,384 basehttp 7652 12116 "POST /admin/login/?next=/admin/ HTTP/1.1" 200 4341
+INFO 2025-06-02 10:55:49,338 middleware 7652 12116 Request: POST /admin/login/
+INFO 2025-06-02 10:55:50,921 middleware 7652 12116 Response: 200 - Duration: 1.58s
+INFO 2025-06-02 10:55:50,923 basehttp 7652 12116 "POST /admin/login/?next=/admin/ HTTP/1.1" 200 4341
+INFO 2025-06-02 10:56:20,732 middleware 7652 12116 Request: POST /admin/login/
+INFO 2025-06-02 10:56:22,426 middleware 7652 12116 Response: 200 - Duration: 1.69s
+INFO 2025-06-02 10:56:22,428 basehttp 7652 12116 "POST /admin/login/?next=/admin/ HTTP/1.1" 200 4342
+INFO 2025-06-02 10:56:28,649 middleware 7652 12116 Request: POST /admin/login/
+INFO 2025-06-02 10:56:30,241 middleware 7652 12116 Response: 200 - Duration: 1.59s
+INFO 2025-06-02 10:56:30,244 basehttp 7652 12116 "POST /admin/login/?next=/admin/ HTTP/1.1" 200 4342
+INFO 2025-06-02 11:09:14,654 autoreload 15008 12244 Watching for file changes with StatReloader
+INFO 2025-06-02 11:09:29,619 middleware 15008 17484 Request: POST /admin/login/
+INFO 2025-06-02 11:09:31,525 middleware 15008 17484 Response: 200 - Duration: 1.91s
+INFO 2025-06-02 11:09:31,528 basehttp 15008 17484 "POST /admin/login/?next=/admin/ HTTP/1.1" 200 4342
+INFO 2025-06-02 11:09:34,899 middleware 15008 17484 Request: POST /admin/login/
+INFO 2025-06-02 11:09:36,504 middleware 15008 17484 Response: 200 - Duration: 1.60s
+INFO 2025-06-02 11:09:36,508 basehttp 15008 17484 "POST /admin/login/?next=/admin/ HTTP/1.1" 200 4342
+INFO 2025-06-02 11:10:05,610 middleware 15008 17484 Request: POST /admin/login/
+INFO 2025-06-02 11:10:07,520 middleware 15008 17484 Response: 302 - Duration: 1.91s
+INFO 2025-06-02 11:10:07,632 basehttp 15008 17484 "POST /admin/login/?next=/admin/ HTTP/1.1" 302 0
+INFO 2025-06-02 11:10:07,640 middleware 15008 17484 Request: GET /admin/
+INFO 2025-06-02 11:10:07,649 middleware 15008 17484 User: ochiengmoses303@gmail.com
+INFO 2025-06-02 11:10:07,752 middleware 15008 17484 Response: 200 - Duration: 0.11s
+INFO 2025-06-02 11:10:07,754 basehttp 15008 17484 "GET /admin/ HTTP/1.1" 200 14289
+INFO 2025-06-02 11:10:08,283 basehttp 15008 17484 "GET /static/admin/css/dashboard.css HTTP/1.1" 200 441
+INFO 2025-06-02 11:10:08,314 basehttp 15008 32 "GET /static/admin/img/icon-addlink.svg HTTP/1.1" 200 331
+INFO 2025-06-02 11:10:08,332 basehttp 15008 16832 "GET /static/admin/img/icon-changelink.svg HTTP/1.1" 200 380
+INFO 2025-06-02 11:23:21,762 middleware 15008 14324 Request: GET /admin/authentication/user/
+INFO 2025-06-02 11:23:21,771 middleware 15008 14324 User: ochiengmoses303@gmail.com
+INFO 2025-06-02 11:23:21,948 middleware 15008 14324 Response: 200 - Duration: 0.19s
+INFO 2025-06-02 11:23:21,952 basehttp 15008 14324 "GET /admin/authentication/user/ HTTP/1.1" 200 17275
+INFO 2025-06-02 11:23:22,048 middleware 15008 13172 Request: GET /admin/jsi18n/
+INFO 2025-06-02 11:23:22,064 middleware 15008 13172 User: ochiengmoses303@gmail.com
+INFO 2025-06-02 11:23:22,066 basehttp 15008 14324 "GET /static/admin/css/changelists.css HTTP/1.1" 200 6878
+INFO 2025-06-02 11:23:22,070 basehttp 15008 16500 "GET /static/admin/js/jquery.init.js HTTP/1.1" 200 347
+INFO 2025-06-02 11:23:22,091 basehttp 15008 16500 "GET /static/admin/js/urlify.js HTTP/1.1" 200 7887
+INFO 2025-06-02 11:23:22,124 basehttp 15008 13988 "GET /static/admin/js/admin/RelatedObjectLookups.js HTTP/1.1" 200 9777
+INFO 2025-06-02 11:23:22,127 basehttp 15008 14824 "GET /static/admin/js/vendor/jquery/jquery.js HTTP/1.1" 200 285314
+INFO 2025-06-02 11:23:22,138 basehttp 15008 14324 "GET /static/admin/js/actions.js HTTP/1.1" 200 8076
+INFO 2025-06-02 11:23:22,140 basehttp 15008 15500 "GET /static/admin/js/core.js HTTP/1.1" 200 6208
+INFO 2025-06-02 11:23:22,144 middleware 15008 13172 Response: 200 - Duration: 0.10s
+INFO 2025-06-02 11:23:22,146 basehttp 15008 13172 "GET /admin/jsi18n/ HTTP/1.1" 200 3342
+INFO 2025-06-02 11:23:22,155 basehttp 15008 16500 "GET /static/admin/js/prepopulate.js HTTP/1.1" 200 1531
+INFO 2025-06-02 11:23:22,175 basehttp 15008 14324 "GET /static/admin/img/icon-yes.svg HTTP/1.1" 200 436
+INFO 2025-06-02 11:23:22,177 basehttp 15008 14824 "GET /static/admin/img/search.svg HTTP/1.1" 200 458
+INFO 2025-06-02 11:23:22,209 basehttp 15008 13988 "GET /static/admin/js/vendor/xregexp/xregexp.js HTTP/1.1" 200 325171
+INFO 2025-06-02 11:23:22,245 basehttp 15008 13988 "GET /static/admin/js/filters.js HTTP/1.1" 200 978
+INFO 2025-06-02 11:23:22,279 basehttp 15008 13988 "GET /static/admin/img/tooltag-add.svg HTTP/1.1" 200 331
+INFO 2025-06-02 11:23:22,280 basehttp 15008 14824 "GET /static/admin/img/icon-viewlink.svg HTTP/1.1" 200 581
+INFO 2025-06-02 11:23:32,481 middleware 15008 14824 Request: GET /admin/authentication/user/add/
+INFO 2025-06-02 11:23:32,489 middleware 15008 14824 User: ochiengmoses303@gmail.com
+INFO 2025-06-02 11:23:32,621 middleware 15008 14824 Response: 200 - Duration: 0.14s
+INFO 2025-06-02 11:23:32,625 basehttp 15008 14824 "GET /admin/authentication/user/add/ HTTP/1.1" 200 18245
+INFO 2025-06-02 11:23:32,721 middleware 15008 16500 Request: GET /admin/jsi18n/
+INFO 2025-06-02 11:23:32,727 basehttp 15008 14324 "GET /static/admin/js/prepopulate_init.js HTTP/1.1" 200 586
+INFO 2025-06-02 11:23:32,731 middleware 15008 16500 User: ochiengmoses303@gmail.com
+INFO 2025-06-02 11:23:32,731 basehttp 15008 14824 "GET /static/admin/css/forms.css HTTP/1.1" 200 8525
+INFO 2025-06-02 11:23:32,736 middleware 15008 16500 Response: 200 - Duration: 0.02s
+INFO 2025-06-02 11:23:32,738 basehttp 15008 16500 "GET /admin/jsi18n/ HTTP/1.1" 200 3342
+INFO 2025-06-02 11:23:32,743 basehttp 15008 13988 "GET /static/admin/css/unusable_password_field.css HTTP/1.1" 200 663
+INFO 2025-06-02 11:23:32,761 basehttp 15008 14824 "GET /static/admin/css/widgets.css HTTP/1.1" 200 11991
+INFO 2025-06-02 11:23:32,784 basehttp 15008 13988 "GET /static/admin/js/change_form.js HTTP/1.1" 200 606
+INFO 2025-06-02 11:23:32,802 basehttp 15008 14824 "GET /static/admin/js/unusable_password_field.js HTTP/1.1" 200 1480
+INFO 2025-06-02 11:24:11,959 middleware 15008 14824 Request: POST /admin/authentication/user/add/
+INFO 2025-06-02 11:24:11,969 middleware 15008 14824 User: ochiengmoses303@gmail.com
+INFO 2025-06-02 11:24:12,207 middleware 15008 14824 Response: 302 - Duration: 0.25s
+INFO 2025-06-02 11:24:12,209 basehttp 15008 14824 "POST /admin/authentication/user/add/ HTTP/1.1" 302 0
+INFO 2025-06-02 11:24:12,215 middleware 15008 14824 Request: GET /admin/authentication/user/add/
+INFO 2025-06-02 11:24:12,223 middleware 15008 14824 User: ochiengmoses303@gmail.com
+INFO 2025-06-02 11:24:12,246 middleware 15008 14824 Response: 200 - Duration: 0.03s
+INFO 2025-06-02 11:24:12,248 basehttp 15008 14824 "GET /admin/authentication/user/add/ HTTP/1.1" 200 18512
+INFO 2025-06-02 11:24:12,330 middleware 15008 14824 Request: GET /admin/jsi18n/
+INFO 2025-06-02 11:24:12,339 middleware 15008 14824 User: ochiengmoses303@gmail.com
+INFO 2025-06-02 11:24:12,343 middleware 15008 14824 Response: 200 - Duration: 0.01s
+INFO 2025-06-02 11:24:12,345 basehttp 15008 14824 "GET /admin/jsi18n/ HTTP/1.1" 200 3342
+INFO 2025-06-02 11:24:27,389 middleware 15008 14824 Request: POST /admin/authentication/user/add/
+INFO 2025-06-02 11:24:27,398 middleware 15008 14824 User: ochiengmoses303@gmail.com
+ERROR 2025-06-02 11:24:27,916 log 15008 14824 Internal Server Error: /admin/authentication/user/add/
+Traceback (most recent call last):
+  File "C:\Users\psi\Desktop\originalEDUHUB\backend\myvach\Lib\site-packages\django\db\backends\utils.py", line 105, in _execute
+    return self.cursor.execute(sql, params)
+           ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+  File "C:\Users\psi\Desktop\originalEDUHUB\backend\myvach\Lib\site-packages\django\db\backends\sqlite3\base.py", line 360, in execute
+    return super().execute(query, params)
+           ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^
+sqlite3.IntegrityError: UNIQUE constraint failed: auth_user.email
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "C:\Users\psi\Desktop\originalEDUHUB\backend\myvach\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+  File "C:\Users\psi\Desktop\originalEDUHUB\backend\myvach\Lib\site-packages\django\core\handlers\base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+  File "C:\Users\psi\Desktop\originalEDUHUB\backend\myvach\Lib\site-packages\django\contrib\admin\options.py", line 719, in wrapper
+    return self.admin_site.admin_view(view)(*args, **kwargs)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^
+  File "C:\Users\psi\Desktop\originalEDUHUB\backend\myvach\Lib\site-packages\django\utils\decorators.py", line 192, in _view_wrapper
+    result = _process_exception(request, e)
+  File "C:\Users\psi\Desktop\originalEDUHUB\backend\myvach\Lib\site-packages\django\utils\decorators.py", line 190, in _view_wrapper
+    response = view_func(request, *args, **kwargs)
+  File "C:\Users\psi\Desktop\originalEDUHUB\backend\myvach\Lib\site-packages\django\views\decorators\cache.py", line 80, in _view_wrapper
+    response = view_func(request, *args, **kwargs)
+  File "C:\Users\psi\Desktop\originalEDUHUB\backend\myvach\Lib\site-packages\django\contrib\admin\sites.py", line 246, in inner
+    return view(request, *args, **kwargs)
+  File "C:\Users\psi\Desktop\originalEDUHUB\backend\myvach\Lib\site-packages\django\utils\decorators.py", line 48, in _wrapper
+    return bound_method(*args, **kwargs)
+  File "C:\Users\psi\Desktop\originalEDUHUB\backend\myvach\Lib\site-packages\django\views\decorators\debug.py", line 143, in sensitive_post_parameters_wrapper
+    return view(request, *args, **kwargs)
+  File "C:\Users\psi\Desktop\originalEDUHUB\backend\myvach\Lib\site-packages\django\utils\decorators.py", line 48, in _wrapper
+    return bound_method(*args, **kwargs)
+  File "C:\Users\psi\Desktop\originalEDUHUB\backend\myvach\Lib\site-packages\django\utils\decorators.py", line 192, in _view_wrapper
+    result = _process_exception(request, e)
+  File "C:\Users\psi\Desktop\originalEDUHUB\backend\myvach\Lib\site-packages\django\utils\decorators.py", line 190, in _view_wrapper
+    response = view_func(request, *args, **kwargs)
+  File "C:\Users\psi\Desktop\originalEDUHUB\backend\myvach\Lib\site-packages\django\contrib\auth\admin.py", line 124, in add_view
+    return self._add_view(request, form_url, extra_context)
+           ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\psi\Desktop\originalEDUHUB\backend\myvach\Lib\site-packages\django\contrib\auth\admin.py", line 152, in _add_view
+    return super().add_view(request, form_url, extra_context)
+           ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\psi\Desktop\originalEDUHUB\backend\myvach\Lib\site-packages\django\contrib\admin\options.py", line 1984, in add_view
+    return self.changeform_view(request, None, form_url, extra_context)
+           ~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\psi\Desktop\originalEDUHUB\backend\myvach\Lib\site-packages\django\utils\decorators.py", line 48, in _wrapper
+    return bound_method(*args, **kwargs)
+  File "C:\Users\psi\Desktop\originalEDUHUB\backend\myvach\Lib\site-packages\django\utils\decorators.py", line 192, in _view_wrapper
+    result = _process_exception(request, e)
+  File "C:\Users\psi\Desktop\originalEDUHUB\backend\myvach\Lib\site-packages\django\utils\decorators.py", line 190, in _view_wrapper
+    response = view_func(request, *args, **kwargs)
+  File "C:\Users\psi\Desktop\originalEDUHUB\backend\myvach\Lib\site-packages\django\contrib\admin\options.py", line 1843, in changeform_view
+    return self._changeform_view(request, object_id, form_url, extra_context)
+           ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\psi\Desktop\originalEDUHUB\backend\myvach\Lib\site-packages\django\contrib\admin\options.py", line 1894, in _changeform_view
+    self.save_model(request, new_object, form, not add)
+    ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\psi\Desktop\originalEDUHUB\backend\myvach\Lib\site-packages\django\contrib\admin\options.py", line 1314, in save_model
+    obj.save()
+    ~~~~~~~~^^
+  File "C:\Users\psi\Desktop\originalEDUHUB\backend\myvach\Lib\site-packages\django\contrib\auth\base_user.py", line 65, in save
+    super().save(*args, **kwargs)
+    ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^
+  File "C:\Users\psi\Desktop\originalEDUHUB\backend\myvach\Lib\site-packages\django\db\models\base.py", line 902, in save
+    self.save_base(
+    ~~~~~~~~~~~~~~^
+        using=using,
+        ^^^^^^^^^^^^
+    ...<2 lines>...
+        update_fields=update_fields,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\psi\Desktop\originalEDUHUB\backend\myvach\Lib\site-packages\django\db\models\base.py", line 1008, in save_base
+    updated = self._save_table(
+        raw,
+    ...<4 lines>...
+        update_fields,
+    )
+  File "C:\Users\psi\Desktop\originalEDUHUB\backend\myvach\Lib\site-packages\django\db\models\base.py", line 1169, in _save_table
+    results = self._do_insert(
+        cls._base_manager, using, fields, returning_fields, raw
+    )
+  File "C:\Users\psi\Desktop\originalEDUHUB\backend\myvach\Lib\site-packages\django\db\models\base.py", line 1210, in _do_insert
+    return manager._insert(
+           ~~~~~~~~~~~~~~~^
+        [self],
+        ^^^^^^^
+    ...<3 lines>...
+        raw=raw,
+        ^^^^^^^^
+    )
+    ^
+  File "C:\Users\psi\Desktop\originalEDUHUB\backend\myvach\Lib\site-packages\django\db\models\manager.py", line 87, in manager_method
+    return getattr(self.get_queryset(), name)(*args, **kwargs)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^
+  File "C:\Users\psi\Desktop\originalEDUHUB\backend\myvach\Lib\site-packages\django\db\models\query.py", line 1864, in _insert
+    return query.get_compiler(using=using).execute_sql(returning_fields)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^
+  File "C:\Users\psi\Desktop\originalEDUHUB\backend\myvach\Lib\site-packages\django\db\models\sql\compiler.py", line 1882, in execute_sql
+    cursor.execute(sql, params)
+    ~~~~~~~~~~~~~~^^^^^^^^^^^^^
+  File "C:\Users\psi\Desktop\originalEDUHUB\backend\myvach\Lib\site-packages\django\db\backends\utils.py", line 122, in execute
+    return super().execute(sql, params)
+           ~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+  File "C:\Users\psi\Desktop\originalEDUHUB\backend\myvach\Lib\site-packages\django\db\backends\utils.py", line 79, in execute
+    return self._execute_with_wrappers(
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~^
+        sql, params, many=False, executor=self._execute
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\psi\Desktop\originalEDUHUB\backend\myvach\Lib\site-packages\django\db\backends\utils.py", line 92, in _execute_with_wrappers
+    return executor(sql, params, many, context)
+  File "C:\Users\psi\Desktop\originalEDUHUB\backend\myvach\Lib\site-packages\django\db\backends\utils.py", line 100, in _execute
+    with self.db.wrap_database_errors:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\psi\Desktop\originalEDUHUB\backend\myvach\Lib\site-packages\django\db\utils.py", line 91, in __exit__
+    raise dj_exc_value.with_traceback(traceback) from exc_value
+  File "C:\Users\psi\Desktop\originalEDUHUB\backend\myvach\Lib\site-packages\django\db\backends\utils.py", line 105, in _execute
+    return self.cursor.execute(sql, params)
+           ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+  File "C:\Users\psi\Desktop\originalEDUHUB\backend\myvach\Lib\site-packages\django\db\backends\sqlite3\base.py", line 360, in execute
+    return super().execute(query, params)
+           ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^
+django.db.utils.IntegrityError: UNIQUE constraint failed: auth_user.email
+INFO 2025-06-02 11:24:28,003 middleware 15008 14824 Response: 500 - Duration: 0.61s
+ERROR 2025-06-02 11:24:28,009 basehttp 15008 14824 "POST /admin/authentication/user/add/ HTTP/1.1" 500 277281
+INFO 2025-06-02 11:25:13,907 middleware 15008 14824 Request: GET /admin/authentication/user/
+INFO 2025-06-02 11:25:13,915 middleware 15008 14824 User: ochiengmoses303@gmail.com
+INFO 2025-06-02 11:25:13,979 middleware 15008 14824 Response: 200 - Duration: 0.07s
+INFO 2025-06-02 11:25:13,982 basehttp 15008 14824 "GET /admin/authentication/user/ HTTP/1.1" 200 17759
+INFO 2025-06-02 11:25:14,061 middleware 15008 14824 Request: GET /admin/jsi18n/
+INFO 2025-06-02 11:25:14,072 middleware 15008 14824 User: ochiengmoses303@gmail.com
+INFO 2025-06-02 11:25:14,078 middleware 15008 14824 Response: 200 - Duration: 0.02s
+INFO 2025-06-02 11:25:14,080 basehttp 15008 14824 "GET /admin/jsi18n/ HTTP/1.1" 200 3342
+INFO 2025-06-02 11:25:39,105 middleware 15008 14824 Request: GET /admin/authentication/user/add/
+INFO 2025-06-02 11:25:39,110 middleware 15008 14824 User: ochiengmoses303@gmail.com
+INFO 2025-06-02 11:25:39,141 middleware 15008 14824 Response: 200 - Duration: 0.04s
+INFO 2025-06-02 11:25:39,143 basehttp 15008 14824 "GET /admin/authentication/user/add/ HTTP/1.1" 200 18245
+INFO 2025-06-02 11:25:39,227 middleware 15008 14824 Request: GET /admin/jsi18n/
+INFO 2025-06-02 11:25:39,240 middleware 15008 14824 User: ochiengmoses303@gmail.com
+INFO 2025-06-02 11:25:39,245 middleware 15008 14824 Response: 200 - Duration: 0.02s
+INFO 2025-06-02 11:25:39,247 basehttp 15008 14824 "GET /admin/jsi18n/ HTTP/1.1" 200 3342
+INFO 2025-06-02 11:25:53,496 middleware 15008 14824 Request: POST /admin/authentication/user/add/
+INFO 2025-06-02 11:25:53,506 middleware 15008 14824 User: ochiengmoses303@gmail.com
+ERROR 2025-06-02 11:25:53,648 log 15008 14824 Internal Server Error: /admin/authentication/user/add/
+Traceback (most recent call last):
+  File "C:\Users\psi\Desktop\originalEDUHUB\backend\myvach\Lib\site-packages\django\db\backends\utils.py", line 105, in _execute
+    return self.cursor.execute(sql, params)
+           ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+  File "C:\Users\psi\Desktop\originalEDUHUB\backend\myvach\Lib\site-packages\django\db\backends\sqlite3\base.py", line 360, in execute
+    return super().execute(query, params)
+           ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^
+sqlite3.IntegrityError: UNIQUE constraint failed: auth_user.email
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "C:\Users\psi\Desktop\originalEDUHUB\backend\myvach\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+  File "C:\Users\psi\Desktop\originalEDUHUB\backend\myvach\Lib\site-packages\django\core\handlers\base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+  File "C:\Users\psi\Desktop\originalEDUHUB\backend\myvach\Lib\site-packages\django\contrib\admin\options.py", line 719, in wrapper
+    return self.admin_site.admin_view(view)(*args, **kwargs)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^
+  File "C:\Users\psi\Desktop\originalEDUHUB\backend\myvach\Lib\site-packages\django\utils\decorators.py", line 192, in _view_wrapper
+    result = _process_exception(request, e)
+  File "C:\Users\psi\Desktop\originalEDUHUB\backend\myvach\Lib\site-packages\django\utils\decorators.py", line 190, in _view_wrapper
+    response = view_func(request, *args, **kwargs)
+  File "C:\Users\psi\Desktop\originalEDUHUB\backend\myvach\Lib\site-packages\django\views\decorators\cache.py", line 80, in _view_wrapper
+    response = view_func(request, *args, **kwargs)
+  File "C:\Users\psi\Desktop\originalEDUHUB\backend\myvach\Lib\site-packages\django\contrib\admin\sites.py", line 246, in inner
+    return view(request, *args, **kwargs)
+  File "C:\Users\psi\Desktop\originalEDUHUB\backend\myvach\Lib\site-packages\django\utils\decorators.py", line 48, in _wrapper
+    return bound_method(*args, **kwargs)
+  File "C:\Users\psi\Desktop\originalEDUHUB\backend\myvach\Lib\site-packages\django\views\decorators\debug.py", line 143, in sensitive_post_parameters_wrapper
+    return view(request, *args, **kwargs)
+  File "C:\Users\psi\Desktop\originalEDUHUB\backend\myvach\Lib\site-packages\django\utils\decorators.py", line 48, in _wrapper
+    return bound_method(*args, **kwargs)
+  File "C:\Users\psi\Desktop\originalEDUHUB\backend\myvach\Lib\site-packages\django\utils\decorators.py", line 192, in _view_wrapper
+    result = _process_exception(request, e)
+  File "C:\Users\psi\Desktop\originalEDUHUB\backend\myvach\Lib\site-packages\django\utils\decorators.py", line 190, in _view_wrapper
+    response = view_func(request, *args, **kwargs)
+  File "C:\Users\psi\Desktop\originalEDUHUB\backend\myvach\Lib\site-packages\django\contrib\auth\admin.py", line 124, in add_view
+    return self._add_view(request, form_url, extra_context)
+           ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\psi\Desktop\originalEDUHUB\backend\myvach\Lib\site-packages\django\contrib\auth\admin.py", line 152, in _add_view
+    return super().add_view(request, form_url, extra_context)
+           ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\psi\Desktop\originalEDUHUB\backend\myvach\Lib\site-packages\django\contrib\admin\options.py", line 1984, in add_view
+    return self.changeform_view(request, None, form_url, extra_context)
+           ~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\psi\Desktop\originalEDUHUB\backend\myvach\Lib\site-packages\django\utils\decorators.py", line 48, in _wrapper
+    return bound_method(*args, **kwargs)
+  File "C:\Users\psi\Desktop\originalEDUHUB\backend\myvach\Lib\site-packages\django\utils\decorators.py", line 192, in _view_wrapper
+    result = _process_exception(request, e)
+  File "C:\Users\psi\Desktop\originalEDUHUB\backend\myvach\Lib\site-packages\django\utils\decorators.py", line 190, in _view_wrapper
+    response = view_func(request, *args, **kwargs)
+  File "C:\Users\psi\Desktop\originalEDUHUB\backend\myvach\Lib\site-packages\django\contrib\admin\options.py", line 1843, in changeform_view
+    return self._changeform_view(request, object_id, form_url, extra_context)
+           ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\psi\Desktop\originalEDUHUB\backend\myvach\Lib\site-packages\django\contrib\admin\options.py", line 1894, in _changeform_view
+    self.save_model(request, new_object, form, not add)
+    ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\psi\Desktop\originalEDUHUB\backend\myvach\Lib\site-packages\django\contrib\admin\options.py", line 1314, in save_model
+    obj.save()
+    ~~~~~~~~^^
+  File "C:\Users\psi\Desktop\originalEDUHUB\backend\myvach\Lib\site-packages\django\contrib\auth\base_user.py", line 65, in save
+    super().save(*args, **kwargs)
+    ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^
+  File "C:\Users\psi\Desktop\originalEDUHUB\backend\myvach\Lib\site-packages\django\db\models\base.py", line 902, in save
+    self.save_base(
+    ~~~~~~~~~~~~~~^
+        using=using,
+        ^^^^^^^^^^^^
+    ...<2 lines>...
+        update_fields=update_fields,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\psi\Desktop\originalEDUHUB\backend\myvach\Lib\site-packages\django\db\models\base.py", line 1008, in save_base
+    updated = self._save_table(
+        raw,
+    ...<4 lines>...
+        update_fields,
+    )
+  File "C:\Users\psi\Desktop\originalEDUHUB\backend\myvach\Lib\site-packages\django\db\models\base.py", line 1169, in _save_table
+    results = self._do_insert(
+        cls._base_manager, using, fields, returning_fields, raw
+    )
+  File "C:\Users\psi\Desktop\originalEDUHUB\backend\myvach\Lib\site-packages\django\db\models\base.py", line 1210, in _do_insert
+    return manager._insert(
+           ~~~~~~~~~~~~~~~^
+        [self],
+        ^^^^^^^
+    ...<3 lines>...
+        raw=raw,
+        ^^^^^^^^
+    )
+    ^
+  File "C:\Users\psi\Desktop\originalEDUHUB\backend\myvach\Lib\site-packages\django\db\models\manager.py", line 87, in manager_method
+    return getattr(self.get_queryset(), name)(*args, **kwargs)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^
+  File "C:\Users\psi\Desktop\originalEDUHUB\backend\myvach\Lib\site-packages\django\db\models\query.py", line 1864, in _insert
+    return query.get_compiler(using=using).execute_sql(returning_fields)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^
+  File "C:\Users\psi\Desktop\originalEDUHUB\backend\myvach\Lib\site-packages\django\db\models\sql\compiler.py", line 1882, in execute_sql
+    cursor.execute(sql, params)
+    ~~~~~~~~~~~~~~^^^^^^^^^^^^^
+  File "C:\Users\psi\Desktop\originalEDUHUB\backend\myvach\Lib\site-packages\django\db\backends\utils.py", line 122, in execute
+    return super().execute(sql, params)
+           ~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+  File "C:\Users\psi\Desktop\originalEDUHUB\backend\myvach\Lib\site-packages\django\db\backends\utils.py", line 79, in execute
+    return self._execute_with_wrappers(
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~^
+        sql, params, many=False, executor=self._execute
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\psi\Desktop\originalEDUHUB\backend\myvach\Lib\site-packages\django\db\backends\utils.py", line 92, in _execute_with_wrappers
+    return executor(sql, params, many, context)
+  File "C:\Users\psi\Desktop\originalEDUHUB\backend\myvach\Lib\site-packages\django\db\backends\utils.py", line 100, in _execute
+    with self.db.wrap_database_errors:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\psi\Desktop\originalEDUHUB\backend\myvach\Lib\site-packages\django\db\utils.py", line 91, in __exit__
+    raise dj_exc_value.with_traceback(traceback) from exc_value
+  File "C:\Users\psi\Desktop\originalEDUHUB\backend\myvach\Lib\site-packages\django\db\backends\utils.py", line 105, in _execute
+    return self.cursor.execute(sql, params)
+           ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+  File "C:\Users\psi\Desktop\originalEDUHUB\backend\myvach\Lib\site-packages\django\db\backends\sqlite3\base.py", line 360, in execute
+    return super().execute(query, params)
+           ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^
+django.db.utils.IntegrityError: UNIQUE constraint failed: auth_user.email
+INFO 2025-06-02 11:25:53,722 middleware 15008 14824 Response: 500 - Duration: 0.23s
+ERROR 2025-06-02 11:25:53,725 basehttp 15008 14824 "POST /admin/authentication/user/add/ HTTP/1.1" 500 277259
+INFO 2025-06-02 11:26:01,407 middleware 15008 14824 Request: GET /admin/authentication/user/
+INFO 2025-06-02 11:26:01,414 middleware 15008 14824 User: ochiengmoses303@gmail.com
+INFO 2025-06-02 11:26:01,456 middleware 15008 14824 Response: 200 - Duration: 0.05s
+INFO 2025-06-02 11:26:01,458 basehttp 15008 14824 "GET /admin/authentication/user/ HTTP/1.1" 200 17759
+INFO 2025-06-02 11:26:01,550 middleware 15008 14824 Request: GET /admin/jsi18n/
+INFO 2025-06-02 11:26:01,563 middleware 15008 14824 User: ochiengmoses303@gmail.com
+INFO 2025-06-02 11:26:01,568 middleware 15008 14824 Response: 200 - Duration: 0.02s
+INFO 2025-06-02 11:26:01,570 basehttp 15008 14824 "GET /admin/jsi18n/ HTTP/1.1" 200 3342
+INFO 2025-06-02 11:26:08,088 middleware 15008 14824 Request: GET /admin/authentication/user/add/
+INFO 2025-06-02 11:26:08,096 middleware 15008 14824 User: ochiengmoses303@gmail.com
+INFO 2025-06-02 11:26:08,128 middleware 15008 14824 Response: 200 - Duration: 0.04s
+INFO 2025-06-02 11:26:08,130 basehttp 15008 14824 "GET /admin/authentication/user/add/ HTTP/1.1" 200 18245
+INFO 2025-06-02 11:26:08,191 middleware 15008 14824 Request: GET /admin/jsi18n/
+INFO 2025-06-02 11:26:08,198 middleware 15008 14824 User: ochiengmoses303@gmail.com
+INFO 2025-06-02 11:26:08,205 middleware 15008 14824 Response: 200 - Duration: 0.01s
+INFO 2025-06-02 11:26:08,208 basehttp 15008 14824 "GET /admin/jsi18n/ HTTP/1.1" 200 3342
+INFO 2025-06-02 11:26:14,914 middleware 15008 14824 Request: POST /admin/authentication/user/add/
+INFO 2025-06-02 11:26:14,923 middleware 15008 14824 User: ochiengmoses303@gmail.com
+ERROR 2025-06-02 11:26:15,058 log 15008 14824 Internal Server Error: /admin/authentication/user/add/
+Traceback (most recent call last):
+  File "C:\Users\psi\Desktop\originalEDUHUB\backend\myvach\Lib\site-packages\django\db\backends\utils.py", line 105, in _execute
+    return self.cursor.execute(sql, params)
+           ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+  File "C:\Users\psi\Desktop\originalEDUHUB\backend\myvach\Lib\site-packages\django\db\backends\sqlite3\base.py", line 360, in execute
+    return super().execute(query, params)
+           ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^
+sqlite3.IntegrityError: UNIQUE constraint failed: auth_user.email
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "C:\Users\psi\Desktop\originalEDUHUB\backend\myvach\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+  File "C:\Users\psi\Desktop\originalEDUHUB\backend\myvach\Lib\site-packages\django\core\handlers\base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+  File "C:\Users\psi\Desktop\originalEDUHUB\backend\myvach\Lib\site-packages\django\contrib\admin\options.py", line 719, in wrapper
+    return self.admin_site.admin_view(view)(*args, **kwargs)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^
+  File "C:\Users\psi\Desktop\originalEDUHUB\backend\myvach\Lib\site-packages\django\utils\decorators.py", line 192, in _view_wrapper
+    result = _process_exception(request, e)
+  File "C:\Users\psi\Desktop\originalEDUHUB\backend\myvach\Lib\site-packages\django\utils\decorators.py", line 190, in _view_wrapper
+    response = view_func(request, *args, **kwargs)
+  File "C:\Users\psi\Desktop\originalEDUHUB\backend\myvach\Lib\site-packages\django\views\decorators\cache.py", line 80, in _view_wrapper
+    response = view_func(request, *args, **kwargs)
+  File "C:\Users\psi\Desktop\originalEDUHUB\backend\myvach\Lib\site-packages\django\contrib\admin\sites.py", line 246, in inner
+    return view(request, *args, **kwargs)
+  File "C:\Users\psi\Desktop\originalEDUHUB\backend\myvach\Lib\site-packages\django\utils\decorators.py", line 48, in _wrapper
+    return bound_method(*args, **kwargs)
+  File "C:\Users\psi\Desktop\originalEDUHUB\backend\myvach\Lib\site-packages\django\views\decorators\debug.py", line 143, in sensitive_post_parameters_wrapper
+    return view(request, *args, **kwargs)
+  File "C:\Users\psi\Desktop\originalEDUHUB\backend\myvach\Lib\site-packages\django\utils\decorators.py", line 48, in _wrapper
+    return bound_method(*args, **kwargs)
+  File "C:\Users\psi\Desktop\originalEDUHUB\backend\myvach\Lib\site-packages\django\utils\decorators.py", line 192, in _view_wrapper
+    result = _process_exception(request, e)
+  File "C:\Users\psi\Desktop\originalEDUHUB\backend\myvach\Lib\site-packages\django\utils\decorators.py", line 190, in _view_wrapper
+    response = view_func(request, *args, **kwargs)
+  File "C:\Users\psi\Desktop\originalEDUHUB\backend\myvach\Lib\site-packages\django\contrib\auth\admin.py", line 124, in add_view
+    return self._add_view(request, form_url, extra_context)
+           ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\psi\Desktop\originalEDUHUB\backend\myvach\Lib\site-packages\django\contrib\auth\admin.py", line 152, in _add_view
+    return super().add_view(request, form_url, extra_context)
+           ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\psi\Desktop\originalEDUHUB\backend\myvach\Lib\site-packages\django\contrib\admin\options.py", line 1984, in add_view
+    return self.changeform_view(request, None, form_url, extra_context)
+           ~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\psi\Desktop\originalEDUHUB\backend\myvach\Lib\site-packages\django\utils\decorators.py", line 48, in _wrapper
+    return bound_method(*args, **kwargs)
+  File "C:\Users\psi\Desktop\originalEDUHUB\backend\myvach\Lib\site-packages\django\utils\decorators.py", line 192, in _view_wrapper
+    result = _process_exception(request, e)
+  File "C:\Users\psi\Desktop\originalEDUHUB\backend\myvach\Lib\site-packages\django\utils\decorators.py", line 190, in _view_wrapper
+    response = view_func(request, *args, **kwargs)
+  File "C:\Users\psi\Desktop\originalEDUHUB\backend\myvach\Lib\site-packages\django\contrib\admin\options.py", line 1843, in changeform_view
+    return self._changeform_view(request, object_id, form_url, extra_context)
+           ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\psi\Desktop\originalEDUHUB\backend\myvach\Lib\site-packages\django\contrib\admin\options.py", line 1894, in _changeform_view
+    self.save_model(request, new_object, form, not add)
+    ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\psi\Desktop\originalEDUHUB\backend\myvach\Lib\site-packages\django\contrib\admin\options.py", line 1314, in save_model
+    obj.save()
+    ~~~~~~~~^^
+  File "C:\Users\psi\Desktop\originalEDUHUB\backend\myvach\Lib\site-packages\django\contrib\auth\base_user.py", line 65, in save
+    super().save(*args, **kwargs)
+    ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^
+  File "C:\Users\psi\Desktop\originalEDUHUB\backend\myvach\Lib\site-packages\django\db\models\base.py", line 902, in save
+    self.save_base(
+    ~~~~~~~~~~~~~~^
+        using=using,
+        ^^^^^^^^^^^^
+    ...<2 lines>...
+        update_fields=update_fields,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\psi\Desktop\originalEDUHUB\backend\myvach\Lib\site-packages\django\db\models\base.py", line 1008, in save_base
+    updated = self._save_table(
+        raw,
+    ...<4 lines>...
+        update_fields,
+    )
+  File "C:\Users\psi\Desktop\originalEDUHUB\backend\myvach\Lib\site-packages\django\db\models\base.py", line 1169, in _save_table
+    results = self._do_insert(
+        cls._base_manager, using, fields, returning_fields, raw
+    )
+  File "C:\Users\psi\Desktop\originalEDUHUB\backend\myvach\Lib\site-packages\django\db\models\base.py", line 1210, in _do_insert
+    return manager._insert(
+           ~~~~~~~~~~~~~~~^
+        [self],
+        ^^^^^^^
+    ...<3 lines>...
+        raw=raw,
+        ^^^^^^^^
+    )
+    ^
+  File "C:\Users\psi\Desktop\originalEDUHUB\backend\myvach\Lib\site-packages\django\db\models\manager.py", line 87, in manager_method
+    return getattr(self.get_queryset(), name)(*args, **kwargs)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^
+  File "C:\Users\psi\Desktop\originalEDUHUB\backend\myvach\Lib\site-packages\django\db\models\query.py", line 1864, in _insert
+    return query.get_compiler(using=using).execute_sql(returning_fields)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^
+  File "C:\Users\psi\Desktop\originalEDUHUB\backend\myvach\Lib\site-packages\django\db\models\sql\compiler.py", line 1882, in execute_sql
+    cursor.execute(sql, params)
+    ~~~~~~~~~~~~~~^^^^^^^^^^^^^
+  File "C:\Users\psi\Desktop\originalEDUHUB\backend\myvach\Lib\site-packages\django\db\backends\utils.py", line 122, in execute
+    return super().execute(sql, params)
+           ~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+  File "C:\Users\psi\Desktop\originalEDUHUB\backend\myvach\Lib\site-packages\django\db\backends\utils.py", line 79, in execute
+    return self._execute_with_wrappers(
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~^
+        sql, params, many=False, executor=self._execute
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\psi\Desktop\originalEDUHUB\backend\myvach\Lib\site-packages\django\db\backends\utils.py", line 92, in _execute_with_wrappers
+    return executor(sql, params, many, context)
+  File "C:\Users\psi\Desktop\originalEDUHUB\backend\myvach\Lib\site-packages\django\db\backends\utils.py", line 100, in _execute
+    with self.db.wrap_database_errors:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\psi\Desktop\originalEDUHUB\backend\myvach\Lib\site-packages\django\db\utils.py", line 91, in __exit__
+    raise dj_exc_value.with_traceback(traceback) from exc_value
+  File "C:\Users\psi\Desktop\originalEDUHUB\backend\myvach\Lib\site-packages\django\db\backends\utils.py", line 105, in _execute
+    return self.cursor.execute(sql, params)
+           ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+  File "C:\Users\psi\Desktop\originalEDUHUB\backend\myvach\Lib\site-packages\django\db\backends\sqlite3\base.py", line 360, in execute
+    return super().execute(query, params)
+           ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^
+django.db.utils.IntegrityError: UNIQUE constraint failed: auth_user.email
+INFO 2025-06-02 11:26:15,145 middleware 15008 14824 Response: 500 - Duration: 0.23s
+ERROR 2025-06-02 11:26:15,154 basehttp 15008 14824 "POST /admin/authentication/user/add/ HTTP/1.1" 500 277251
+INFO 2025-06-02 11:26:22,048 middleware 15008 14824 Request: GET /admin/authentication/user/
+INFO 2025-06-02 11:26:22,055 middleware 15008 14824 User: ochiengmoses303@gmail.com
+INFO 2025-06-02 11:26:22,088 middleware 15008 14824 Response: 200 - Duration: 0.04s
+INFO 2025-06-02 11:26:22,095 basehttp 15008 14824 "GET /admin/authentication/user/ HTTP/1.1" 200 17759
+INFO 2025-06-02 11:26:22,177 middleware 15008 14824 Request: GET /admin/jsi18n/
+INFO 2025-06-02 11:26:22,182 middleware 15008 14824 User: ochiengmoses303@gmail.com
+INFO 2025-06-02 11:26:22,186 middleware 15008 14824 Response: 200 - Duration: 0.01s
+INFO 2025-06-02 11:26:22,188 basehttp 15008 14824 "GET /admin/jsi18n/ HTTP/1.1" 200 3342
+INFO 2025-06-02 11:28:54,328 middleware 15008 14824 Request: GET /admin/authentication/user/4e3d9507-2966-4222-bc73-d086eddf399d/change/
+INFO 2025-06-02 11:28:54,339 middleware 15008 14824 User: ochiengmoses303@gmail.com
+INFO 2025-06-02 11:28:54,505 middleware 15008 14824 Response: 200 - Duration: 0.18s
+INFO 2025-06-02 11:28:54,506 basehttp 15008 14824 "GET /admin/authentication/user/4e3d9507-2966-4222-bc73-d086eddf399d/change/ HTTP/1.1" 200 34362
+INFO 2025-06-02 11:28:54,624 basehttp 15008 7624 "GET /static/admin/js/admin/DateTimeShortcuts.js HTTP/1.1" 200 19319
+INFO 2025-06-02 11:28:54,633 middleware 15008 13648 Request: GET /admin/jsi18n/
+INFO 2025-06-02 11:28:54,634 basehttp 15008 14824 "GET /static/admin/js/calendar.js HTTP/1.1" 200 9141
+INFO 2025-06-02 11:28:54,642 basehttp 15008 15560 "GET /static/admin/js/SelectBox.js HTTP/1.1" 200 4530
+INFO 2025-06-02 11:28:54,650 middleware 15008 13648 User: ochiengmoses303@gmail.com
+INFO 2025-06-02 11:28:54,665 middleware 15008 13648 Response: 200 - Duration: 0.03s
+INFO 2025-06-02 11:28:54,668 basehttp 15008 13648 "GET /admin/jsi18n/ HTTP/1.1" 200 3342
+INFO 2025-06-02 11:28:54,669 basehttp 15008 9264 "GET /static/admin/js/SelectFilter2.js HTTP/1.1" 200 15709
+INFO 2025-06-02 11:28:54,854 basehttp 15008 13648 "GET /static/admin/img/selector-icons.svg HTTP/1.1" 200 3291
+INFO 2025-06-02 11:28:54,860 basehttp 15008 9264 "GET /static/admin/img/icon-calendar.svg HTTP/1.1" 200 1086
+INFO 2025-06-02 11:28:54,866 basehttp 15008 14824 "GET /static/admin/img/icon-clock.svg HTTP/1.1" 200 677
+INFO 2025-06-02 11:29:11,243 middleware 15008 14824 Request: GET /admin/
+INFO 2025-06-02 11:29:11,250 middleware 15008 14824 User: ochiengmoses303@gmail.com
+INFO 2025-06-02 11:29:11,284 middleware 15008 14824 Response: 200 - Duration: 0.04s
+INFO 2025-06-02 11:29:11,286 basehttp 15008 14824 "GET /admin/ HTTP/1.1" 200 14703
+INFO 2025-06-02 11:29:13,782 middleware 15008 14824 Request: GET /admin/authentication/user/
+INFO 2025-06-02 11:29:13,791 middleware 15008 14824 User: ochiengmoses303@gmail.com
+INFO 2025-06-02 11:29:13,818 middleware 15008 14824 Response: 200 - Duration: 0.04s
+INFO 2025-06-02 11:29:13,820 basehttp 15008 14824 "GET /admin/authentication/user/ HTTP/1.1" 200 17759
+INFO 2025-06-02 11:29:13,930 middleware 15008 14824 Request: GET /admin/jsi18n/
+INFO 2025-06-02 11:29:13,958 middleware 15008 14824 User: ochiengmoses303@gmail.com
+INFO 2025-06-02 11:29:13,964 middleware 15008 14824 Response: 200 - Duration: 0.03s
+INFO 2025-06-02 11:29:13,966 basehttp 15008 14824 "GET /admin/jsi18n/ HTTP/1.1" 200 3342
+INFO 2025-06-02 11:29:19,269 middleware 15008 14824 Request: GET /admin/authentication/user/ae9ca50a-e1e2-45d5-b6ba-b4091eb31aec/change/
+INFO 2025-06-02 11:29:19,276 middleware 15008 14824 User: ochiengmoses303@gmail.com
+INFO 2025-06-02 11:29:19,352 middleware 15008 14824 Response: 200 - Duration: 0.08s
+INFO 2025-06-02 11:29:19,354 basehttp 15008 14824 "GET /admin/authentication/user/ae9ca50a-e1e2-45d5-b6ba-b4091eb31aec/change/ HTTP/1.1" 200 33889
+INFO 2025-06-02 11:29:19,421 middleware 15008 14824 Request: GET /admin/jsi18n/
+INFO 2025-06-02 11:29:19,431 middleware 15008 14824 User: ochiengmoses303@gmail.com
+INFO 2025-06-02 11:29:19,436 middleware 15008 14824 Response: 200 - Duration: 0.01s
+INFO 2025-06-02 11:29:19,437 basehttp 15008 14824 "GET /admin/jsi18n/ HTTP/1.1" 200 3342
+INFO 2025-06-02 11:29:56,735 middleware 15008 14824 Request: POST /admin/authentication/user/ae9ca50a-e1e2-45d5-b6ba-b4091eb31aec/change/
+INFO 2025-06-02 11:29:56,744 middleware 15008 14824 User: ochiengmoses303@gmail.com
+INFO 2025-06-02 11:29:57,051 middleware 15008 14824 Response: 200 - Duration: 0.32s
+INFO 2025-06-02 11:29:57,053 basehttp 15008 14824 "POST /admin/authentication/user/ae9ca50a-e1e2-45d5-b6ba-b4091eb31aec/change/ HTTP/1.1" 200 34359
+INFO 2025-06-02 11:29:57,188 middleware 15008 14824 Request: GET /admin/jsi18n/
+INFO 2025-06-02 11:29:57,199 middleware 15008 14824 User: ochiengmoses303@gmail.com
+INFO 2025-06-02 11:29:57,203 middleware 15008 14824 Response: 200 - Duration: 0.02s
+INFO 2025-06-02 11:29:57,205 basehttp 15008 14824 "GET /admin/jsi18n/ HTTP/1.1" 200 3342
+INFO 2025-06-02 11:30:28,791 middleware 15008 14824 Request: POST /admin/authentication/user/ae9ca50a-e1e2-45d5-b6ba-b4091eb31aec/change/
+INFO 2025-06-02 11:30:28,801 middleware 15008 14824 User: ochiengmoses303@gmail.com
+INFO 2025-06-02 11:30:28,853 middleware 15008 9264 Request: POST /admin/authentication/user/ae9ca50a-e1e2-45d5-b6ba-b4091eb31aec/change/
+INFO 2025-06-02 11:30:28,869 middleware 15008 9264 User: ochiengmoses303@gmail.com
+INFO 2025-06-02 11:30:29,080 middleware 15008 14824 Response: 302 - Duration: 0.29s
+INFO 2025-06-02 11:30:29,085 basehttp 15008 14824 - Broken pipe from ('127.0.0.1', 8728)
+ERROR 2025-06-02 11:30:29,171 log 15008 9264 Internal Server Error: /admin/authentication/user/ae9ca50a-e1e2-45d5-b6ba-b4091eb31aec/change/
+Traceback (most recent call last):
+  File "C:\Users\psi\Desktop\originalEDUHUB\backend\myvach\Lib\site-packages\django\db\backends\utils.py", line 105, in _execute
+    return self.cursor.execute(sql, params)
+           ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+  File "C:\Users\psi\Desktop\originalEDUHUB\backend\myvach\Lib\site-packages\django\db\backends\sqlite3\base.py", line 360, in execute
+    return super().execute(query, params)
+           ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^
+sqlite3.OperationalError: database is locked
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "C:\Users\psi\Desktop\originalEDUHUB\backend\myvach\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+  File "C:\Users\psi\Desktop\originalEDUHUB\backend\myvach\Lib\site-packages\django\core\handlers\base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+  File "C:\Users\psi\Desktop\originalEDUHUB\backend\myvach\Lib\site-packages\django\contrib\admin\options.py", line 719, in wrapper
+    return self.admin_site.admin_view(view)(*args, **kwargs)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^
+  File "C:\Users\psi\Desktop\originalEDUHUB\backend\myvach\Lib\site-packages\django\utils\decorators.py", line 192, in _view_wrapper
+    result = _process_exception(request, e)
+  File "C:\Users\psi\Desktop\originalEDUHUB\backend\myvach\Lib\site-packages\django\utils\decorators.py", line 190, in _view_wrapper
+    response = view_func(request, *args, **kwargs)
+  File "C:\Users\psi\Desktop\originalEDUHUB\backend\myvach\Lib\site-packages\django\views\decorators\cache.py", line 80, in _view_wrapper
+    response = view_func(request, *args, **kwargs)
+  File "C:\Users\psi\Desktop\originalEDUHUB\backend\myvach\Lib\site-packages\django\contrib\admin\sites.py", line 246, in inner
+    return view(request, *args, **kwargs)
+  File "C:\Users\psi\Desktop\originalEDUHUB\backend\myvach\Lib\site-packages\django\contrib\admin\options.py", line 1987, in change_view
+    return self.changeform_view(request, object_id, form_url, extra_context)
+           ~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\psi\Desktop\originalEDUHUB\backend\myvach\Lib\site-packages\django\utils\decorators.py", line 48, in _wrapper
+    return bound_method(*args, **kwargs)
+  File "C:\Users\psi\Desktop\originalEDUHUB\backend\myvach\Lib\site-packages\django\utils\decorators.py", line 192, in _view_wrapper
+    result = _process_exception(request, e)
+  File "C:\Users\psi\Desktop\originalEDUHUB\backend\myvach\Lib\site-packages\django\utils\decorators.py", line 190, in _view_wrapper
+    response = view_func(request, *args, **kwargs)
+  File "C:\Users\psi\Desktop\originalEDUHUB\backend\myvach\Lib\site-packages\django\contrib\admin\options.py", line 1843, in changeform_view
+    return self._changeform_view(request, object_id, form_url, extra_context)
+           ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\psi\Desktop\originalEDUHUB\backend\myvach\Lib\site-packages\django\contrib\admin\options.py", line 1894, in _changeform_view
+    self.save_model(request, new_object, form, not add)
+    ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\psi\Desktop\originalEDUHUB\backend\myvach\Lib\site-packages\django\contrib\admin\options.py", line 1314, in save_model
+    obj.save()
+    ~~~~~~~~^^
+  File "C:\Users\psi\Desktop\originalEDUHUB\backend\myvach\Lib\site-packages\django\contrib\auth\base_user.py", line 65, in save
+    super().save(*args, **kwargs)
+    ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^
+  File "C:\Users\psi\Desktop\originalEDUHUB\backend\myvach\Lib\site-packages\django\db\models\base.py", line 902, in save
+    self.save_base(
+    ~~~~~~~~~~~~~~^
+        using=using,
+        ^^^^^^^^^^^^
+    ...<2 lines>...
+        update_fields=update_fields,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\psi\Desktop\originalEDUHUB\backend\myvach\Lib\site-packages\django\db\models\base.py", line 1008, in save_base
+    updated = self._save_table(
+        raw,
+    ...<4 lines>...
+        update_fields,
+    )
+  File "C:\Users\psi\Desktop\originalEDUHUB\backend\myvach\Lib\site-packages\django\db\models\base.py", line 1138, in _save_table
+    updated = self._do_update(
+        base_qs, using, pk_val, values, update_fields, forced_update
+    )
+  File "C:\Users\psi\Desktop\originalEDUHUB\backend\myvach\Lib\site-packages\django\db\models\base.py", line 1203, in _do_update
+    return filtered._update(values) > 0
+           ~~~~~~~~~~~~~~~~^^^^^^^^
+  File "C:\Users\psi\Desktop\originalEDUHUB\backend\myvach\Lib\site-packages\django\db\models\query.py", line 1284, in _update
+    return query.get_compiler(self.db).execute_sql(ROW_COUNT)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^
+  File "C:\Users\psi\Desktop\originalEDUHUB\backend\myvach\Lib\site-packages\django\db\models\sql\compiler.py", line 2060, in execute_sql
+    row_count = super().execute_sql(result_type)
+  File "C:\Users\psi\Desktop\originalEDUHUB\backend\myvach\Lib\site-packages\django\db\models\sql\compiler.py", line 1623, in execute_sql
+    cursor.execute(sql, params)
+    ~~~~~~~~~~~~~~^^^^^^^^^^^^^
+  File "C:\Users\psi\Desktop\originalEDUHUB\backend\myvach\Lib\site-packages\django\db\backends\utils.py", line 122, in execute
+    return super().execute(sql, params)
+           ~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+  File "C:\Users\psi\Desktop\originalEDUHUB\backend\myvach\Lib\site-packages\django\db\backends\utils.py", line 79, in execute
+    return self._execute_with_wrappers(
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~^
+        sql, params, many=False, executor=self._execute
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\psi\Desktop\originalEDUHUB\backend\myvach\Lib\site-packages\django\db\backends\utils.py", line 92, in _execute_with_wrappers
+    return executor(sql, params, many, context)
+  File "C:\Users\psi\Desktop\originalEDUHUB\backend\myvach\Lib\site-packages\django\db\backends\utils.py", line 100, in _execute
+    with self.db.wrap_database_errors:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\psi\Desktop\originalEDUHUB\backend\myvach\Lib\site-packages\django\db\utils.py", line 91, in __exit__
+    raise dj_exc_value.with_traceback(traceback) from exc_value
+  File "C:\Users\psi\Desktop\originalEDUHUB\backend\myvach\Lib\site-packages\django\db\backends\utils.py", line 105, in _execute
+    return self.cursor.execute(sql, params)
+           ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+  File "C:\Users\psi\Desktop\originalEDUHUB\backend\myvach\Lib\site-packages\django\db\backends\sqlite3\base.py", line 360, in execute
+    return super().execute(query, params)
+           ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^
+django.db.utils.OperationalError: database is locked
+INFO 2025-06-02 11:30:29,250 middleware 15008 9264 Response: 500 - Duration: 0.40s
+ERROR 2025-06-02 11:30:29,252 basehttp 15008 9264 "POST /admin/authentication/user/ae9ca50a-e1e2-45d5-b6ba-b4091eb31aec/change/ HTTP/1.1" 500 244979
+INFO 2025-06-02 11:31:00,496 middleware 15008 9264 Request: GET /admin/authentication/user/ae9ca50a-e1e2-45d5-b6ba-b4091eb31aec/
+INFO 2025-06-02 11:31:00,506 middleware 15008 9264 User: ochiengmoses303@gmail.com
+INFO 2025-06-02 11:31:00,508 middleware 15008 9264 Response: 302 - Duration: 0.01s
+INFO 2025-06-02 11:31:00,511 basehttp 15008 9264 "GET /admin/authentication/user/ae9ca50a-e1e2-45d5-b6ba-b4091eb31aec/ HTTP/1.1" 302 0
+INFO 2025-06-02 11:31:00,520 middleware 15008 9264 Request: GET /admin/authentication/user/ae9ca50a-e1e2-45d5-b6ba-b4091eb31aec/change/
+INFO 2025-06-02 11:31:00,530 middleware 15008 9264 User: ochiengmoses303@gmail.com
+INFO 2025-06-02 11:31:00,637 middleware 15008 9264 Response: 200 - Duration: 0.12s
+INFO 2025-06-02 11:31:00,639 basehttp 15008 9264 "GET /admin/authentication/user/ae9ca50a-e1e2-45d5-b6ba-b4091eb31aec/change/ HTTP/1.1" 200 34014
+INFO 2025-06-02 11:31:00,739 middleware 15008 9264 Request: GET /admin/jsi18n/
+INFO 2025-06-02 11:31:00,747 middleware 15008 9264 User: ochiengmoses303@gmail.com
+INFO 2025-06-02 11:31:00,752 middleware 15008 9264 Response: 200 - Duration: 0.01s
+INFO 2025-06-02 11:31:00,754 basehttp 15008 9264 "GET /admin/jsi18n/ HTTP/1.1" 200 3342
+INFO 2025-06-02 11:33:00,553 middleware 15008 9264 Request: POST /admin/authentication/user/ae9ca50a-e1e2-45d5-b6ba-b4091eb31aec/change/
+INFO 2025-06-02 11:33:00,564 middleware 15008 9264 User: ochiengmoses303@gmail.com
+INFO 2025-06-02 11:33:00,844 middleware 15008 9264 Response: 302 - Duration: 0.29s
+INFO 2025-06-02 11:33:00,847 basehttp 15008 9264 "POST /admin/authentication/user/ae9ca50a-e1e2-45d5-b6ba-b4091eb31aec/change/ HTTP/1.1" 302 0
+INFO 2025-06-02 11:33:00,855 middleware 15008 9264 Request: GET /admin/authentication/user/
+INFO 2025-06-02 11:33:00,860 middleware 15008 9264 User: ochiengmoses303@gmail.com
+INFO 2025-06-02 11:33:00,886 middleware 15008 9264 Response: 200 - Duration: 0.03s
+INFO 2025-06-02 11:33:00,888 basehttp 15008 9264 "GET /admin/authentication/user/ HTTP/1.1" 200 18062
+INFO 2025-06-02 11:33:01,108 middleware 15008 9264 Request: GET /admin/jsi18n/
+INFO 2025-06-02 11:33:01,120 middleware 15008 9264 User: ochiengmoses303@gmail.com
+INFO 2025-06-02 11:33:01,127 middleware 15008 9264 Response: 200 - Duration: 0.02s
+INFO 2025-06-02 11:33:01,130 basehttp 15008 9264 "GET /admin/jsi18n/ HTTP/1.1" 200 3342
+INFO 2025-06-02 11:35:02,720 middleware 15008 9264 Request: GET /admin/authentication/user/
+INFO 2025-06-02 11:35:02,727 middleware 15008 9264 User: ochiengmoses303@gmail.com
+INFO 2025-06-02 11:35:02,789 middleware 15008 9264 Response: 200 - Duration: 0.07s
+INFO 2025-06-02 11:35:02,792 basehttp 15008 9264 "GET /admin/authentication/user/ HTTP/1.1" 200 17802
+INFO 2025-06-02 11:35:02,887 middleware 15008 9264 Request: GET /admin/jsi18n/
+INFO 2025-06-02 11:35:02,897 middleware 15008 9264 User: ochiengmoses303@gmail.com
+INFO 2025-06-02 11:35:02,902 middleware 15008 9264 Response: 200 - Duration: 0.01s
+INFO 2025-06-02 11:35:02,904 basehttp 15008 9264 "GET /admin/jsi18n/ HTTP/1.1" 200 3342
+INFO 2025-06-02 11:35:09,724 middleware 15008 9264 Request: GET /admin
+INFO 2025-06-02 11:35:09,731 middleware 15008 9264 User: ochiengmoses303@gmail.com
+INFO 2025-06-02 11:35:09,749 middleware 15008 9264 Response: 404 - Duration: 0.02s
+INFO 2025-06-02 11:35:09,751 basehttp 15008 9264 "GET /admin HTTP/1.1" 301 0
+INFO 2025-06-02 11:35:09,763 middleware 15008 15408 Request: GET /admin/
+INFO 2025-06-02 11:35:09,772 middleware 15008 15408 User: ochiengmoses303@gmail.com
+INFO 2025-06-02 11:35:09,797 middleware 15008 15408 Response: 200 - Duration: 0.03s
+INFO 2025-06-02 11:35:09,799 basehttp 15008 15408 "GET /admin/ HTTP/1.1" 200 15522
+INFO 2025-06-02 11:35:19,635 middleware 15008 15408 Request: POST /admin/logout/
+INFO 2025-06-02 11:35:19,641 middleware 15008 15408 User: ochiengmoses303@gmail.com
+INFO 2025-06-02 11:35:19,851 middleware 15008 15408 Response: 200 - Duration: 0.22s
+INFO 2025-06-02 11:35:19,853 basehttp 15008 15408 "POST /admin/logout/ HTTP/1.1" 200 3572
+INFO 2025-06-02 11:35:27,186 middleware 15008 15408 Request: GET /admin/
+INFO 2025-06-02 11:35:27,188 middleware 15008 15408 Response: 302 - Duration: 0.00s
+INFO 2025-06-02 11:35:27,191 basehttp 15008 15408 "GET /admin/ HTTP/1.1" 302 0
+INFO 2025-06-02 11:35:27,201 middleware 15008 15408 Request: GET /admin/login/
+INFO 2025-06-02 11:35:27,211 middleware 15008 15408 Response: 200 - Duration: 0.01s
+INFO 2025-06-02 11:35:27,213 basehttp 15008 15408 "GET /admin/login/?next=/admin/ HTTP/1.1" 200 4174
+INFO 2025-06-02 11:35:35,760 middleware 15008 15408 Request: GET /
+INFO 2025-06-02 11:35:35,771 middleware 15008 15408 Response: 404 - Duration: 0.01s
+WARNING 2025-06-02 11:35:35,774 log 15008 15408 Not Found: /
+WARNING 2025-06-02 11:35:35,776 basehttp 15008 15408 "GET / HTTP/1.1" 404 3136
+INFO 2025-06-02 11:35:53,829 middleware 15008 15408 Request: GET /health
+INFO 2025-06-02 11:35:53,837 middleware 15008 15408 Response: 404 - Duration: 0.01s
+INFO 2025-06-02 11:35:53,842 basehttp 15008 15408 "GET /health HTTP/1.1" 301 0
+INFO 2025-06-02 11:35:53,854 middleware 15008 14284 Request: GET /health/
+INFO 2025-06-02 11:35:53,856 middleware 15008 14284 Response: 200 - Duration: 0.00s
+INFO 2025-06-02 11:35:53,858 basehttp 15008 14284 "GET /health/ HTTP/1.1" 200 65
+INFO 2025-06-02 11:36:47,493 middleware 15008 14284 Request: GET /
+INFO 2025-06-02 11:36:47,508 middleware 15008 14284 Response: 404 - Duration: 0.01s
+WARNING 2025-06-02 11:36:47,513 log 15008 14284 Not Found: /
+WARNING 2025-06-02 11:36:47,516 basehttp 15008 14284 "GET / HTTP/1.1" 404 3136
+INFO 2025-06-02 11:37:04,674 middleware 15008 14284 Request: GET /api
+INFO 2025-06-02 11:37:04,685 middleware 15008 14284 Response: 404 - Duration: 0.01s
+WARNING 2025-06-02 11:37:04,686 log 15008 14284 Not Found: /api
+WARNING 2025-06-02 11:37:04,688 basehttp 15008 14284 "GET /api HTTP/1.1" 404 3163
+INFO 2025-06-02 11:37:21,726 middleware 15008 14284 Request: GET /api/v1
+INFO 2025-06-02 11:37:21,740 middleware 15008 14284 Response: 404 - Duration: 0.01s
+WARNING 2025-06-02 11:37:21,742 log 15008 14284 Not Found: /api/v1
+WARNING 2025-06-02 11:37:21,744 basehttp 15008 14284 "GET /api/v1 HTTP/1.1" 404 3172
+INFO 2025-06-02 11:37:59,653 middleware 15008 14284 Request: GET /api/schema/ [name='schema']
+INFO 2025-06-02 11:37:59,667 middleware 15008 14284 Response: 404 - Duration: 0.01s
+WARNING 2025-06-02 11:37:59,669 log 15008 14284 Not Found: /api/schema/ [name='schema']
+WARNING 2025-06-02 11:37:59,670 basehttp 15008 14284 "GET /api/schema/%20[name='schema'] HTTP/1.1" 404 3273
+INFO 2025-06-02 11:38:36,346 middleware 15008 14284 Request: GET /admin
+INFO 2025-06-02 11:38:36,362 middleware 15008 14284 Response: 404 - Duration: 0.02s
+INFO 2025-06-02 11:38:36,364 basehttp 15008 14284 "GET /admin HTTP/1.1" 301 0
+INFO 2025-06-02 11:38:36,378 middleware 15008 16396 Request: GET /admin/
+INFO 2025-06-02 11:38:36,382 middleware 15008 16396 Response: 302 - Duration: 0.00s
+INFO 2025-06-02 11:38:36,384 basehttp 15008 16396 "GET /admin/ HTTP/1.1" 302 0
+INFO 2025-06-02 11:38:36,396 middleware 15008 16396 Request: GET /admin/login/
+INFO 2025-06-02 11:38:36,401 middleware 15008 16396 Response: 200 - Duration: 0.01s
+INFO 2025-06-02 11:38:36,403 basehttp 15008 16396 "GET /admin/login/?next=/admin/ HTTP/1.1" 200 4174
+INFO 2025-06-02 11:38:43,546 middleware 15008 16396 Request: POST /admin/login/
+INFO 2025-06-02 11:38:45,382 middleware 15008 16396 Response: 302 - Duration: 1.84s
+INFO 2025-06-02 11:38:45,495 basehttp 15008 16396 "POST /admin/login/?next=/admin/ HTTP/1.1" 302 0
+INFO 2025-06-02 11:38:45,504 middleware 15008 16396 Request: GET /admin/
+INFO 2025-06-02 11:38:45,509 middleware 15008 16396 User: ochiengmoses303@gmail.com
+INFO 2025-06-02 11:38:45,527 middleware 15008 16396 Response: 200 - Duration: 0.02s
+INFO 2025-06-02 11:38:45,530 basehttp 15008 16396 "GET /admin/ HTTP/1.1" 200 15522
+INFO 2025-06-02 11:38:51,844 middleware 15008 16396 Request: GET /admin/auth/group/
+INFO 2025-06-02 11:38:51,850 middleware 15008 16396 User: ochiengmoses303@gmail.com
+INFO 2025-06-02 11:38:51,884 middleware 15008 16396 Response: 200 - Duration: 0.04s
+INFO 2025-06-02 11:38:51,886 basehttp 15008 16396 "GET /admin/auth/group/ HTTP/1.1" 200 13979
+INFO 2025-06-02 11:38:51,985 middleware 15008 16396 Request: GET /admin/jsi18n/
+INFO 2025-06-02 11:38:51,995 middleware 15008 16396 User: ochiengmoses303@gmail.com
+INFO 2025-06-02 11:38:52,000 middleware 15008 16396 Response: 200 - Duration: 0.02s
+INFO 2025-06-02 11:38:52,002 basehttp 15008 16396 "GET /admin/jsi18n/ HTTP/1.1" 200 3342
+INFO 2025-06-02 11:39:03,732 middleware 15008 16396 Request: GET /admin/auth/
+INFO 2025-06-02 11:39:03,738 middleware 15008 16396 User: ochiengmoses303@gmail.com
+INFO 2025-06-02 11:39:03,756 middleware 15008 16396 Response: 200 - Duration: 0.02s
+INFO 2025-06-02 11:39:03,759 basehttp 15008 16396 "GET /admin/auth/ HTTP/1.1" 200 5563
+INFO 2025-06-02 11:39:06,344 middleware 15008 16396 Request: GET /admin/
+INFO 2025-06-02 11:39:06,352 middleware 15008 16396 User: ochiengmoses303@gmail.com
+INFO 2025-06-02 11:39:06,380 middleware 15008 16396 Response: 200 - Duration: 0.04s
+INFO 2025-06-02 11:39:06,382 basehttp 15008 16396 "GET /admin/ HTTP/1.1" 200 15522
+INFO 2025-06-02 11:39:17,009 middleware 15008 16396 Request: GET /admin/universities/universityrequirement/
+INFO 2025-06-02 11:39:17,018 middleware 15008 16396 User: ochiengmoses303@gmail.com
+INFO 2025-06-02 11:39:17,058 middleware 15008 16396 Response: 200 - Duration: 0.05s
+INFO 2025-06-02 11:39:17,060 basehttp 15008 16396 "GET /admin/universities/universityrequirement/ HTTP/1.1" 200 14783
+INFO 2025-06-02 11:39:17,136 middleware 15008 16396 Request: GET /admin/jsi18n/
+INFO 2025-06-02 11:39:17,143 middleware 15008 16396 User: ochiengmoses303@gmail.com
+INFO 2025-06-02 11:39:17,148 middleware 15008 16396 Response: 200 - Duration: 0.01s
+INFO 2025-06-02 11:39:17,150 basehttp 15008 16396 "GET /admin/jsi18n/ HTTP/1.1" 200 3342
+INFO 2025-06-02 11:39:23,879 middleware 15008 16396 Request: GET /admin/universities/universityrequirement/add/
+INFO 2025-06-02 11:39:23,885 middleware 15008 16396 User: ochiengmoses303@gmail.com
+INFO 2025-06-02 11:39:23,923 middleware 15008 16396 Response: 200 - Duration: 0.04s
+INFO 2025-06-02 11:39:23,926 basehttp 15008 16396 "GET /admin/universities/universityrequirement/add/ HTTP/1.1" 200 18345
+INFO 2025-06-02 11:39:24,009 middleware 15008 16396 Request: GET /admin/jsi18n/
+INFO 2025-06-02 11:39:24,020 middleware 15008 16396 User: ochiengmoses303@gmail.com
+INFO 2025-06-02 11:39:24,023 middleware 15008 16396 Response: 200 - Duration: 0.01s
+INFO 2025-06-02 11:39:24,025 basehttp 15008 16396 "GET /admin/jsi18n/ HTTP/1.1" 200 3342
