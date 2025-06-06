@@ -9,7 +9,7 @@ from .serializers import (
     FacultySerializer,
     DepartmentSerializer
 )
-from apps.core.utils import StandardResultsSetPagination
+#from apps.core.utils import StandardResultsSetPagination
 
 
 class UniversityViewSet(viewsets.ReadOnlyModelViewSet):
@@ -17,6 +17,7 @@ class UniversityViewSet(viewsets.ReadOnlyModelViewSet):
     API endpoint for viewing university information.
     
     list:
+    #CHECK OUT THIS ERROR
     Return a paginated list of all active universities.
     
     retrieve:
@@ -30,7 +31,7 @@ class UniversityViewSet(viewsets.ReadOnlyModelViewSet):
     """
     queryset = University.objects.filter(is_active=True)
     permission_classes = [permissions.AllowAny]
-    pagination_class = StandardResultsSetPagination
+    #pagination_class = StandardResultsSetPagination
     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
     filterset_fields = ['city', 'country']
     search_fields = ['name', 'code', 'city', 'description']

@@ -5,7 +5,7 @@ Authentication URL patterns.
 from django.urls import path
 from rest_framework_simplejwt.views import TokenRefreshView
 from . import views
-
+from .views import UserProfileViewSet, PasswordChangeView
 
 urlpatterns = [
     # Authentication endpoints
@@ -15,7 +15,14 @@ urlpatterns = [
     path('refresh/', TokenRefreshView.as_view(), name='token_refresh'),
     
     # Profile endpoints
-    path('profile/', views.UserProfileView.as_view(), name='user_profile'),
-    path('profile/update/', views.UserProfileDetailView.as_view(), name='profile_update'),
-    path('password/change/', views.PasswordChangeView.as_view(), name='password_change'),
+    path(
+        'profile/',
+        UserProfileViewSet.as_view({
+            'get': 'retrieve',
+            'put': 'update',
+            'patch': 'partial_update',
+        }),
+        name='user_profile'
+    ),
+    path('password/change/', PasswordChangeView.as_view(), name='password_change'),
 ]

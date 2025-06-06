@@ -1,20 +1,34 @@
+"""
+Payment URL configuration for EduPathway platform.
+"""
+
 from django.urls import path
+from rest_framework.routers import DefaultRouter
 from . import views
+from .views import SubscriptionViewSet,UserSubscriptionViewSet,PaymentViewSet  # explicitly import your ViewSet
 
 app_name = 'payments'
 
+# DRF router for SubscriptionViewSet
+router = DefaultRouter()
+router.register(r'plans/',SubscriptionViewSet, basename='subscription')
+router.register(r'subscription/',UserSubscriptionViewSet, basename='user-subscription')
+router.register(r'history/', PaymentViewSet, basename='payment-history')
+
 urlpatterns = [
-    # Payment methods and subscriptions
-    path('payment-methods/', views.PaymentMethodListView.as_view(), name='payment-methods'),
-    path('subscriptions/', views.SubscriptionListView.as_view(), name='subscriptions'),
-    
-    # User-specific endpoints
-    path('user/subscriptions/', views.UserSubscriptionListView.as_view(), name='user-subscriptions'),
-    path('user/payments/', views.UserPaymentListView.as_view(), name='user-payments'),
-    
-    # Payment processing
-    path('mpesa/initiate/', views.initiate_mpesa_payment, name='mpesa-initiate'),
-    path('mpesa/callback/', views.mpesa_callback, name='mpesa-callback'),
-    path('verify/', views.verify_payment, name='verify-payment'),
-    path('subscribe/', views.subscribe, name='subscribe'),
+    # User subscription
+    path('subscription/status/', views.SubscriptionStatusView.as_view(), name='subscription-status'),
+
+    # Payments
+    path('initiate/', views.PaymentInitiationView.as_view(), name='payment-initiate'),
+    path('verify/', views.PaymentVerificationView.as_view(), name='payment-verify'),
+    # M-Pesa callbacks
+    path('callback/', views.MpesaCallbackView.as_view(), name='mpesa-callback'),
+
+    # Legacy endpoints (for compatibility)
+    #remember this test
+    #path('test/', views.index, name='payment-test'),
 ]
+
+# Include the router URLs
+urlpatterns += router.urls

@@ -1,343 +1,644 @@
-from rest_framework import status, generics, permissions
-from rest_framework.decorators import api_view, permission_classes
-from rest_framework.response import Response
-from rest_framework.views import APIView
-from rest_framework_simplejwt.tokens import RefreshToken
-from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
-from django.contrib.auth import login, logout
-from django.core.cache import cache
-from django.utils import timezone
-from django.contrib.auth.tokens import default_token_generator
-from django.core.mail import send_mail
-from django.conf import settings
-from drf_spectacular.utils import extend_schema, OpenApiParameter
-from drf_spectacular.openapi import OpenApiTypes
+"""
+Authentication views using standardized base classes.
+"""
 
-from .models import User, UserProfile, UserSession
+from rest_framework import status, permissions
+from rest_framework.decorators import action
+from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework_simplejwt.exceptions import TokenError
+from django.contrib.auth import authenticate
+from django.utils import timezone
+from django.core.cache import cache
+
+from apps.core.views import BaseAPIView, BaseModelViewSet
+from apps.core.utils import (
+    standardize_response, get_client_ip, log_user_activity,
+    cache_key, generate_reference, validate_kenyan_phone,
+    standardize_phone_number
+)
+from .models import User, UserProfile, UserSubject, UserSession
 from .serializers import (
     UserRegistrationSerializer, UserLoginSerializer,
-    UserProfileSerializer, UserProfileDetailSerializer,
-    PasswordChangeSerializer, PasswordResetSerializer
+    UserProfileSerializer, UserDetailSerializer,
+    UserSubjectSerializer, PasswordChangeSerializer
 )
-from apps.core.utils import get_client_ip, get_user_agent_info
-from apps.core.permissions import IsOwnerOrReadOnly
 
-class UserRegistrationView(generics.CreateAPIView):
-    """User registration endpoint"""
+
+class UserRegistrationView(BaseAPIView):
+    """
+    User registration endpoint with standardized response format.
     
-    queryset = User.objects.all()
-    serializer_class = UserRegistrationSerializer
-    permission_classes = [permissions.AllowAny]
+    POST /api/v1/auth/register/
     
-    @extend_schema(
-        summary="Register a new user",
-        description="Create a new user account with email verification",
-        responses={201: UserProfileSerializer}
-    )
-    def post(self, request, *args, **kwargs):
-        serializer = self.get_serializer(data=request.data)
+    Request Body:
+    {
+        "email": "user@example.com",
+        "password": "securepassword123",
+        "password_confirm": "securepassword123",
+        "first_name": "John",
+        "last_name": "Doe",
+        "phone_number": "+254712345678"
+    }
+    
+    Response:
+    {
+        "success": true,
+        "message": "User registered successfully",
+        "data": {
+            "user": {...},
+            "tokens": {
+                "access": "...",
+                "refresh": "..."
+            }
+        }
+    }
+    """
+    
+    authentication_required = False
+    rate_limit_scope = 'registration'
+    rate_limit_count = 5
+    rate_limit_window = 3600  # 1 hour
+    
+    def post(self, request):
+        """
+        Register a new user.
+        """
+        serializer = UserRegistrationSerializer(data=request.data)
         
-        if serializer.is_valid():
+        if not serializer.is_valid():
+            return standardize_response(
+                success=False,
+                message="Registration validation failed",
+                errors=serializer.errors,
+                status_code=status.HTTP_400_BAD_REQUEST
+            )
+        
+        try:
+            # Create user
             user = serializer.save()
             
-            # Create session tracking
-            self._create_user_session(request, user)
-            
-            # Generate tokens
+            # Generate JWT tokens
             refresh = RefreshToken.for_user(user)
             
-            # Send welcome email (implement email service)
-            self._send_welcome_email(user)
+            # Create user session
+            session_key = generate_reference('SESSION')
+            UserSession.objects.create(
+                user=user,
+                session_key=session_key,
+                ip_address=self.request_ip,
+                user_agent=request.META.get('HTTP_USER_AGENT', ''),
+                is_active=True
+            )
             
-            return Response({
-                'user': UserProfileSerializer(user).data,
+            # Log registration
+            log_user_activity(
+                user=user,
+                action='USER_REGISTERED',
+                details={'registration_method': 'email'},
+                request=request
+            )
+            
+            response_data = {
+                'user': UserDetailSerializer(user).data,
                 'tokens': {
-                    'refresh': str(refresh),
                     'access': str(refresh.access_token),
+                    'refresh': str(refresh)
                 },
-                'message': 'Registration successful. Please check your email for verification.'
-            }, status=status.HTTP_201_CREATED)
-        
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-    
-    def _create_user_session(self, request, user):
-        """Create user session tracking"""
-        ip_address = get_client_ip(request)
-        user_agent_info = get_user_agent_info(request)
-        
-        UserSession.objects.create(
-            user=user,
-            session_key=request.session.session_key or '',
-            ip_address=ip_address,
-            user_agent=request.META.get('HTTP_USER_AGENT', ''),
-            device_info=user_agent_info
-        )
-    
-    def _send_welcome_email(self, user):
-        """Send welcome email to new user"""
-        # Implement email service
-        pass
-
-class UserLoginView(TokenObtainPairView):
-    """Enhanced user login with session tracking"""
-    
-    serializer_class = UserLoginSerializer
-    
-    @extend_schema(
-        summary="User login",
-        description="Authenticate user and return JWT tokens",
-        responses={200: {
-            'type': 'object',
-            'properties': {
-                'user': UserProfileSerializer,
-                'tokens': {
-                    'type': 'object',
-                    'properties': {
-                        'refresh': {'type': 'string'},
-                        'access': {'type': 'string'}
-                    }
-                }
+                'session_key': session_key
             }
-        }}
-    )
-    def post(self, request, *args, **kwargs):
-        serializer = self.get_serializer(data=request.data)
+            
+            return standardize_response(
+                success=True,
+                message="User registered successfully",
+                data=response_data,
+                status_code=status.HTTP_201_CREATED
+            )
+            
+        except Exception as e:
+            return standardize_response(
+                success=False,
+                message="Registration failed",
+                errors={'detail': str(e)},
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+
+class UserLoginView(BaseAPIView):
+    """
+    User login endpoint with standardized response format.
+    
+    POST /api/v1/auth/login/
+    
+    Request Body:
+    {
+        "email": "user@example.com",
+        "password": "userpassword"
+    }
+    
+    Response:
+    {
+        "success": true,
+        "message": "Login successful",
+        "data": {
+            "user": {...},
+            "tokens": {
+                "access": "...",
+                "refresh": "..."
+            }
+        }
+    }
+    """
+    
+    authentication_required = False
+    rate_limit_scope = 'login'
+    rate_limit_count = 10
+    rate_limit_window = 3600  # 1 hour
+    
+    def post(self, request):
+        """
+        Authenticate user and return tokens.
+        """
+        serializer = UserLoginSerializer(data=request.data, context={'request': request})
         
-        if serializer.is_valid():
+        if not serializer.is_valid():
+            return standardize_response(
+                success=False,
+                message="Invalid login credentials",
+                errors=serializer.errors,
+                status_code=status.HTTP_401_UNAUTHORIZED
+            )
+        
+        try:
             user = serializer.validated_data['user']
             
             # Update last login
             user.last_login = timezone.now()
-            user.last_login_ip = get_client_ip(request)
-            user.save(update_fields=['last_login', 'last_login_ip'])
+            user.save(update_fields=['last_login'])
             
-            # Create/update session
-            self._update_user_session(request, user)
-            
-            # Generate tokens
+            # Generate JWT tokens
             refresh = RefreshToken.for_user(user)
             
-            # Cache user data for performance
-            cache.set(f'user_profile_{user.id}', user, timeout=3600)
+            # Create or update user session
+            session_key = generate_reference('SESSION')
+            session, created = UserSession.objects.get_or_create(
+                user=user,
+                ip_address=self.request_ip,
+                defaults={
+                    'session_key': session_key,
+                    'user_agent': request.META.get('HTTP_USER_AGENT', ''),
+                    'is_active': True,
+                    'last_activity': timezone.now()
+                }
+            )
             
-            return Response({
-                'user': UserProfileSerializer(user).data,
+            if not created:
+                session.session_key = session_key
+                session.last_activity = timezone.now()
+                session.is_active = True
+                session.save()
+            
+            # Log login
+            log_user_activity(
+                user=user,
+                action='USER_LOGIN',
+                details={'login_method': 'email'},
+                request=request
+            )
+            
+            response_data = {
+                'user': UserDetailSerializer(user).data,
                 'tokens': {
-                    'refresh': str(refresh),
                     'access': str(refresh.access_token),
+                    'refresh': str(refresh)
                 },
-                'message': 'Login successful'
-            }, status=status.HTTP_200_OK)
-        
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-    
-    def _update_user_session(self, request, user):
-        """Update or create user session"""
-        ip_address = get_client_ip(request)
-        user_agent = request.META.get('HTTP_USER_AGENT', '')
-        
-        session, created = UserSession.objects.get_or_create(
-            user=user,
-            ip_address=ip_address,
-            user_agent=user_agent,
-            defaults={
-                'session_key': request.session.session_key or '',
-                'device_info': get_user_agent_info(request)
+                'session_key': session_key
             }
-        )
-        
-        if not created:
-            session.last_activity = timezone.now()
-            session.is_active = True
-            session.save()
-
-class UserLogoutView(APIView):
-    """User logout endpoint"""
-    
-    permission_classes = [permissions.IsAuthenticated]
-    
-    @extend_schema(
-        summary="User logout",
-        description="Logout user and blacklist refresh token"
-    )
-    def post(self, request):
-        try:
-            refresh_token = request.data.get("refresh_token")
-            if refresh_token:
-                token = RefreshToken(refresh_token)
-                token.blacklist()
             
-            # Deactivate user session
-            ip_address = get_client_ip(request)
-            UserSession.objects.filter(
-                user=request.user,
-                ip_address=ip_address,
-                is_active=True
-            ).update(is_active=False)
-            
-            # Clear cache
-            cache.delete(f'user_profile_{request.user.id}')
-            
-            return Response({
-                'message': 'Logout successful'
-            }, status=status.HTTP_200_OK)
+            return standardize_response(
+                success=True,
+                message="Login successful",
+                data=response_data
+            )
             
         except Exception as e:
-            return Response({
-                'error': 'Invalid token'
-            }, status=status.HTTP_400_BAD_REQUEST)
+            return standardize_response(
+                success=False,
+                message="Login failed",
+                errors={'detail': str(e)},
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
 
-class UserProfileView(generics.RetrieveUpdateAPIView):
-    """User profile management"""
+
+class UserLogoutView(BaseAPIView):
+    """
+    User logout endpoint with token blacklisting.
+    
+    POST /api/v1/auth/logout/
+    
+    Request Body:
+    {
+        "refresh_token": "..."
+    }
+    
+    Response:
+    {
+        "success": true,
+        "message": "Logout successful"
+    }
+    """
+    
+    rate_limit_scope = 'logout'
+    rate_limit_count = 20
+    rate_limit_window = 3600
+    
+    def post(self, request):
+        """
+        Logout user and blacklist tokens.
+        """
+        try:
+            refresh_token = request.data.get('refresh_token')
+            
+            if refresh_token:
+                try:
+                    token = RefreshToken(refresh_token)
+                    token.blacklist()
+                except TokenError:
+                    pass  # Token already invalid
+            
+            # Deactivate user sessions
+            UserSession.objects.filter(
+                user=request.user,
+                ip_address=self.request_ip,
+                is_active=True
+            ).update(
+                is_active=False,
+                logout_time=timezone.now()
+            )
+            
+            # Log logout
+            log_user_activity(
+                user=request.user,
+                action='USER_LOGOUT',
+                details={'logout_method': 'manual'},
+                request=request
+            )
+            
+            return standardize_response(
+                success=True,
+                message="Logout successful"
+            )
+            
+        except Exception as e:
+            return standardize_response(
+                success=False,
+                message="Logout failed",
+                errors={'detail': str(e)},
+                status_code=status.HTTP_400_BAD_REQUEST
+            )
+
+
+class UserProfileViewSet(BaseModelViewSet):
+    """
+    User profile management viewset.
+    
+    GET /api/v1/auth/profile/ - Get user profile
+    PUT /api/v1/auth/profile/ - Update user profile
+    PATCH /api/v1/auth/profile/ - Partial update user profile
+    """
     
     serializer_class = UserProfileSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    rate_limit_scope = 'profile'
+    rate_limit_count = 50
+    rate_limit_window = 3600
+    
+    def get_queryset(self):
+        """
+        Return user's profile.
+        """
+        return UserProfile.objects.filter(user=self.request.user)
     
     def get_object(self):
-        return self.request.user
-    
-    @extend_schema(
-        summary="Get user profile",
-        description="Retrieve authenticated user's profile"
-    )
-    def get(self, request, *args, **kwargs):
-        return super().get(request, *args, **kwargs)
-    
-    @extend_schema(
-        summary="Update user profile",
-        description="Update authenticated user's profile information"
-    )
-    def patch(self, request, *args, **kwargs):
-        return super().patch(request, *args, **kwargs)
-
-class UserProfileDetailView(generics.RetrieveUpdateAPIView):
-    """Detailed user profile with preferences"""
-    
-    serializer_class = UserProfileDetailSerializer
-    permission_classes = [permissions.IsAuthenticated]
-    
-    def get_object(self):
+        """
+        Get or create user profile.
+        """
         profile, created = UserProfile.objects.get_or_create(user=self.request.user)
         return profile
+    
+    @action(detail=False, methods=['get'])
+    def me(self, request):
+        """
+        Get current user's detailed profile.
+        
+        GET /api/v1/auth/profile/me/
+        """
+        try:
+            user = request.user
+            profile = self.get_object()
+            
+            user_data = UserDetailSerializer(user).data
+            profile_data = UserProfileSerializer(profile).data
+            
+            response_data = {
+                'user': user_data,
+                'profile': profile_data
+            }
+            
+            return standardize_response(
+                success=True,
+                message="Profile retrieved successfully",
+                data=response_data
+            )
+            
+        except Exception as e:
+            return standardize_response(
+                success=False,
+                message="Failed to retrieve profile",
+                errors={'detail': str(e)},
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
 
-class PasswordChangeView(APIView):
-    """Password change endpoint"""
+
+class UserSubjectViewSet(BaseModelViewSet):
+    """
+    User subjects management viewset.
     
-    permission_classes = [permissions.IsAuthenticated]
+    GET /api/v1/auth/subjects/ - List user subjects
+    POST /api/v1/auth/subjects/ - Add new subject
+    PUT /api/v1/auth/subjects/{id}/ - Update subject
+    DELETE /api/v1/auth/subjects/{id}/ - Delete subject
+    """
     
-    @extend_schema(
-        summary="Change password",
-        description="Change user password with old password verification"
-    )
+    serializer_class = UserSubjectSerializer
+    rate_limit_scope = 'subjects'
+    rate_limit_count = 100
+    rate_limit_window = 3600
+    
+    def get_queryset(self):
+        """
+        Return user's subjects.
+        """
+        return UserSubject.objects.filter(user=self.request.user).order_by('-year', 'subject_name')
+    
+    def perform_create(self, serializer):
+        """
+        Create subject for current user.
+        """
+        return serializer.save(user=self.request.user)
+    
+    @action(detail=False, methods=['post'])
+    def bulk_create(self, request):
+        """
+        Bulk create subjects.
+        
+        POST /api/v1/auth/subjects/bulk_create/
+        
+        Request Body:
+        {
+            "subjects": [
+                {
+                    "subject_name": "Mathematics",
+                    "grade": "A",
+                    "year": 2023,
+                    "exam_type": "KCSE"
+                },
+                ...
+            ]
+        }
+        """
+        try:
+            subjects_data = request.data.get('subjects', [])
+            
+            if not subjects_data:
+                return standardize_response(
+                    success=False,
+                    message="No subjects provided",
+                    status_code=status.HTTP_400_BAD_REQUEST
+                )
+            
+            created_subjects = []
+            errors = []
+            
+            for subject_data in subjects_data:
+                serializer = self.get_serializer(data=subject_data)
+                if serializer.is_valid():
+                    subject = serializer.save(user=request.user)
+                    created_subjects.append(serializer.data)
+                else:
+                    errors.append({
+                        'subject_data': subject_data,
+                        'errors': serializer.errors
+                    })
+            
+            if created_subjects:
+                log_user_activity(
+                    user=request.user,
+                    action='SUBJECTS_BULK_CREATED',
+                    details={'count': len(created_subjects)},
+                    request=request
+                )
+            
+            response_data = {
+                'created': created_subjects,
+                'errors': errors,
+                'summary': {
+                    'total_provided': len(subjects_data),
+                    'created_count': len(created_subjects),
+                    'error_count': len(errors)
+                }
+            }
+            
+            return standardize_response(
+                success=True,
+                message=f"Created {len(created_subjects)} subjects successfully",
+                data=response_data,
+                status_code=status.HTTP_201_CREATED
+            )
+            
+        except Exception as e:
+            return standardize_response(
+                success=False,
+                message="Bulk creation failed",
+                errors={'detail': str(e)},
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+
+class PasswordChangeView(BaseAPIView):
+    """
+    Password change endpoint.
+    
+    POST /api/v1/auth/change-password/
+    
+    Request Body:
+    {
+        "old_password": "currentpassword",
+        "new_password": "newpassword123",
+        "new_password_confirm": "newpassword123"
+    }
+    """
+    
+    rate_limit_scope = 'password_change'
+    rate_limit_count = 5
+    rate_limit_window = 3600
+    
     def post(self, request):
+        """
+        Change user password.
+        """
         serializer = PasswordChangeSerializer(
             data=request.data,
             context={'request': request}
         )
         
-        if serializer.is_valid():
-            serializer.save()
+        if not serializer.is_valid():
+            return standardize_response(
+                success=False,
+                message="Password change validation failed",
+                errors=serializer.errors,
+                status_code=status.HTTP_400_BAD_REQUEST
+            )
+        
+        try:
+            # Verify old password
+            if not request.user.check_password(serializer.validated_data['old_password']):
+                return standardize_response(
+                    success=False,
+                    message="Current password is incorrect",
+                    status_code=status.HTTP_400_BAD_REQUEST
+                )
+            
+            # Set new password
+            request.user.set_password(serializer.validated_data['new_password'])
+            request.user.save()
             
             # Invalidate all user sessions except current
             UserSession.objects.filter(
-                user=request.user
+                user=request.user,
+                is_active=True
             ).exclude(
-                ip_address=get_client_ip(request)
-            ).update(is_active=False)
+                ip_address=self.request_ip
+            ).update(
+                is_active=False,
+                logout_time=timezone.now()
+            )
             
-            return Response({
-                'message': 'Password changed successfully'
-            }, status=status.HTTP_200_OK)
-        
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-class PasswordResetRequestView(APIView):
-    """Password reset request endpoint"""
-    
-    permission_classes = [permissions.AllowAny]
-    
-    @extend_schema(
-        summary="Request password reset",
-        description="Send password reset email to user"
-    )
-    def post(self, request):
-        serializer = PasswordResetSerializer(data=request.data)
-        
-        if serializer.is_valid():
-            email = serializer.validated_data['email']
-            user = User.objects.get(email=email)
+            # Log password change
+            log_user_activity(
+                user=request.user,
+                action='PASSWORD_CHANGED',
+                details={'change_method': 'user_initiated'},
+                request=request
+            )
             
-            # Generate reset token
-            token = default_token_generator.make_token(user)
+            return standardize_response(
+                success=True,
+                message="Password changed successfully"
+            )
             
-            # Store token in cache with expiration
-            cache.set(f'password_reset_{user.id}', token, timeout=3600)  # 1 hour
+        except Exception as e:
+            return standardize_response(
+                success=False,
+                message="Password change failed",
+                errors={'detail': str(e)},
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+
+class UserSessionsView(BaseAPIView):
+    """
+    User sessions management.
+    
+    GET /api/v1/auth/sessions/ - List active sessions
+    DELETE /api/v1/auth/sessions/{session_id}/ - Revoke session
+    """
+    
+    rate_limit_scope = 'sessions'
+    rate_limit_count = 30
+    rate_limit_window = 3600
+    
+    def get(self, request):
+        """
+        Get user's active sessions.
+        """
+        try:
+            sessions = UserSession.objects.filter(
+                user=request.user,
+                is_active=True
+            ).order_by('-last_activity')
             
-            # Send reset email (implement email service)
-            self._send_reset_email(user, token)
+            sessions_data = []
+            for session in sessions:
+                sessions_data.append({
+                    'id': session.id,
+                    'session_key': session.session_key,
+                    'ip_address': session.ip_address,
+                    'user_agent': session.user_agent,
+                    'created_at': session.created_at.isoformat(),
+                    'last_activity': session.last_activity.isoformat(),
+                    'is_current': session.ip_address == self.request_ip
+                })
             
-            return Response({
-                'message': 'Password reset email sent'
-            }, status=status.HTTP_200_OK)
-        
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            return standardize_response(
+                success=True,
+                message="Sessions retrieved successfully",
+                data={'sessions': sessions_data}
+            )
+            
+        except Exception as e:
+            return standardize_response(
+                success=False,
+                message="Failed to retrieve sessions",
+                errors={'detail': str(e)},
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
     
-    def _send_reset_email(self, user, token):
-        """Send password reset email"""
-        # Implement email service
-        pass
-
-@api_view(['GET'])
-@permission_classes([permissions.IsAuthenticated])
-def user_sessions_view(request):
-    """Get user's active sessions"""
-    sessions = UserSession.objects.filter(
-        user=request.user,
-        is_active=True
-    ).order_by('-last_activity')
-    
-    sessions_data = []
-    for session in sessions:
-        sessions_data.append({
-            'id': session.id,
-            'ip_address': session.ip_address,
-            'device_info': session.device_info,
-            'last_activity': session.last_activity,
-            'is_current': session.ip_address == get_client_ip(request)
-        })
-    
-    return Response(sessions_data)
-
-@api_view(['POST'])
-@permission_classes([permissions.IsAuthenticated])
-def terminate_session_view(request, session_id):
-    """Terminate a specific user session"""
-    try:
-        session = UserSession.objects.get(
-            id=session_id,
-            user=request.user
-        )
-        session.is_active = False
-        session.save()
-        
-        return Response({
-            'message': 'Session terminated successfully'
-        })
-    except UserSession.DoesNotExist:
-        return Response({
-            'error': 'Session not found'
-        }, status=status.HTTP_404_NOT_FOUND)
-
-class PasswordResetConfirmView(APIView):
-    permission_classes = [permissions.AllowAny]
-
-    @extend_schema(
-        summary="Confirm password reset",
-        description="Set a new password using the reset token",
-    )
-    def post(self, request):
-        serializer = PasswordResetConfirmSerializer(data=request.data)
-        if serializer.is_valid():
-            serializer.save()
-            return Response({'message': 'Password has been reset successfully.'}, status=status.HTTP_200_OK)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    def delete(self, request, session_id=None):
+        """
+        Revoke a specific session.
+        """
+        try:
+            if not session_id:
+                return standardize_response(
+                    success=False,
+                    message="Session ID is required",
+                    status_code=status.HTTP_400_BAD_REQUEST
+                )
+            
+            session = UserSession.objects.filter(
+                id=session_id,
+                user=request.user,
+                is_active=True
+            ).first()
+            
+            if not session:
+                return standardize_response(
+                    success=False,
+                    message="Session not found",
+                    status_code=status.HTTP_404_NOT_FOUND
+                )
+            
+            # Deactivate session
+            session.is_active = False
+            session.logout_time = timezone.now()
+            session.save()
+            
+            # Log session revocation
+            log_user_activity(
+                user=request.user,
+                action='SESSION_REVOKED',
+                details={'revoked_session_id': session_id},
+                request=request
+            )
+            
+            return standardize_response(
+                success=True,
+                message="Session revoked successfully"
+            )
+            
+        except Exception as e:
+            return standardize_response(
+                success=False,
+                message="Failed to revoke session",
+                errors={'detail': str(e)},
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
