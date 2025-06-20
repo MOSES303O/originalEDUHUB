@@ -26,7 +26,6 @@ from rest_framework.response import Response
 
 logger = logging.getLogger(__name__)
 
-
 def standardize_response(
     success: bool,
     message: str,
@@ -37,37 +36,36 @@ def standardize_response(
 ) -> Response:
     """
     Standardize API response format across all apps.
-    
-    Creates a consistent response format for authentication, payments,
-    courses, and all other API endpoints.
-    
+
     Args:
-        success: Boolean indicating if the operation was successful
-        message: Human-readable message describing the result
-        data: Optional data payload to include in response
-        status_code: HTTP status code for the response
-        errors: Optional error details for failed operations
-        meta: Optional metadata (pagination, etc.)
-    
+        success: Boolean indicating if the operation was successful.
+        message: Human-readable message describing the result.
+        data: Optional data payload to include in response.
+        status_code: HTTP status code for the response.
+        errors: Optional error details for failed operations.
+        meta: Optional metadata (pagination, etc.).
+
     Returns:
-        DRF Response object with standardized format
+        DRF Response object with standardized format.
     """
     response_data = {
         'success': success,
         'message': message,
         'timestamp': timezone.now().isoformat(),
-        'status_code': status_code
     }
-    
+
     if data is not None:
         response_data['data'] = data
-    
+    else:
+        response_data['data'] = {}
+
     if errors is not None:
         response_data['errors'] = errors
-    
+
     if meta is not None:
         response_data['meta'] = meta
-    
+
+    # DO NOT include 'status_code' inside the payload — DRF handles it via Response argument
     return Response(response_data, status=status_code)
 
 

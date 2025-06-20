@@ -20,12 +20,23 @@ class UniversityRequirementInline(admin.TabularInline):
 
 @admin.register(University)
 class UniversityAdmin(admin.ModelAdmin):
-    list_display = ('name', 'code', 'city', 'country', 'ranking', 'is_active')
-    list_filter = ('is_active', 'city', 'country')
+    list_display = ('name', 'code', 'city', 'ranking', 'is_active')
+    list_filter = ('is_active', 'city')
     search_fields = ('name', 'code', 'description')
     prepopulated_fields = {'slug': ('name',)}
     inlines = [FacultyInline, UniversityRequirementInline]
 
+    fieldsets = (
+        ('Basic Info', {
+            'fields': ('name', 'slug', 'code', 'city')  # ✅ Add slug here
+        }),
+        ('Details', {
+            'fields': ('website', 'description', 'established_year', 'logo')
+        }),
+        ('Status & Metadata', {
+            'fields': ('is_active',)
+        }),
+    )
 
 @admin.register(Faculty)
 class FacultyAdmin(admin.ModelAdmin):

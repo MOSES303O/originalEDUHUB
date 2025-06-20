@@ -1,34 +1,26 @@
-"""
-Payment URL configuration for EduPathway platform.
-"""
-
-from django.urls import path
+from django.urls import path, include
 from rest_framework.routers import DefaultRouter
-from . import views
-from .views import SubscriptionViewSet,UserSubscriptionViewSet,PaymentViewSet  # explicitly import your ViewSet
+from .views import (
+    SubscriptionViewSet,
+    SubscriptionStatusView,
+    PaymentViewSet,
+    PaymentInitiationView,
+    MpesaCallbackView,
+    UserSubscriptionViewSet,
+    PaymentVerificationView
+)
 
-app_name = 'payments'
-
-# DRF router for SubscriptionViewSet
 router = DefaultRouter()
-router.register(r'plans/',SubscriptionViewSet, basename='subscription')
-router.register(r'subscription/',UserSubscriptionViewSet, basename='user-subscription')
-router.register(r'history/', PaymentViewSet, basename='payment-history')
+router.register(r'payments', PaymentViewSet, basename='payment')
+router.register(r'my-subscriptions', UserSubscriptionViewSet, basename='user-subscription')
 
 urlpatterns = [
-    # User subscription
-    path('subscription/status/', views.SubscriptionStatusView.as_view(), name='subscription-status'),
+    path('', include(router.urls)),
 
-    # Payments
-    path('initiate/', views.PaymentInitiationView.as_view(), name='payment-initiate'),
-    path('verify/', views.PaymentVerificationView.as_view(), name='payment-verify'),
-    # M-Pesa callbacks
-    path('callback/', views.MpesaCallbackView.as_view(), name='mpesa-callback'),
-
-    # Legacy endpoints (for compatibility)
-    #remember this test
-    #path('test/', views.index, name='payment-test'),
+    # Individual APIViews
+    path('subscriptions/', SubscriptionViewSet.as_view(), name='subscription'),
+    path('subscription-status/', SubscriptionStatusView.as_view(), name='subscription-status'),
+    path('payment/initiate/', PaymentInitiationView.as_view(), name='payment-initiate'),
+    path('mpesa/callback/', MpesaCallbackView.as_view(), name='mpesa-callback'),
+    path('payment/verify/<str:reference>/', PaymentVerificationView.as_view(), name='payment-verify')
 ]
-
-# Include the router URLs
-urlpatterns += router.urls

@@ -1,79 +1,44 @@
-from rest_framework import generics, status, filters
-from rest_framework.decorators import api_view, permission_classes
+from rest_framework import generics, mixins, status,serializers,permissions
 from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticated, IsAuthenticatedOrReadOnly
-from django_filters.rest_framework import DjangoFilterBackend
-from django.db.models import Q, Avg, Count, Case, When, IntegerField
-from django.utils import timezone
-from apps.core.utils import APIResponseMixin
+from rest_framework.views import APIView
+from rest_framework.generics import GenericAPIView
+#from utils.activity_logger import log_user_activity
+from django.db.models import Q, Avg, Count
+from apps.core.utils import standardize_response
+from apps.core.utils import log_user_activity
 from .models import (
-    University, Subject, Course, UserSelectedCourse,
-    CourseReview, CourseApplication, CourseSubjectRequirement
+    Subject, Course, UserSelectedCourse,
+    CourseReview, CourseApplication
 )
+#work on the stardardize_response function as it is being implemented twice in two apps differently
+#from apps.universities.serializers import UniversityListSerializer
 from .serializers import (
-    UniversitySerializer, SubjectSerializer, CourseListSerializer,
+    SubjectSerializer, CourseListSerializer,
     CourseDetailSerializer, UserSelectedCourseSerializer,
     CourseReviewSerializer, CourseApplicationSerializer,
-    CourseMatchSerializer
+    CourseMatchSerializer,CourseStatisticsQuerySerializer, CourseSearchFilterSerializer
 )
-from .utils import CourseMatchingEngine
+from .utils import CourseMatchingEngine,StandardAPIResponse
 import logging
-
 logger = logging.getLogger(__name__)
-
-
-class UniversityListView(generics.ListAPIView):
-    """
-    GET /api/v1/universities/
-    List all active universities with optional filtering
-    """
-    queryset = University.objects.filter(is_active=True)
-    serializer_class = UniversitySerializer
-    filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
-    filterset_fields = ['type', 'location']
-    search_fields = ['name', 'code', 'location']
-    ordering_fields = ['name', 'established_year']
-    ordering = ['name']
-
-    def get_queryset(self):
-        queryset = super().get_queryset()
-        # Annotate with course count for better performance
-        return queryset.annotate(
-            course_count=Count('courses', filter=Q(courses__is_active=True))
-        )
-
-
-class UniversityDetailView(generics.RetrieveAPIView):
-    """
-    GET /api/v1/universities/{id}/
-    Get detailed information about a specific university
-    """
-    queryset = University.objects.filter(is_active=True)
-    serializer_class = UniversitySerializer
-
-
-class SubjectListView(generics.ListAPIView):
+class SubjectListView(generics.ListCreateAPIView):
     """
     GET /api/v1/subjects/
     List all active subjects with optional filtering
     """
     queryset = Subject.objects.filter(is_active=True)
     serializer_class = SubjectSerializer
-    filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
-    filterset_fields = ['category', 'is_core']
+    filterset_fields = ['name', 'code', 'is_core', 'is_active']
     search_fields = ['name', 'code']
-    ordering_fields = ['name', 'category']
+    ordering_fields = ['name', 'created_at']
     ordering = ['name']
 
-
-class CourseListView(generics.ListAPIView):
+class CourseListView(generics.ListCreateAPIView):
     """
     GET /api/v1/courses/
     List courses with filtering, searching, and pagination
     """
     serializer_class = CourseListSerializer
-    filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
-    filterset_fields = ['category', 'university', 'minimum_grade']
     search_fields = ['name', 'code', 'description', 'university__name']
     ordering_fields = ['name', 'tuition_fee_per_year', 'duration_years']
     ordering = ['name']
@@ -81,35 +46,46 @@ class CourseListView(generics.ListAPIView):
     def get_queryset(self):
         queryset = Course.objects.filter(is_active=True).select_related('university')
         
-        # Add filters from query parameters
+        # 📌 Custom filtering for university name
+        university_name = self.request.query_params.get('university')
+        if university_name:
+            queryset = queryset.filter(university__name__iexact=university_name)
+
+        # Optional filters
+        category = self.request.query_params.get('category')
+        if category:
+            queryset = queryset.filter(category=category)
+
+        minimum_grade = self.request.query_params.get('minimum_grade')
+        if minimum_grade:
+            queryset = queryset.filter(minimum_grade=minimum_grade)
+
         min_fee = self.request.query_params.get('min_fee')
-        max_fee = self.request.query_params.get('max_fee')
-        duration = self.request.query_params.get('duration')
-        
         if min_fee:
             try:
                 queryset = queryset.filter(tuition_fee_per_year__gte=float(min_fee))
             except ValueError:
                 pass
-        
+
+        max_fee = self.request.query_params.get('max_fee')
         if max_fee:
             try:
                 queryset = queryset.filter(tuition_fee_per_year__lte=float(max_fee))
             except ValueError:
                 pass
-        
+
+        duration = self.request.query_params.get('duration')
         if duration:
             try:
                 queryset = queryset.filter(duration_years=int(duration))
             except ValueError:
                 pass
-        
-        # Annotate with ratings
+
+        # Aggregate ratings
         return queryset.annotate(
             avg_rating=Avg('reviews__rating', filter=Q(reviews__is_approved=True)),
             review_count=Count('reviews', filter=Q(reviews__is_approved=True))
         )
-
 
 class CourseDetailView(generics.RetrieveAPIView):
     """
@@ -124,16 +100,22 @@ class CourseDetailView(generics.RetrieveAPIView):
             'coursesubjectrequirement_set__subject',
             'coursesubjectrequirement_set__alternative_subjects'
         )
-
-
-class UserSelectedCourseListView(generics.ListCreateAPIView):
+class UserSelectedCourseView(
+    mixins.UpdateModelMixin,
+    mixins.DestroyModelMixin,
+    generics.ListCreateAPIView
+):
     """
-    GET /api/v1/user/selected-courses/
-    POST /api/v1/user/selected-courses/
-    List and create user selected courses
+    Manages user-selected courses.
+
+    GET    /api/v1/user/selected-courses/         - List selected courses
+    POST   /api/v1/user/selected-courses/         - Select a new course
+    PUT    /api/v1/user/selected-courses/{id}/    - Update a selection
+    DELETE /api/v1/user/selected-courses/{id}/    - Remove selection
+    POST   /api/v1/user/selected-courses/bulk_create/ - Bulk select courses
     """
     serializer_class = UserSelectedCourseSerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
         return UserSelectedCourse.objects.filter(
@@ -141,22 +123,96 @@ class UserSelectedCourseListView(generics.ListCreateAPIView):
         ).select_related('course__university').order_by('priority', 'created_at')
 
     def perform_create(self, serializer):
-        serializer.save(user=self.request.user)
+        return serializer.save(user=self.request.user)
 
     def create(self, request, *args, **kwargs):
         try:
             response = super().create(request, *args, **kwargs)
-            return StandardAPIResponse.success(
+            return standardize_response(
+                success=True,
+                message="Course added to selection successfully",
                 data=response.data,
-                message="Course added to selection successfully"
+                status_code=status.HTTP_201_CREATED
             )
         except Exception as e:
-            logger.error(f"Error adding course to selection: {str(e)}")
-            return StandardAPIResponse.error(
+            return standardize_response(
+                success=False,
                 message="Failed to add course to selection",
-                errors=str(e)
+                errors={'detail': str(e)},
+                status_code=status.HTTP_400_BAD_REQUEST
             )
 
+    def put(self, request, *args, **kwargs):
+        return self.update(request, *args, **kwargs)
+
+    def delete(self, request, *args, **kwargs):
+        return self.destroy(request, *args, **kwargs)
+
+
+class BulkUserSelectedCourseCreateView(APIView):
+    """
+    POST /api/v1/user/selected-courses/bulk_create/
+    Bulk create selected courses
+    """
+    permission_classes = [permissions.IsAuthenticated]
+    serializer_class = UserSelectedCourseSerializer
+
+    def post(self, request):
+        try:
+            courses_data = request.data.get('courses', [])
+            if not courses_data:
+                return standardize_response(
+                    success=False,
+                    message="No courses provided",
+                    status_code=status.HTTP_400_BAD_REQUEST
+                )
+
+            created = []
+            errors = []
+
+            for course_data in courses_data:
+                serializer = self.serializer_class(data=course_data)
+                if serializer.is_valid():
+                    serializer.save(user=request.user)
+                    created.append(serializer.data)
+                else:
+                    errors.append({
+                        'course_data': course_data,
+                        'errors': serializer.errors
+                    })
+
+            if created:
+                log_user_activity(
+                    user=request.user,
+                    action='SELECTED_COURSES_BULK_CREATED',
+                    details={'count': len(created)},
+                    request=request
+                )
+
+            response_data = {
+                'created': created,
+                'errors': errors,
+                'summary': {
+                    'total_provided': len(courses_data),
+                    'created_count': len(created),
+                    'error_count': len(errors)
+                }
+            }
+
+            return standardize_response(
+                success=True,
+                message=f"{len(created)} courses added to selection successfully",
+                data=response_data,
+                status_code=status.HTTP_201_CREATED
+            )
+
+        except Exception as e:
+            return standardize_response(
+                success=False,
+                message="Bulk creation failed",
+                errors={'detail': str(e)},
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
 
 class UserSelectedCourseDetailView(generics.RetrieveUpdateDestroyAPIView):
     """
@@ -166,7 +222,7 @@ class UserSelectedCourseDetailView(generics.RetrieveUpdateDestroyAPIView):
     Retrieve, update, or delete a selected course
     """
     serializer_class = UserSelectedCourseSerializer
-    permission_classes = [IsAuthenticated]
+    #permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
         return UserSelectedCourse.objects.filter(user=self.request.user)
@@ -191,7 +247,7 @@ class CourseReviewListView(generics.ListCreateAPIView):
     List and create course reviews
     """
     serializer_class = CourseReviewSerializer
-    permission_classes = [IsAuthenticatedOrReadOnly]
+    #permission_classes = [IsAuthenticatedOrReadOnly]
 
     def get_queryset(self):
         course_id = self.kwargs['course_id']
@@ -207,7 +263,6 @@ class CourseReviewListView(generics.ListCreateAPIView):
         except Course.DoesNotExist:
             raise serializers.ValidationError("Course not found")
 
-
 class CourseApplicationListView(generics.ListCreateAPIView):
     """
     GET /api/v1/user/applications/
@@ -215,7 +270,7 @@ class CourseApplicationListView(generics.ListCreateAPIView):
     List and create course applications
     """
     serializer_class = CourseApplicationSerializer
-    permission_classes = [IsAuthenticated]
+    #permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
         return CourseApplication.objects.filter(
@@ -238,194 +293,80 @@ class CourseApplicationListView(generics.ListCreateAPIView):
                 message="Failed to create application",
                 errors=str(e)
             )
+class CourseStatisticsAPIView(GenericAPIView):
+    permission_classes = [permissions.AllowAny]
 
+    def get(self, request, *args, **kwargs):
+        query_serializer = CourseStatisticsQuerySerializer(data=request.query_params)
+        query_serializer.is_valid(raise_exception=True)
+        filters = query_serializer.validated_data
 
-@api_view(['POST'])
-@permission_classes([IsAuthenticated])
-def match_courses(request):
+        queryset = Course.objects.filter(is_active=True)
+        if category := filters.get('category'):
+            queryset = queryset.filter(category__iexact=category)
+        if university := filters.get('university'):
+            queryset = queryset.filter(university_id=university)
+
+        stats = queryset.aggregate(
+            total_courses=Count('id'),
+            avg_fee=Avg('tuition_fee_per_year'),
+            avg_duration=Avg('duration_years')
+        )
+        return Response(StandardAPIResponse.success("Course statistics", stats))
+class CourseSearchAPIView(generics.CreateAPIView):
     """
-    POST /api/v1/courses/match/
-    Match courses based on user subjects and preferences
-    
-    Request body:
-    {
-        "subjects": [
-            {"subject_id": "uuid", "grade": "B+"},
-            {"subject_id": "uuid", "grade": "A-"}
-        ],
-        "preferred_categories": ["engineering", "technology"],
-        "max_tuition_fee": 500000,
-        "preferred_universities": ["uuid1", "uuid2"]
-    }
+    POST /api/v1/courses/search/
+    Search courses using a JSON payload
     """
-    try:
-        serializer = CourseMatchSerializer(data=request.data)
-        if not serializer.is_valid():
-            return StandardAPIResponse.error(
-                message="Invalid input data",
-                errors=serializer.errors
+    serializer_class = CourseSearchFilterSerializer
+    permission_classes = [permissions.AllowAny]
+
+    def create(self, request, *args, **kwargs):
+        filter_serializer = self.get_serializer(data=request.data)
+        filter_serializer.is_valid(raise_exception=True)
+        filters = filter_serializer.validated_data
+
+        queryset = Course.objects.filter(is_active=True)
+
+        if q := filters.get('q'):
+            queryset = queryset.filter(
+                Q(name__icontains=q) |
+                Q(code__icontains=q) |
+                Q(description__icontains=q) |
+                Q(university__name__icontains=q)
             )
+        if category := filters.get('category'):
+            queryset = queryset.filter(category__iexact=category)
+        if university := filters.get('university'):
+            queryset = queryset.filter(university_id=university)
+        if min_fee := filters.get('min_fee'):
+            queryset = queryset.filter(tuition_fee_per_year__gte=min_fee)
+        if max_fee := filters.get('max_fee'):
+            queryset = queryset.filter(tuition_fee_per_year__lte=max_fee)
+        if duration := filters.get('duration'):
+            queryset = queryset.filter(duration_years=duration)
+        if grade := filters.get('minimum_grade'):
+            queryset = queryset.filter(minimum_grade__iexact=grade)
 
-        # Initialize course matching engine
-        matching_engine = CourseMatchingEngine()
-        
-        # Get matched courses
-        matched_courses = matching_engine.match_courses(
-            user_subjects=serializer.validated_data['subjects'],
-            preferred_categories=serializer.validated_data.get('preferred_categories', []),
+        results = CourseListSerializer(queryset, many=True, context=self.get_serializer_context()).data
+        return Response(StandardAPIResponse.success("Courses filtered", results))
+class CourseMatchAPIView(GenericAPIView):
+    serializer_class = CourseMatchSerializer
+
+    def post(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        engine = CourseMatchingEngine()
+        matched_courses = engine.match(
+            user=request.user,
+            subject_grades=serializer.validated_data['subjects'],
+            preferred_categories=serializer.validated_data.get('preferred_categories'),
             max_tuition_fee=serializer.validated_data.get('max_tuition_fee'),
-            preferred_universities=serializer.validated_data.get('preferred_universities', [])
+            preferred_universities=serializer.validated_data.get('preferred_universities')
         )
 
-        # Serialize the results
-        course_serializer = CourseListSerializer(
-            matched_courses, many=True, context={'request': request}
+        response_serializer = CourseListSerializer(
+            matched_courses, many=True, context=self.get_serializer_context()
         )
-
-        return StandardAPIResponse.success(
-            data={
-                'matched_courses': course_serializer.data,
-                'total_matches': len(matched_courses),
-                'matching_criteria': {
-                    'subjects_count': len(serializer.validated_data['subjects']),
-                    'preferred_categories': serializer.validated_data.get('preferred_categories', []),
-                    'max_tuition_fee': serializer.validated_data.get('max_tuition_fee'),
-                    'preferred_universities_count': len(serializer.validated_data.get('preferred_universities', []))
-                }
-            },
-            message=f"Found {len(matched_courses)} matching courses"
-        )
-
-    except Exception as e:
-        logger.error(f"Error in course matching: {str(e)}")
-        return StandardAPIResponse.error(
-            message="Failed to match courses",
-            errors=str(e)
-        )
-
-
-@api_view(['GET'])
-def course_search(request):
-    """
-    GET /api/v1/courses/search/
-    Advanced course search with multiple filters
-    """
-    try:
-        query = request.query_params.get('q', '')
-        category = request.query_params.get('category', '')
-        university_id = request.query_params.get('university', '')
-        min_fee = request.query_params.get('min_fee')
-        max_fee = request.query_params.get('max_fee')
-        duration = request.query_params.get('duration')
-        minimum_grade = request.query_params.get('minimum_grade', '')
-
-        # Start with active courses
-        courses = Course.objects.filter(is_active=True).select_related('university')
-
-        # Apply filters
-        if query:
-            courses = courses.filter(
-                Q(name__icontains=query) |
-                Q(description__icontains=query) |
-                Q(university__name__icontains=query) |
-                Q(code__icontains=query)
-            )
-
-        if category:
-            courses = courses.filter(category=category)
-
-        if university_id:
-            courses = courses.filter(university_id=university_id)
-
-        if min_fee:
-            try:
-                courses = courses.filter(tuition_fee_per_year__gte=float(min_fee))
-            except ValueError:
-                pass
-
-        if max_fee:
-            try:
-                courses = courses.filter(tuition_fee_per_year__lte=float(max_fee))
-            except ValueError:
-                pass
-
-        if duration:
-            try:
-                courses = courses.filter(duration_years=int(duration))
-            except ValueError:
-                pass
-
-        if minimum_grade:
-            courses = courses.filter(minimum_grade=minimum_grade)
-
-        # Annotate with ratings and order by relevance
-        courses = courses.annotate(
-            avg_rating=Avg('reviews__rating', filter=Q(reviews__is_approved=True)),
-            review_count=Count('reviews', filter=Q(reviews__is_approved=True))
-        ).order_by('-avg_rating', 'name')
-
-        # Limit results for performance
-        courses = courses[:50]
-
-        serializer = CourseListSerializer(courses, many=True, context={'request': request})
-
-        return StandardAPIResponse.success(
-            data={
-                'courses': serializer.data,
-                'total_results': len(courses),
-                'search_query': query,
-                'applied_filters': {
-                    'category': category,
-                    'university_id': university_id,
-                    'min_fee': min_fee,
-                    'max_fee': max_fee,
-                    'duration': duration,
-                    'minimum_grade': minimum_grade
-                }
-            },
-            message=f"Found {len(courses)} courses matching your search"
-        )
-
-    except Exception as e:
-        logger.error(f"Error in course search: {str(e)}")
-        return StandardAPIResponse.error(
-            message="Failed to search courses",
-            errors=str(e)
-        )
-
-
-@api_view(['GET'])
-def course_statistics(request):
-    """
-    GET /api/v1/courses/statistics/
-    Get course statistics and analytics
-    """
-    try:
-        stats = {
-            'total_courses': Course.objects.filter(is_active=True).count(),
-            'total_universities': University.objects.filter(is_active=True).count(),
-            'courses_by_category': Course.objects.filter(is_active=True).values('category').annotate(
-                count=Count('id')
-            ).order_by('-count'),
-            'average_tuition_fee': Course.objects.filter(is_active=True).aggregate(
-                avg_fee=Avg('tuition_fee_per_year')
-            )['avg_fee'],
-            'universities_by_type': University.objects.filter(is_active=True).values('type').annotate(
-                count=Count('id')
-            ).order_by('-count'),
-            'most_popular_courses': Course.objects.filter(is_active=True).annotate(
-                selection_count=Count('userselectedcourse')
-            ).order_by('-selection_count')[:10].values('name', 'selection_count'),
-        }
-
-        return StandardAPIResponse.success(
-            data=stats,
-            message="Course statistics retrieved successfully"
-        )
-
-    except Exception as e:
-        logger.error(f"Error getting course statistics: {str(e)}")
-        return StandardAPIResponse.error(
-            message="Failed to get course statistics",
-            errors=str(e)
-        )
+        return Response(StandardAPIResponse.success("Matched courses", response_serializer.data))

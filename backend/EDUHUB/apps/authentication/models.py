@@ -260,7 +260,7 @@ class UserProfile(models.Model):
     
     # Timestamps
     created_at = models.DateTimeField(auto_now_add=True)
-    last_updated = models.DateTimeField(auto_now=True)
+    updated_at = models.DateTimeField(auto_now=True)
     
     class Meta:
         db_table = 'user_profile'

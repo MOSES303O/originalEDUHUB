@@ -14,20 +14,27 @@ class University(models.Model):
     logo = models.ImageField(upload_to='universities/logos/', blank=True, null=True)
     address = models.TextField(blank=True)
     city = models.CharField(max_length=100, blank=True)
-    country = models.CharField(max_length=100, default="Kenya")
+    type = models.CharField(max_length=50, choices=[
+        ('public', 'Public University'),
+        ('private', 'Private University'),
+        ])    
     is_active = models.BooleanField(default=True)
     ranking = models.PositiveIntegerField(null=True, blank=True, help_text="National ranking")
-    established_year = models.PositiveIntegerField(null=True, blank=True)
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
+    established_year = models.PositiveIntegerField(null=True, blank=True)    
 
     class Meta:
         verbose_name = "University"
         verbose_name_plural = "Universities"
         ordering = ['name']
+        indexes = [
+            models.Index(fields=['name']),
+            models.Index(fields=['code']),
+            models.Index(fields=['city']),
+            models.Index(fields=['is_active']),
+        ]
 
     def __str__(self):
-        return self.name
+        return f"{self.name} ({self.code})"
 
     def save(self, *args, **kwargs):
         if not self.slug:

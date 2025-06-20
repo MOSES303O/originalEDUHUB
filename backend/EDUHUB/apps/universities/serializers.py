@@ -51,6 +51,6 @@ class UniversityDetailSerializer(serializers.ModelSerializer):
         model = University
         fields = [
             'id', 'name', 'slug', 'code', 'description', 'website', 
-            'logo', 'address', 'city', 'country', 'ranking', 
+            'logo', 'address', 'city', 'ranking', 
             'established_year', 'faculties', 'requirements'
         ]

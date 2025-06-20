@@ -5,7 +5,7 @@ from .views import UniversityViewSet, FacultyViewSet
 # Create a router and register our viewsets with it
 router = DefaultRouter()
 router.register(r'universities', UniversityViewSet)
-router.register(r'faculties', FacultyViewSet)
+router.register(r'faculties', FacultyViewSet,basename='faculty')
 
 # The API URLs are determined automatically by the router
 urlpatterns = [

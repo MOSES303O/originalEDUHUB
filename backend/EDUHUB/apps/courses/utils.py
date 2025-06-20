@@ -1,6 +1,8 @@
 from django.db.models import Q, Count, Avg
+from requests import Response
 from .models import Course, CourseSubjectRequirement, Subject
 import logging
+from rest_framework import status
 
 logger = logging.getLogger(__name__)
 
@@ -278,4 +280,21 @@ class CourseAnalytics:
             total_courses=Count('id'),
             total_selections=Count('userselectedcourse'),
             avg_rating=Avg('reviews__rating', filter=Q(reviews__is_approved=True))
-        ).order_by('-total_selections')
+        ).order_by('-total_selections')  
+
+class StandardAPIResponse:
+    @staticmethod
+    def success(data=None, message=""):
+        return Response({
+            "status": "success",
+            "message": message,
+            "data": data
+        }, status=status.HTTP_200_OK)
+
+    @staticmethod
+    def error(message="", errors=None):
+        return Response({
+            "status": "error",
+            "message": message,
+            "errors": errors
+        }, status=status.HTTP_400_BAD_REQUEST)    

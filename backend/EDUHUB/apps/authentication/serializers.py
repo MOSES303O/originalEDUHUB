@@ -164,9 +164,8 @@ class UserProfileSerializer(serializers.ModelSerializer):
         model = UserProfile
         fields = [
             'email', 'full_name', 'phone_number',
-            'current_education_level', 'school_name', 'graduation_year',
-            'preferred_study_mode', 'preferred_location', 'budget_range',
-            'bio', 'interests', 'email_notifications', 'sms_notifications',
+            'preferred_study_mode', 'preferred_location',
+            'bio','email_notifications', 'sms_notifications',
             'marketing_emails', 'created_at', 'updated_at'
         ]
         read_only_fields = ['created_at', 'updated_at']

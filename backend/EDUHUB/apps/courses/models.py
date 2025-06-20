@@ -3,71 +3,24 @@ from django.contrib.auth import get_user_model
 from django.core.validators import MinValueValidator, MaxValueValidator
 from django.utils import timezone
 import uuid
+from apps.universities.models import University
 
 User = get_user_model()
-
-
-class University(models.Model):
-    """
-    Model representing universities and educational institutions
-    """
-    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    name = models.CharField(max_length=200, unique=True)
-    code = models.CharField(max_length=10, unique=True)
-    location = models.CharField(max_length=100)
-    type = models.CharField(max_length=50, choices=[
-        ('public', 'Public University'),
-        ('private', 'Private University'),
-        ('college', 'College'),
-        ('technical', 'Technical Institute'),
-    ])
-    website = models.URLField(blank=True, null=True)
-    description = models.TextField(blank=True)
-    established_year = models.PositiveIntegerField(
-        validators=[MinValueValidator(1800), MaxValueValidator(2030)],
-        blank=True, null=True
-    )
-    logo = models.URLField(blank=True, null=True)
-    is_active = models.BooleanField(default=True)
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
-
-    class Meta:
-        ordering = ['name']
-        indexes = [
-            models.Index(fields=['name']),
-            models.Index(fields=['type']),
-            models.Index(fields=['is_active']),
-        ]
-
-    def __str__(self):
-        return f"{self.name} ({self.code})"
-
-
 class Subject(models.Model):
     """
-    Model representing academic subjects
+    Model representing academic subjects (e.g., English, Math, Physics).
     """
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     name = models.CharField(max_length=100, unique=True)
     code = models.CharField(max_length=10, unique=True)
     description = models.TextField(blank=True)
-    category = models.CharField(max_length=50, choices=[
-        ('mathematics', 'Mathematics'),
-        ('sciences', 'Sciences'),
-        ('languages', 'Languages'),
-        ('humanities', 'Humanities'),
-        ('technical', 'Technical'),
-        ('arts', 'Arts'),
-    ])
-    is_core = models.BooleanField(default=False)  # Core subjects like Math, English
+    is_core = models.BooleanField(default=False)  # Core subjects like English, Math
     is_active = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
         ordering = ['name']
         indexes = [
-            models.Index(fields=['category']),
             models.Index(fields=['is_core']),
             models.Index(fields=['is_active']),
         ]
@@ -262,8 +215,6 @@ class CourseApplication(models.Model):
     # Application details
     application_number = models.CharField(max_length=50, unique=True, blank=True)
     submitted_at = models.DateTimeField(blank=True, null=True)
-    documents_uploaded = models.JSONField(default=dict)
-    
     # Tracking
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

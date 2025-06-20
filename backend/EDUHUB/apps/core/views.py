@@ -19,119 +19,73 @@ from .utils import (
 
 logger = logging.getLogger(__name__)
 
-
 class BaseAPIView(APIView, APIResponseMixin, RateLimitMixin):
     """
-    Base API view class with standardized error handling, response formatting,
-    and common functionality for all apps.
-    
-    Features:
-    - Standardized response format
-    - Rate limiting
-    - Activity logging
-    - Error handling
-    - Authentication helpers
+    Base API view class with safe DRF behavior and standardized extensions.
     """
-    
-    # Default rate limiting settings
+
     rate_limit_scope = 'default'
     rate_limit_count = 60
-    rate_limit_window = 3600  # 1 hour
-    
-    # Authentication settings
+    rate_limit_window = 3600
     authentication_required = True
-    
-    def dispatch(self, request, *args, **kwargs):
+
+    def initial(self, request, *args, **kwargs):
         """
-        Override dispatch to add common functionality.
+        DRF lifecycle method called before any action (get/post/etc).
         """
-        # Check rate limiting
-        if not self.check_rate_limit_for_view(request):
-            return self.rate_limit_exceeded_response()
-        
-        # Add request metadata
+        super().initial(request, *args, **kwargs)
+
+        # Rate limiting
+        if not self.check_rate_limit(request):
+            raise exceptions.Throttled(detail="Rate limit exceeded.")
+
+        # Capture request metadata
         self.request_ip = get_client_ip(request)
         self.request_timestamp = timezone.now()
-        
-        try:
-            response = super().dispatch(request, *args, **kwargs)
-            
-            # Log successful API call
-            if hasattr(request, 'user') and request.user.is_authenticated:
-                log_user_activity(
-                    user=request.user,
-                    action=f'API_{request.method}_{self.__class__.__name__}',
-                    details={
-                        'endpoint': request.path,
-                        'method': request.method,
-                        'status_code': response.status_code
-                    },
-                    request=request
-                )
-            
-            return response
-            
-        except Exception as e:
-            logger.error(f"API Error in {self.__class__.__name__}: {str(e)}")
-            return self.handle_exception(e, request)
-    
-    def check_rate_limit_for_view(self, request) -> bool:
+
+    def handle_exception(self, exc):
         """
-        Check rate limiting for the current view.
+        DRF-compliant exception handling.
         """
-        return self.check_rate_limit(
-            request,
-            self.rate_limit_scope,
-            self.rate_limit_count,
-            self.rate_limit_window
-        )
-    
-    def rate_limit_exceeded_response(self):
-        """
-        Response when rate limit is exceeded.
-        """
-        return standardize_response(
-            success=False,
-            message="Rate limit exceeded. Please try again later.",
-            status_code=status.HTTP_429_TOO_MANY_REQUESTS
-        )
-    
-    def handle_exception(self, exc, request):
-        """
-        Handle exceptions with standardized error responses.
-        """
-        # Log the exception
-        if hasattr(request, 'user') and request.user.is_authenticated:
+        logger.error(f"API Error in {self.__class__.__name__}: {str(exc)}")
+
+        # Log user error
+        if hasattr(self.request, 'user') and self.request.user.is_authenticated:
             log_user_activity(
-                user=request.user,
+                user=self.request.user,
                 action=f'API_ERROR_{self.__class__.__name__}',
                 details={
                     'error': str(exc),
-                    'endpoint': request.path,
-                    'method': request.method
+                    'endpoint': self.request.path,
+                    'method': self.request.method
                 },
                 success=False,
                 error_message=str(exc),
-                request=request
+                request=self.request
             )
-        
-        # Return standardized error response
+
         return standardize_response(
             success=False,
             message="An error occurred while processing your request.",
             errors={'detail': str(exc)},
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR
         )
-    
+
+    def check_rate_limit(self, request) -> bool:
+        return self.check_rate_limit_for_view(
+            request,
+            self.rate_limit_scope,
+            self.rate_limit_count,
+            self.rate_limit_window
+        )
+
     def get_permissions(self):
         """
-        Override to handle authentication requirements.
+        Add `IsAuthenticated` only if authentication_required is True.
         """
         permissions = super().get_permissions()
-        
         if self.authentication_required:
             permissions.append(IsAuthenticated())
-        
         return permissions
 
 

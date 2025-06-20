@@ -1,32 +1,12 @@
 from rest_framework import serializers
 from django.contrib.auth import get_user_model
 from .models import (
-    University, Subject, Course, CourseSubjectRequirement,
+    Subject, Course, CourseSubjectRequirement,
     UserSelectedCourse, CourseReview, CourseApplication
 )
-
+from apps.universities.models import University
+from apps.universities.serializers import UniversityListSerializer
 User = get_user_model()
-
-
-class UniversitySerializer(serializers.ModelSerializer):
-    """
-    Serializer for University model
-    """
-    total_courses = serializers.SerializerMethodField()
-    
-    class Meta:
-        model = University
-        fields = [
-            'id', 'name', 'code', 'location', 'type', 'website',
-            'description', 'established_year', 'logo', 'is_active',
-            'total_courses', 'created_at'
-        ]
-        read_only_fields = ['id', 'created_at', 'total_courses']
-
-    def get_total_courses(self, obj):
-        return obj.courses.filter(is_active=True).count()
-
-
 class SubjectSerializer(serializers.ModelSerializer):
     """
     Serializer for Subject model
@@ -34,7 +14,7 @@ class SubjectSerializer(serializers.ModelSerializer):
     class Meta:
         model = Subject
         fields = [
-            'id', 'name', 'code', 'description', 'category',
+            'id', 'name', 'code', 'description',
             'is_core', 'is_active', 'created_at'
         ]
         read_only_fields = ['id', 'created_at']
@@ -89,7 +69,7 @@ class CourseDetailSerializer(serializers.ModelSerializer):
     """
     Detailed serializer for individual course view
     """
-    university = UniversitySerializer(read_only=True)
+    university =UniversityListSerializer(read_only=True)
     required_subjects = CourseSubjectRequirementSerializer(
         source='coursesubjectrequirement_set', many=True, read_only=True
     )
@@ -205,7 +185,7 @@ class CourseApplicationSerializer(serializers.ModelSerializer):
         model = CourseApplication
         fields = [
             'id', 'course', 'course_id', 'status', 'application_number',
-            'submitted_at', 'documents_uploaded', 'created_at', 'updated_at'
+            'submitted_at','created_at', 'updated_at'
         ]
         read_only_fields = [
             'id', 'application_number', 'submitted_at', 'created_at', 'updated_at'
@@ -271,4 +251,27 @@ class CourseMatchSerializer(serializers.Serializer):
                     f"Subject with ID {subject_data['subject_id']} not found"
                 )
         
+        return value 
+class SubjectScoreSerializer(serializers.Serializer):
+    subject_code = serializers.CharField(max_length=10)
+    grade = serializers.CharField(max_length=5)
+
+class CourseMatchSerializer(serializers.Serializer):
+    kcse_mean_grade = serializers.CharField(max_length=5)
+    subject_scores = SubjectScoreSerializer(many=True)
+
+    def validate_subject_scores(self, value):
+        if not value:
+            raise serializers.ValidationError("At least one subject score is required.")
         return value
+class CourseSearchFilterSerializer(serializers.Serializer):
+    q = serializers.CharField(required=False, help_text="Search keyword")
+    category = serializers.CharField(required=False)
+    university = serializers.UUIDField(required=False)
+    min_fee = serializers.DecimalField(max_digits=10, decimal_places=2, required=False)
+    max_fee = serializers.DecimalField(max_digits=10, decimal_places=2, required=False)
+    duration = serializers.IntegerField(required=False)
+    minimum_grade = serializers.CharField(required=False)
+class CourseStatisticsQuerySerializer(serializers.Serializer):
+    category = serializers.CharField(required=False)
+    university = serializers.UUIDField(required=False)

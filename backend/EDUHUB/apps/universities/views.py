@@ -31,9 +31,7 @@ class UniversityViewSet(viewsets.ReadOnlyModelViewSet):
     """
     queryset = University.objects.filter(is_active=True)
     permission_classes = [permissions.AllowAny]
-    #pagination_class = StandardResultsSetPagination
-    filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
-    filterset_fields = ['city', 'country']
+    filterset_fields = ['city', 'name']
     search_fields = ['name', 'code', 'city', 'description']
     ordering_fields = ['name', 'ranking', 'established_year']
     lookup_field = 'slug'
@@ -42,7 +40,20 @@ class UniversityViewSet(viewsets.ReadOnlyModelViewSet):
         if self.action == 'list':
             return UniversityListSerializer
         return UniversityDetailSerializer
+    def list(self, request, *args, **kwargs):
+        queryset = self.get_queryset()
 
+        # Manually handle filtering
+        city = request.query_params.get('city')
+        name = request.query_params.get('name')
+
+        if city:
+            queryset = queryset.filter(city__icontains=city)
+        if name:
+            queryset = queryset.filter(name__icontains=name)
+
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
     @action(detail=True, methods=['get'])
     def faculties(self, request, slug=None):
         """
@@ -70,9 +81,14 @@ class FacultyViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Faculty.objects.filter(is_active=True)
     serializer_class = FacultySerializer
     permission_classes = [permissions.AllowAny]
-    filter_backends = [DjangoFilterBackend, filters.SearchFilter]
-    filterset_fields = ['university']
     search_fields = ['name', 'description']
+
+    def get_queryset(self):
+        queryset = self.queryset
+        university_name = self.request.query_params.get('university')
+        if university_name:
+            queryset = queryset.filter(university__name__icontains=university_name)
+        return queryset
 
     @action(detail=True, methods=['get'])
     def departments(self, request, pk=None):
