@@ -18,6 +18,20 @@ import { useAuth } from "@/lib/auth-context"
 import { Header } from "@/components/header"
 import { Footer } from "@/components/footer"
 
+const gradeMap: Record<string, number> = {
+  A: 12,
+  "A-": 11,
+  "B+": 10,
+  B: 9,
+  "B-": 8,
+  "C+": 7,
+  C: 6,
+  "C-": 5,
+  "D+": 4,
+  D: 3,
+  "D-": 2,
+  E: 1,
+}
 export default function CoursesPage() {
   const [expandedRows, setExpandedRows] = useState<Record<string, boolean>>({})
   const [coursesData, setCoursesData] = useState<Course[]>([])
@@ -31,7 +45,8 @@ export default function CoursesPage() {
   const { toast } = useToast() // ✅ Fix for toast error
   // Get user's total points from URL params
   const userPoints = Number.parseInt(searchParams.get("points") || "0", 10)
-
+  const userGrade = searchParams.get("grade") || ""
+ 
   // Get subject filters and points from URL once
   const subjectParams = searchParams.getAll("subjects")
   const pointsParam = searchParams.get("points")
@@ -83,30 +98,55 @@ export default function CoursesPage() {
           {
             id: "CS001",
             code: "BSC-CS-001",
-            title: "Bachelor of Computer Science",
-            university: "University of Nairobi",
-            points: 32,
-            description:
-              "A comprehensive program covering programming, algorithms, data structures, and software engineering.",
+            name: "Bachelor of Computer Science",
+            university_name: "University of Nairobi",
+            description:"IT all the the way",
+            minimum_grade: "B", // ✅ required
+            tuition_fee_per_year: "50000.00", // optional if required
+            application_fee: "1000.00", // optional
+            average_rating: 4,
+            total_reviews: 10,
+            category: "technology",
+            duration_years: 4,
+            is_selected: false,
           },
           {
             id: "BA001",
             code: "BBA-001",
-            title: "Bachelor of Business Administration",
-            university: "Strathmore University",
-            points: 28,
-            description: "Develop skills in management, marketing, finance, and entrepreneurship.",
+            name: "Bachelor of Business Administration",
+            university_name: "Strathmore University",
+            description:"biashara ni biashara",
+            minimum_grade: "B-", // ✅ required
+            tuition_fee_per_year: "60000.00",
+            application_fee: "1500.00",
+            average_rating: 4,
+            total_reviews: 8,
+            category: "business",
+            duration_years: 4,
+            is_selected: false,
           },
           {
             id: "MD001",
             code: "MBChB-001",
-            title: "Bachelor of Medicine and Surgery",
-            university: "Kenyatta University",
-            points: 42,
-            description: "Train to become a medical doctor with a focus on clinical practice and medical sciences.",
+            name: "Bachelor of Medicine and Surgery",
+            university_name: "Kenyatta University",
+            description:"medicine is the dawa",
+            minimum_grade: "A-", // ✅ required
+            tuition_fee_per_year: "70000.00",
+            application_fee: "2000.00",
+            average_rating: 5,
+            total_reviews: 12,
+            category: "medical",
+            duration_years: 6,
+            is_selected: false,
           },
-        ]
-        setCoursesData(fallbackData)
+        ]  
+        const transformedData = fallbackData.map((course) => ({
+          ...course,
+          duration_years: course.duration_years.toString(), // Convert number to string
+        }));
+        
+        setCoursesData(transformedData);
       } finally {
         // Add a slight delay to ensure smooth transition
         setTimeout(() => {
@@ -127,8 +167,8 @@ export default function CoursesPage() {
     }))
   }
 
-  const isQualified = (requiredPoints: number) => {
-    return userPoints >= requiredPoints
+  const isQualified = (minGrade: string): boolean => {
+    return gradeMap[userGrade] >= gradeMap[minGrade]
   }
 
   const handleSelectCourse = (e: React.MouseEvent, course: Course) => {
@@ -139,13 +179,13 @@ export default function CoursesPage() {
       if (!isCourseSelected(course.id)) {
         toast({
           title: "Course Selected",
-          description: `${course.title} has been added to your selected courses.`,
+          description: `${(course as Course).name} has been added to your selected courses.`,
           duration: 3000,
         })
       } else {
         toast({
           title: "Course Removed",
-          description: `${course.title} has been removed from your selected courses.`,
+          description: `${(course as Course).name} has been removed from your selected courses.`,
           duration: 3000,
         })
       }
@@ -164,7 +204,7 @@ export default function CoursesPage() {
     <div className="flex min-h-screen flex-col">
       <Header />
       <main className="flex-1">
-        <section className="w-full py-12 md:py-24 lg:py-32 bg-gradient-to-b from-white to-gray-50 dark:from-gray-950 dark:to-gray-900">
+        <section className="w-full py-12 md:py-24 lg:py-32 ">
           <div className="container px-4 md:px-6">
             <div className="flex flex-col items-start gap-4 mb-8">
               <Button variant="outline" size="sm" asChild className="mb-2">
@@ -246,12 +286,12 @@ export default function CoursesPage() {
                             <ChevronRight className="h-4 w-4" />
                           )}
                         </TableCell>
-                        <TableCell className="font-medium">{course.id}</TableCell>
-                        <TableCell>{course.title}</TableCell>
-                        <TableCell>{course.university}</TableCell>
-                        <TableCell>{course.points}</TableCell>
+                        <TableCell className="font-medium">{course.code}</TableCell>
+                        <TableCell>{(course as Course).name}</TableCell>
+                        <TableCell>{(course as Course).university_name}</TableCell>
+                        <TableCell>{(course as Course).minimum_grade}</TableCell>
                         <TableCell>
-                          {isQualified(course.points) ? (
+                          {isQualified((course as Course).minimum_grade) ? (
                             <div className="flex items-center">
                               <CheckCircle className="h-5 w-5 text-green-500 mr-1" />
                               <span className="text-green-500">Qualified</span>
@@ -297,15 +337,15 @@ export default function CoursesPage() {
                                 </div>
                                 <div>
                                   <h4 className="text-sm font-semibold">Course Name</h4>
-                                  <p>{course.title}</p>
+                                  <p>{course.name}</p>
                                 </div>
                                 <div>
                                   <h4 className="text-sm font-semibold">University</h4>
-                                  <p>{course.university}</p>
+                                  <p>{course.university_name}</p>
                                 </div>
                                 <div>
                                   <h4 className="text-sm font-semibold">Qualification Status</h4>
-                                  {isQualified(course.points) ? (
+                                  {isQualified(course.minimum_grade) ? (
                                     <div className="flex items-center">
                                       <CheckCircle className="h-5 w-5 text-green-500 mr-1" />
                                       <span className="text-green-500">You meet the cluster weight requirements</span>
@@ -334,7 +374,7 @@ export default function CoursesPage() {
                                   )}
                                 </Button>
                                 <Button className="bg-emerald-600 hover:bg-emerald-700" asChild>
-                                  <Link href={`/courses/${course.id}`}>View Course Details</Link>
+                                  <Link href={`/courses/courses/${course.id}`}>View Course Details</Link>
                                 </Button>
                               </div>
                             </div>

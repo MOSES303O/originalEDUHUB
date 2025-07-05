@@ -1,42 +1,35 @@
-import { NextResponse } from "next/server"
-import { coursesData } from "./data"
+// app/api/courses/search/route.ts
+import { NextResponse } from "next/server";
+import { fetchCourses } from "@/lib/api"; // Ensure this path is correct per tsconfig.json
 
 export async function GET(request: Request) {
   try {
-    const { searchParams } = new URL(request.url)
-    const search = searchParams.get("search")
-    const university = searchParams.get("university")
-    let filteredCourses = [...coursesData]
+    const { searchParams } = new URL(request.url);
 
-    // Apply filters if provided
-    if (search) {
-      filteredCourses = filteredCourses.filter((course) => course.title.toLowerCase().includes(search.toLowerCase()))
-    }
+    // Prepare query parameters
+    const params: Record<string, string | string[]> = {};
 
-    if (university) {
-      filteredCourses = filteredCourses.filter((course) =>
-        course.university.toLowerCase().includes(university.toLowerCase()),
-      )
-    }
+    const search = searchParams.get("search");
+    if (search) params.search = search;
 
-    // Filter by subjects if provided
-    const subjects = searchParams.getAll("subject")
-    if (subjects.length > 0) {
-      filteredCourses = filteredCourses.filter((course) =>
-        subjects.some((subject) => course.subjects.includes(subject)),
-      )
-    }
+    const university = searchParams.get("university");
+    if (university) params.university = university;
 
-    // Filter by minimum points
-    const minPoints = searchParams.get("min_points")
-    if (minPoints) {
-      const points = Number.parseInt(minPoints, 10)
-      filteredCourses = filteredCourses.filter((course) => course.points <= points)
-    }
+    const subjects = searchParams.getAll("subject");
+    if (subjects.length > 0) params.subject = subjects;
 
-    return NextResponse.json(filteredCourses)
+    const minPoints = searchParams.get("min_points");
+    if (minPoints) params.min_points = minPoints;
+
+    // Fetch filtered courses from the Django backend
+    const courses = await fetchCourses(params);
+
+    return NextResponse.json(courses);
   } catch (error) {
-    console.error("Error fetching courses:", error)
-    return NextResponse.json({ error: "Failed to fetch courses" }, { status: 500 })
+    console.error("Error fetching courses from backend:", error);
+    return NextResponse.json(
+      { error: "Failed to fetch courses from backend" },
+      { status: 500 }
+    );
   }
 }

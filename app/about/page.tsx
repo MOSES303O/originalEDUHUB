@@ -9,7 +9,7 @@ export default function AboutPage() {
     <div className="flex min-h-screen flex-col">
       <Header />
       <main className="flex-1">
-        <section className="w-full py-12 md:py-24 lg:py-32 bg-gradient-to-b from-white to-gray-50 dark:from-gray-950 dark:to-gray-900">
+        <section className="w-full py-12 md:py-24 lg:py-32 ">
           <div className="container px-4 md:px-6">
             <div className="flex flex-col items-center gap-4 text-center">
               <h1 className="text-3xl font-bold tracking-tighter sm:text-4xl md:text-5xl">About EduPathway</h1>
@@ -45,7 +45,7 @@ export default function AboutPage() {
           </div>
         </section>
 
-        <section className="w-full py-12 md:py-24 lg:py-32 bg-white dark:bg-gray-950">
+        <section className="w-full py-12 md:py-24 lg:py-32">
           <div className="container px-4 md:px-6">
             <div className="grid gap-12 lg:grid-cols-2 lg:gap-16 items-center">
               <div className="space-y-4 order-2 lg:order-1">
@@ -76,7 +76,7 @@ export default function AboutPage() {
           </div>
         </section>
 
-        <section className="w-full py-12 md:py-24 lg:py-32 bg-gray-50 dark:bg-gray-900">
+        <section className="w-full py-12 md:py-24 lg:py-32">
           <div className="container px-4 md:px-6">
             <div className="flex flex-col items-center gap-4 text-center mb-12">
               <h2 className="text-3xl font-bold tracking-tighter">Our Values</h2>
@@ -161,7 +161,7 @@ export default function AboutPage() {
           </div>
         </section>
 
-        <section className="w-full py-12 md:py-24 lg:py-32 bg-white dark:bg-gray-950">
+        <section className="w-full py-12 md:py-24 lg:py-32 ">
           <div className="container px-4 md:px-6">
             <div className="flex flex-col items-center gap-4 text-center mb-12">
               <h2 className="text-3xl font-bold tracking-tighter">Our Team</h2>
@@ -232,7 +232,7 @@ export default function AboutPage() {
               <div className="space-y-2">
                 <h2 className="text-3xl font-bold tracking-tighter md:text-4xl text-white">Join Our Community</h2>
                 <p className="max-w-[700px] text-emerald-100 md:text-xl mx-auto">
-                  Start your educational journey with EduPathway today
+                  Start your educational journey with EduHub today
                 </p>
               </div>
               <div className="w-full max-w-sm space-y-2">

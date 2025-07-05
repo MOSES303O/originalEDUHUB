@@ -1,15 +1,14 @@
-"use client"
+"use client";
 
-import { useState, useEffect } from "react"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { ArrowLeft, Trash2, Heart, Download } from "lucide-react"
-import Link from "next/link"
-import { useSelectedCourses } from "@/lib/course-store"
+import { useState, useEffect } from "react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { ArrowLeft, Trash2, Heart, Download } from "lucide-react";
+import Link from "next/link";
 import { useToast } from "@/hooks/use-toast";
-import { PDFNotification } from "@/components/pdf-notification"
-import { generateCoursesPDF } from "@/lib/pdf-generator"
+import { PDFNotification } from "@/components/pdf-notification";
+import { generateCoursesPDF } from "@/lib/pdf-generator";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -20,60 +19,83 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
   AlertDialogTrigger,
-} from "@/components/ui/alert-dialog"
-import { Header } from "@/components/header"
-import { Footer } from "@/components/footer"
-import { useAuth } from "@/lib/auth-context"
+} from "@/components/ui/alert-dialog";
+import { Header } from "@/components/header";
+import { Footer } from "@/components/footer";
+import { fetchSelectedCourses, insertSelectedCourse } from "@/lib/api"; // Import the API functions
 
 export default function SelectedCoursesPage() {
-  const { selectedCourses, removeCourse } = useSelectedCourses()
-  const [courseToRemove, setCourseToRemove] = useState<string | null>(null)
-  const [showPdfNotification, setShowPdfNotification] = useState(false)
-  const { user } = useAuth()
-  const { toast } = useToast() // ✅ Fix for toast error
+  const [selectedCourses, setSelectedCourses] = useState<any[]>([]); // State for selected courses
+  const [courseToRemove, setCourseToRemove] = useState<string | null>(null);
+  const [showPdfNotification, setShowPdfNotification] = useState(false);
+  const { toast } = useToast();
 
+  // Fetch selected courses from the API
   useEffect(() => {
-    // Check if this is the first visit to this page
-    const hasSeenPdfNotification = localStorage.getItem("hasSeenPdfNotification")
+    const fetchCourses = async () => {
+      try {
+        const courses = await fetchSelectedCourses();
+        setSelectedCourses(courses); // Update state with API response
+      } catch (error) {
+        console.error("Failed to fetch selected courses:", error);
+        toast({
+          title: "Error",
+          description: "Failed to fetch selected courses.",
+          duration: 3000,
+        });
+      }
+    };
 
-    if (!hasSeenPdfNotification && selectedCourses.length > 0) {
-      // Show the notification after a short delay
-      const timer = setTimeout(() => {
-        setShowPdfNotification(true)
-      }, 1500)
-
-      return () => clearTimeout(timer)
-    }
-  }, [selectedCourses.length])
+    fetchCourses();
+  }, []);
 
   const handleRemoveCourse = (courseId: string) => {
-    removeCourse(courseId)
+    setSelectedCourses((prevCourses) => prevCourses.filter((course) => course.id !== courseId));
     toast({
       title: "Course Removed",
       description: "The course has been removed from your selected courses.",
       duration: 3000,
-    })
-  }
+    });
+  };
+
+  const handleAddCourse = async (courseId: string) => {
+    try {
+      const newCourse = await insertSelectedCourse(courseId);
+      setSelectedCourses((prevCourses) => [...prevCourses, newCourse]);
+      toast({
+        title: "Course Added",
+        description: "The course has been added to your selected courses.",
+        duration: 3000,
+      });
+    } catch (error) {
+      console.error("Failed to add course:", error);
+      toast({
+        title: "Error",
+        description: "Failed to add the course.",
+        duration: 3000,
+      });
+    }
+  };
 
   const handleClosePdfNotification = () => {
-    setShowPdfNotification(false)
-    localStorage.setItem("hasSeenPdfNotification", "true")
-  }
+    setShowPdfNotification(false);
+    localStorage.setItem("hasSeenPdfNotification", "true");
+  };
 
   const handleDownloadPdf = () => {
-    generateCoursesPDF(selectedCourses, user?.email || "Student")
+    generateCoursesPDF(selectedCourses, "Student");
     toast({
       title: "PDF Generated",
       description: "Your selected courses have been downloaded as a PDF.",
       duration: 3000,
-    })
-  }
+    });
+  };
 
   return (
     <div className="flex min-h-screen flex-col">
       <Header />
       <main className="flex-1">
-        <section className="w-full py-12 md:py-24 lg:py-32 bg-gradient-to-b from-white to-gray-50 dark:from-gray-950 dark:to-gray-900">
+        <section className="w-full py-12 md:py-24 lg:py-32 ">
           <div className="container px-4 md:px-6">
             <div className="flex flex-col items-start gap-4 mb-8">
               <Button variant="outline" size="sm" asChild className="mb-2">
@@ -130,7 +152,7 @@ export default function SelectedCoursesPage() {
                             <AlertDialogHeader>
                               <AlertDialogTitle>Remove Course</AlertDialogTitle>
                               <AlertDialogDescription>
-                                Are you sure you want to remove "{course.title}" from your selected courses?
+                                Are you sure you want to remove "{course.name}" from your selected courses?
                               </AlertDialogDescription>
                             </AlertDialogHeader>
                             <AlertDialogFooter>
@@ -145,8 +167,8 @@ export default function SelectedCoursesPage() {
                           </AlertDialogContent>
                         </AlertDialog>
                       </div>
-                      <CardTitle className="text-xl">{course.title}</CardTitle>
-                      <CardDescription>{course.university}</CardDescription>
+                      <CardTitle className="text-xl">{course.name}</CardTitle>
+                      <CardDescription>{course.university_name}</CardDescription>
                     </CardHeader>
                     <CardContent>
                       <div className="space-y-2">
@@ -156,7 +178,7 @@ export default function SelectedCoursesPage() {
                         </div>
                         <div className="flex justify-between">
                           <span className="text-sm font-medium">Required Points:</span>
-                          <span className="text-sm">{course.points}</span>
+                          <span className="text-sm">{course.minimum_grade}</span>
                         </div>
                         <p className="text-sm text-gray-500 mt-2">{course.description}</p>
                       </div>
@@ -178,5 +200,5 @@ export default function SelectedCoursesPage() {
       {/* PDF Download Notification */}
       {showPdfNotification && <PDFNotification onClose={handleClosePdfNotification} onDownload={handleDownloadPdf} />}
     </div>
-  )
+  );
 }

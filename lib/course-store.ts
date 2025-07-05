@@ -5,19 +5,13 @@ import { useState, useEffect } from "react"
 
 // Define course type
 export interface Course {
-  id: string
-  code: string
-  title: string
-  university: string
-  description: string
-  points: number
-  fullDescription?: string
-  subjects?: string[]
-  duration?: string
-  startDate?: string
-  applicationDeadline?: string
-  campuses?: string[]
-  careers?: string[]
+  id: string;
+  name: string; // Ensure this property exists
+  university_name: string;
+  minimum_grade: string;
+  code: string;
+  description: string;
+  duration_years: string;
 }
 
 // Hook to manage selected courses

@@ -1,9 +1,10 @@
-"use client"
+"use client";
 
-import { useState, useEffect } from "react"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
+import { useState, useEffect } from "react";
+import { Button } from "@/components/ui/button";
+import { Course } from "@/types";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import {
   ArrowLeft,
   BookOpen,
@@ -13,123 +14,132 @@ import {
   Clock,
   Heart,
   Check,
-} from "lucide-react"
-import Link from "next/link"
-import { useParams, useRouter } from "next/navigation"
-import { fetchCourseById } from "@/lib/api"
-import { Skeleton } from "@/components/ui/skeleton"
-import { useSelectedCourses } from "@/lib/course-store"
+} from "lucide-react";
+import Link from "next/link";
+import { useParams, useRouter } from "next/navigation";
+import { fetchCourseById, matchUniversityCampus } from "@/lib/api";
+import { Skeleton } from "@/components/ui/skeleton";
+import { useSelectedCourses } from "@/lib/course-store";
 import { useToast } from "@/hooks/use-toast";
-import { Header } from "@/components/header"
-import { Footer } from "@/components/footer"
-import { useAuth } from "@/lib/auth-context"
+import { Header } from "@/components/header";
+import { Footer } from "@/components/footer";
+import { useAuth } from "@/lib/auth-context";
 
 export default function CourseDetailPage() {
-  const params = useParams()
-  const courseId = params.id as string
-  const router = useRouter()
-  const { user } = useAuth()
-  const { toast } = useToast() // ✅ Fix for toast error
-  const [course, setCourse] = useState<any>(null)
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
+  const params = useParams();
+  const courseId = params.id as string;
+  const router = useRouter();
+  const { user } = useAuth();
+  const { toast } = useToast();
+  const [course, setCourse] = useState<Course | null>(null);
+  const [courseCampus, setCourseCampus] = useState<string>("Not specified");
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const { addCourse, isCourseSelected, toggleCourseSelection } = useSelectedCourses()
+  const { addCourse, isCourseSelected, toggleCourseSelection } = useSelectedCourses();
 
   useEffect(() => {
     async function loadCourseDetails() {
       try {
-        setLoading(true)
-        const data = await fetchCourseById(courseId)
+        setLoading(true);
+        const data = await fetchCourseById(courseId);
 
         if (!data) {
-          setError("Course not found. Please try another course.")
-          return
+          setError("Course not found. Please try another course.");
+          return;
         }
 
-        setCourse(data)
+        setCourse(data);
       } catch (err) {
-        console.error("Error loading course details:", err)
-        setError("Failed to load course details. Please try again later.")
+        console.error("Error loading course details:", err);
+        setError("Failed to load course details. Please try again later.");
       } finally {
-        // Add a slight delay to ensure smooth transition
         setTimeout(() => {
-          setLoading(false)
-        }, 500)
+          setLoading(false);
+        }, 500);
       }
     }
 
-    loadCourseDetails()
-    // Use stable reference to courseId
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [courseId])
+    async function fetchCampus() {
+      try {
+        const campus = await matchUniversityCampus(courseId);
+        setCourseCampus(campus);
+      } catch (error) {
+        console.error("Failed to fetch campus:", error);
+        setCourseCampus("Not specified");
+      }
+    }
+
+    if (courseId) {
+      loadCourseDetails();
+      fetchCampus();
+    }
+  }, [courseId]);
 
   const handleApplyNow = () => {
     try {
       if (course && !isCourseSelected(course.id)) {
-        addCourse(course)
+        addCourse(course);
         toast({
           title: "Course Selected",
-          description: `${course.title} has been added to your selected courses.`,
+          description: `${course.name} has been added to your selected courses.`,
           duration: 3000,
-        })
+        });
       }
 
-      // Redirect to signup page for payment if not logged in
       if (!user) {
-        router.push("/signup")
+        router.push("/signup");
       } else if (!user.hasPaid) {
-        router.push("/signup")
+        router.push("/signup");
       } else {
-        router.push("/selected-courses")
+        router.push("/selected-courses");
       }
     } catch (err) {
-      console.error("Error applying for course:", err)
+      console.error("Error applying for course:", err);
       toast({
         title: "Error",
         description: "Failed to apply for course. Please try again.",
         variant: "destructive",
         duration: 3000,
-      })
+      });
     }
-  }
+  };
 
   const handleToggleSelection = () => {
     try {
       if (course) {
-        toggleCourseSelection(course)
-
+        toggleCourseSelection(course);
         if (!isCourseSelected(course.id)) {
           toast({
             title: "Course Added",
-            description: `${course.title} has been added to your selected courses.`,
+            description: `${course.name} has been added to your selected courses.`,
             duration: 3000,
-          })
+          });
         } else {
           toast({
             title: "Course Removed",
-            description: `${course.title} has been removed from your selected courses.`,
+            description: `${course.name} has been removed from your selected courses.`,
             duration: 3000,
-          })
+          });
         }
       }
     } catch (err) {
-      console.error("Error toggling course selection:", err)
+      console.error("Error toggling course selection:", err);
       toast({
         title: "Error",
         description: "Failed to update course selection. Please try again.",
         variant: "destructive",
         duration: 3000,
-      })
+      });
     }
-  }
+  };
 
   if (loading) {
     return (
       <div className="flex min-h-screen flex-col">
         <Header />
         <main className="flex-1">
-          <section className="w-full py-12 md:py-24 lg:py-32 bg-gradient-to-b from-white to-gray-50 dark:from-gray-950 dark:to-gray-900">
+          <section className="w-full py-12 md:py-24 lg:py-32">
             <div className="container px-4 md:px-6">
               <div className="flex flex-col items-start gap-4 mb-8">
                 <Button variant="outline" size="sm" asChild className="mb-2">
@@ -138,14 +148,12 @@ export default function CourseDetailPage() {
                     Back to Courses
                   </Link>
                 </Button>
-
                 <div className="w-full space-y-4">
                   <Skeleton className="h-8 w-32" />
                   <Skeleton className="h-10 w-3/4" />
                   <Skeleton className="h-6 w-1/2" />
                 </div>
               </div>
-
               <div className="grid gap-6 md:grid-cols-3">
                 <div className="md:col-span-2 space-y-6">
                   <Card>
@@ -162,7 +170,6 @@ export default function CourseDetailPage() {
                       </div>
                     </CardContent>
                   </Card>
-
                   <Card>
                     <CardHeader>
                       <Skeleton className="h-7 w-48" />
@@ -181,7 +188,6 @@ export default function CourseDetailPage() {
                     </CardContent>
                   </Card>
                 </div>
-
                 <div className="space-y-6">
                   <Card>
                     <CardHeader>
@@ -213,7 +219,6 @@ export default function CourseDetailPage() {
                       </div>
                     </CardContent>
                   </Card>
-
                   <Card>
                     <CardHeader>
                       <Skeleton className="h-7 w-24" />
@@ -230,7 +235,7 @@ export default function CourseDetailPage() {
         </main>
         <Footer />
       </div>
-    )
+    );
   }
 
   if (error) {
@@ -253,7 +258,7 @@ export default function CourseDetailPage() {
         </main>
         <Footer />
       </div>
-    )
+    );
   }
 
   if (!course) {
@@ -275,14 +280,14 @@ export default function CourseDetailPage() {
         </main>
         <Footer />
       </div>
-    )
+    );
   }
 
   return (
     <div className="flex min-h-screen flex-col">
       <Header />
       <main className="flex-1">
-        <section className="w-full py-12 md:py-24 lg:py-32 bg-gradient-to-b from-white to-gray-50 dark:from-gray-950 dark:to-gray-900">
+        <section className="w-full py-12 md:py-24 lg:py-32 ">
           <div className="container px-4 md:px-6">
             <div className="flex flex-col items-start gap-4 mb-8">
               <Button variant="outline" size="sm" asChild className="mb-2">
@@ -291,12 +296,11 @@ export default function CourseDetailPage() {
                   Back to Courses
                 </Link>
               </Button>
-
               <div className="flex flex-col md:flex-row md:items-center md:justify-between w-full">
                 <div>
                   <Badge className="mb-2">{course.id}</Badge>
-                  <h1 className="text-3xl font-bold tracking-tighter sm:text-4xl md:text-5xl">{course.title}</h1>
-                  <p className="text-xl text-gray-500 mt-2">{course.university}</p>
+                  <h1 className="text-3xl font-bold tracking-tighter sm:text-4xl md:text-5xl">{course.name}</h1>
+                  <p className="text-xl text-gray-500 mt-2">{course.university_name}</p>
                 </div>
                 <div className="mt-4 md:mt-0 flex gap-2">
                   <Button
@@ -322,7 +326,6 @@ export default function CourseDetailPage() {
                 </div>
               </div>
             </div>
-
             <div className="grid gap-6 md:grid-cols-3">
               <div className="md:col-span-2 space-y-6">
                 <Card>
@@ -331,23 +334,26 @@ export default function CourseDetailPage() {
                   </CardHeader>
                   <CardContent>
                     <div className="prose dark:prose-invert max-w-none">
-                      {course.fullDescription.split("\n\n").map((paragraph: string, index: number) => {
-                        if (paragraph.startsWith("- ")) {
-                          const items = paragraph.split("\n- ")
-                          return (
-                            <ul key={index} className="my-4 list-disc pl-5">
-                              {items.map((item, i) => (
-                                <li key={i}>{item.replace("- ", "")}</li>
-                              ))}
-                            </ul>
-                          )
-                        }
-                        return <p key={index}>{paragraph}</p>
-                      })}
+                      {course.description ? (
+                        course.description.split("\n\n").map((paragraph: string, index: number) => {
+                          if (paragraph.startsWith("- ")) {
+                            const items = paragraph.split("\n- ");
+                            return (
+                              <ul key={index} className="my-4 list-disc pl-5">
+                                {items.map((item, i) => (
+                                  <li key={i}>{item.replace("- ", "")}</li>
+                                ))}
+                              </ul>
+                            );
+                          }
+                          return <p key={index}>{paragraph}</p>;
+                        })
+                      ) : (
+                        <p className="text-gray-400">No course description available.</p>
+                      )}
                     </div>
                   </CardContent>
                 </Card>
-
                 <Card>
                   <CardHeader>
                     <CardTitle>Entry Requirements</CardTitle>
@@ -357,55 +363,65 @@ export default function CourseDetailPage() {
                       <div>
                         <h3 className="font-semibold mb-2">Required Subjects</h3>
                         <div className="flex flex-wrap gap-2">
-                          {course.subjects.map((subject: string) => (
-                            <Badge key={subject} variant="secondary">
-                              {subject}
-                            </Badge>
-                          ))}
+                          {Array.isArray(course.required_subjects) && course.required_subjects.length > 0 ? (
+                            course.required_subjects.map((item: { subject: { name: string } }, index: number) => (
+                              <Badge key={index} variant="secondary">
+                                {item.subject.name}
+                              </Badge>
+                            ))
+                          ) : (
+                            <p className="text-sm text-muted-foreground">No required subjects listed.</p>
+                          )}
                         </div>
                       </div>
                       <div>
                         <h3 className="font-semibold mb-2">Minimum Points Required</h3>
-                        <Badge className="bg-emerald-100 text-emerald-800 dark:bg-emerald-900 dark:text-emerald-300">
-                          {course.points} points
-                        </Badge>
+                        {course.minimum_grade ? (
+                          <Badge className="bg-emerald-100 text-emerald-800 dark:bg-emerald-900 dark:text-emerald-300">
+                            {course.minimum_grade} points
+                          </Badge>
+                        ) : (
+                          <p className="text-sm text-muted-foreground">No points specified.</p>
+                        )}
                       </div>
                     </div>
                   </CardContent>
                 </Card>
-
                 <Card>
                   <CardHeader>
                     <CardTitle>Career Opportunities</CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <ul className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                      {course.careers.map((career: string) => (
-                        <li key={career} className="flex items-center gap-2">
-                          <div className="rounded-full bg-emerald-100 p-1 dark:bg-emerald-900">
-                            <svg
-                              className="h-4 w-4 text-emerald-600 dark:text-emerald-400"
-                              fill="none"
-                              height="24"
-                              stroke="currentColor"
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth="2"
-                              viewBox="0 0 24 24"
-                              width="24"
-                              xmlns="http://www.w3.org/2000/svg"
-                            >
-                              <polyline points="20 6 9 17 4 12" />
-                            </svg>
-                          </div>
-                          {career}
-                        </li>
-                      ))}
-                    </ul>
+                    {course.career_prospects ? (
+                      <ul className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                        {course.career_prospects.split(",").map((career: string) => (
+                          <li key={career.trim()} className="flex items-center gap-2">
+                            <div className="rounded-full bg-emerald-100 p-1 dark:bg-emerald-900">
+                              <svg
+                                className="h-4 w-4 text-emerald-600 dark:text-emerald-400"
+                                fill="none"
+                                height="24"
+                                stroke="currentColor"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth="2"
+                                viewBox="0 0 24 24"
+                                width="24"
+                                xmlns="http://www.w3.org/2000/svg"
+                              >
+                                <polyline points="20 6 9 17 4 12" />
+                              </svg>
+                            </div>
+                            {career.trim()}
+                          </li>
+                        ))}
+                      </ul>
+                    ) : (
+                      <p className="text-sm text-muted-foreground">No career prospects listed.</p>
+                    )}
                   </CardContent>
                 </Card>
               </div>
-
               <div className="space-y-6">
                 <Card>
                   <CardHeader>
@@ -423,35 +439,34 @@ export default function CourseDetailPage() {
                       <div className="flex items-center gap-2">
                         <GradCap className="h-5 w-5 text-emerald-600" />
                         <div>
-                          <p className="text-sm text-gray-500">Duration</p>
-                          <p className="font-medium">{course.duration}</p>
+                          <p className="text-sm text-gray-500">duration</p>
+                          <p className="font-medium">{course.duration_years} years</p>
                         </div>
                       </div>
                       <div className="flex items-center gap-2">
                         <Calendar className="h-5 w-5 text-emerald-600" />
                         <div>
                           <p className="text-sm text-gray-500">Start Date</p>
-                          <p className="font-medium">{course.startDate}</p>
+                          <p className="font-medium">{course.startDate || "Not specified"}</p>
                         </div>
                       </div>
                       <div className="flex items-center gap-2">
                         <Clock className="h-5 w-5 text-emerald-600" />
                         <div>
                           <p className="text-sm text-gray-500">Application Deadline</p>
-                          <p className="font-medium">{course.applicationDeadline}</p>
+                          <p className="font-medium">{course.applicationDeadline || "Not specified"}</p>
                         </div>
                       </div>
                       <div className="flex items-center gap-2">
                         <Building className="h-5 w-5 text-emerald-600" />
                         <div>
                           <p className="text-sm text-gray-500">Available Campuses</p>
-                          <p className="font-medium">{course.campuses.join(", ")}</p>
+                          <p className="font-medium">{courseCampus}</p>
                         </div>
                       </div>
                     </div>
                   </CardContent>
                 </Card>
-
                 <Card>
                   <CardHeader>
                     <CardTitle>Apply Now</CardTitle>
@@ -461,10 +476,11 @@ export default function CourseDetailPage() {
                     <Button className="w-full bg-emerald-600 hover:bg-emerald-700" onClick={handleApplyNow}>
                       Start Application
                     </Button>
-                    <p className="text-sm text-gray-500 mt-4">Application deadline: {course.applicationDeadline}</p>
+                    <p className="text-sm text-gray-500 mt-4">
+                      Application deadline: {course.applicationDeadline || "Not specified"}
+                    </p>
                   </CardContent>
                 </Card>
-
                 <Card>
                   <CardHeader>
                     <CardTitle>Need Help?</CardTitle>
@@ -485,5 +501,5 @@ export default function CourseDetailPage() {
       </main>
       <Footer />
     </div>
-  )
+  );
 }

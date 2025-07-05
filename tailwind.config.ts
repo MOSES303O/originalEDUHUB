@@ -9,6 +9,10 @@ export default {
   theme: {
     extend: {
       colors: {
+        'app-bg': {
+          light: '#A7F0DD', // Light #C592A8 mode: #A7F0DD
+          dark: '#121212',   // Dark mode: dark #121212
+        },
         background: "var(--background)",
         foreground: "var(--foreground)",
       },

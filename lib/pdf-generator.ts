@@ -33,9 +33,9 @@ export const generateCoursesPDF = (courses: Course[], userName = "Student") => {
   const tableColumn = ["Course Code", "Title", "University", "Points", "Description"]
   const tableRows = courses.map((course) => [
     course.code,
-    course.title,
-    course.university,
-    course.points.toString(),
+    course.name,
+    course.university_name,
+    course.minimum_grade,
     course.description.substring(0, 60) + (course.description.length > 60 ? "..." : ""),
   ])
 
@@ -69,17 +69,17 @@ export const generateCoursesPDF = (courses: Course[], userName = "Student") => {
 
     doc.setFontSize(12)
     doc.setTextColor(50, 50, 50)
-    doc.text(`${index + 1}. ${course.title} (${course.code})`, 14, yPos)
+    doc.text(`${index + 1}. ${course.name} (${course.code})`, 14, yPos)
 
     yPos += 6
 
     doc.setFontSize(10)
     doc.setTextColor(80, 80, 80)
-    doc.text(`University: ${course.university}`, 18, yPos)
+    doc.text(`University: ${course.university_name}`, 18, yPos)
 
     yPos += 5
 
-    doc.text(`Required Points: ${course.points}`, 18, yPos)
+    doc.text(`Required Points: ${course.minimum_grade}`, 18, yPos)
 
     yPos += 5
 

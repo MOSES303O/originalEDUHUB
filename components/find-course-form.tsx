@@ -12,12 +12,11 @@ interface FindCourseFormProps {
 
 type Subject = {
   id: string
-  value: string
+  code: string
   label: string
   grade: string
 }
 
-// Grades with their point values
 const grades = [
   { value: "A", label: "A", points: 12 },
   { value: "A-", label: "A-", points: 11 },
@@ -34,60 +33,39 @@ const grades = [
 ]
 
 export function FindCourseForm({ onClose }: FindCourseFormProps) {
-  const [availableSubjects, setAvailableSubjects] = useState<Array<{ value: string; label: string }>>([])
+  const [availableSubjects, setAvailableSubjects] = useState<Array<{ id: string; code: string; label: string }>>([])
   const [selectedSubjects, setSelectedSubjects] = useState<Subject[]>([])
   const [isSubjectsDropdownOpen, setIsSubjectsDropdownOpen] = useState(false)
   const [totalPoints, setTotalPoints] = useState(0)
   const [error, setError] = useState<string | null>(null)
-  //const [loading, setLoading] = useState(true)
+
   const router = useRouter()
-    const MIN_SUBJECTS = 7;
-    const MAX_SUBJECTS = 9;
-  
-    useEffect(() => {
-      async function loadSubjects() {
-        try {
-          const data = await fetchSubjects();
-          setAvailableSubjects(Array.isArray(data) ? data : data.results || []);
-        } catch (err) {
-          console.error("Error loading subjects:", err);
-          setAvailableSubjects([
-            { value: "mathematics", label: "Mathematics" },
-            { value: "kiswahili", label: "Kiswahili" },
-            { value: "english", label: "English" },
-            { value: "biology", label: "Biology" },
-            { value: "chemistry", label: "Chemistry" },
-            { value: "physics", label: "Physics" },
-            { value: "history", label: "History" },
-            { value: "geography", label: "Geography" },
-            { value: "business_studies", label: "Business Studies" },
-            { value: "computer_studies", label: "Computer Studies" },
-            { value: "agriculture", label: "Agriculture" },
-            { value: "home_science", label: "Home Science" },
-            { value: "art_design", label: "Art & Design" },
-            { value: "music", label: "Music" },
-            { value: "religious_education", label: "Religious Education" },
-          ]);
-        }
-      }
-  
-      loadSubjects();
-    }, []);
+  const MIN_SUBJECTS = 7
+  const MAX_SUBJECTS = 9
 
   useEffect(() => {
-    // Calculate total points whenever subject grades change
+    async function loadSubjects() {
+      const rawSubjects = await fetchSubjects();
+      const normalizedSubjects = rawSubjects.map((s: any) => ({
+        id: s.value, // Use value as the unique identifier or s.code
+        code: s.value,
+        label: s.label,
+      }));
+      setAvailableSubjects(normalizedSubjects);
+    }
+    loadSubjects();
+  }, []);
+  useEffect(() => {
     const points = selectedSubjects.reduce((total, subject) => {
       const gradeInfo = grades.find((g) => g.value === subject.grade)
       return total + (gradeInfo?.points || 0)
     }, 0)
     setTotalPoints(points)
 
-    // Set error message based on subject count
     if (selectedSubjects.length < MIN_SUBJECTS) {
       setError(`Please select at least ${MIN_SUBJECTS} subjects (${selectedSubjects.length}/${MIN_SUBJECTS} selected)`)
     } else {
-      // Check if all selected subjects have grades
-      const missingGrades = selectedSubjects.filter((subject) => !subject.grade)
+      const missingGrades = selectedSubjects.filter((s) => !s.grade)
       if (missingGrades.length > 0) {
         setError(`Please select grades for all subjects (${missingGrades.length} missing)`)
       } else {
@@ -96,63 +74,50 @@ export function FindCourseForm({ onClose }: FindCourseFormProps) {
     }
   }, [selectedSubjects])
 
-  const handleSubjectSelect = (subject: { value: string; label: string }) => {
-    if (selectedSubjects.length < MAX_SUBJECTS && !selectedSubjects.some((s) => s.value === subject.value)) {
-      setSelectedSubjects([...selectedSubjects, { ...subject, id: Date.now().toString(), grade: "" }])
+  const handleSubjectSelect = (subject: { id: string; code: string; label: string }) => {
+    if (
+      selectedSubjects.length < MAX_SUBJECTS &&
+      !selectedSubjects.some((s) => s.code === subject.code)
+    ) {
+      setSelectedSubjects([...selectedSubjects, { ...subject, grade: "" }]);
     }
-    setIsSubjectsDropdownOpen(false)
-  }
+    setIsSubjectsDropdownOpen(false);
+  };
 
   const handleRemoveSubject = (id: string) => {
-    setSelectedSubjects(selectedSubjects.filter((subject) => subject.id !== id))
+    setSelectedSubjects(selectedSubjects.filter((s) => s.id !== id))
   }
 
   const handleGradeChange = (id: string, grade: string) => {
-    setSelectedSubjects(selectedSubjects.map((subject) => (subject.id === id ? { ...subject, grade } : subject)))
+    setSelectedSubjects(selectedSubjects.map((s) => (s.id === id ? { ...s, grade } : s)))
   }
 
   const handleSubmit = () => {
-    if (selectedSubjects.length < MIN_SUBJECTS) {
-      return
-    }
+    if (error) return
 
-    // Check if all subjects have grades
-    const missingGrades = selectedSubjects.filter((subject) => !subject.grade)
-    if (missingGrades.length > 0) {
-      return
-    }
-
-    // Store subject data and points in localStorage
     const subjectData = {
       subjects: selectedSubjects.map((s) => ({ name: s.label, grade: s.grade })),
       totalPoints,
     }
-    localStorage.setItem("eduPathwaySubjects", JSON.stringify(subjectData))
 
-    // Create a user record to simulate account creation
+    localStorage.setItem("eduPathwaySubjects", JSON.stringify(subjectData))
     localStorage.setItem(
-      "eduPathwayUser",
-      JSON.stringify({
-        id: `user-${Date.now()}`,
-        hasCompletedProfile: true,
-        hasPaid: false,
-      }),
+      "EduHubwayUser",
+      JSON.stringify({ id: `user-${Date.now()}`, hasCompletedProfile: true, hasPaid: false })
     )
 
-    // Build query parameters
     const queryParams = new URLSearchParams()
     selectedSubjects.forEach((s) => {
       queryParams.append("subjects", `${s.label}:${s.grade}`)
     })
     queryParams.append("points", totalPoints.toString())
 
-    // Navigate to courses page
     router.push(`/courses?${queryParams.toString()}`)
   }
 
   return (
     <div className="fixed inset-0 flex items-center justify-center z-50 p-4 bg-black/70 overflow-y-auto">
-      <div className="w-full max-w-2xl bg-[#111827] text-white rounded-lg my-4">
+      <div className="w-full max-w-2xl bg-[#1a2521] text-white rounded-lg my-4">
         <div className="p-6 space-y-6 max-h-[80vh] overflow-y-auto">
           <div className="flex justify-between items-center">
             <div className="text-center space-y-2">
@@ -166,12 +131,10 @@ export function FindCourseForm({ onClose }: FindCourseFormProps) {
             </Button>
           </div>
 
-          <div className="flex justify-between items-center">
-            <div className="text-sm">
-              Select your high school subjects ({MIN_SUBJECTS}-{MAX_SUBJECTS})
-            </div>
+          <div className="flex justify-between items-center text-sm">
+            <span>Select your high school subjects ({MIN_SUBJECTS}-{MAX_SUBJECTS})</span>
             <div className="flex items-center gap-2">
-              <span className="text-sm">Total Points:</span>
+              <span>Total Points:</span>
               <span className="bg-gray-700 px-3 py-1 rounded-md">{totalPoints}</span>
             </div>
           </div>
@@ -183,7 +146,7 @@ export function FindCourseForm({ onClose }: FindCourseFormProps) {
             </div>
           )}
 
-          {/* Subject selection dropdown */}
+          {/* Subject dropdown */}
           <div className="relative">
             <button
               type="button"
@@ -202,10 +165,10 @@ export function FindCourseForm({ onClose }: FindCourseFormProps) {
             {isSubjectsDropdownOpen && (
               <div className="absolute z-10 w-full mt-1 bg-gray-800 border border-gray-700 rounded-md shadow-lg max-h-60 overflow-auto">
                 {availableSubjects
-                  .filter((subject) => !selectedSubjects.some((s) => s.value === subject.value))
+                  .filter((subject) => !selectedSubjects.some((s) => s.id === subject.id))
                   .map((subject) => (
                     <div
-                      key={subject.value}
+                      key={subject.id}
                       className="px-4 py-2 hover:bg-gray-700 cursor-pointer"
                       onClick={() => handleSubjectSelect(subject)}
                     >
@@ -216,7 +179,7 @@ export function FindCourseForm({ onClose }: FindCourseFormProps) {
             )}
           </div>
 
-          {/* Selected subjects with grades */}
+          {/* Selected subjects */}
           <div className="flex flex-wrap gap-2 max-h-60 overflow-y-auto">
             {selectedSubjects.map((subject) => (
               <div
@@ -224,7 +187,6 @@ export function FindCourseForm({ onClose }: FindCourseFormProps) {
                 className="flex items-center gap-2 bg-gray-800 border border-gray-700 rounded-md p-2 flex-shrink-0"
               >
                 <div className="bg-gray-900 px-3 py-1 rounded-md">{subject.label}</div>
-
                 <div className="relative">
                   <select
                     value={subject.grade}
@@ -240,7 +202,6 @@ export function FindCourseForm({ onClose }: FindCourseFormProps) {
                   </select>
                   <ChevronDown className="absolute right-2 top-1/2 transform -translate-y-1/2 h-4 w-4 pointer-events-none" />
                 </div>
-
                 <button
                   type="button"
                   onClick={() => handleRemoveSubject(subject.id)}
@@ -253,17 +214,7 @@ export function FindCourseForm({ onClose }: FindCourseFormProps) {
           </div>
 
           <div className="text-sm text-gray-400">
-            {selectedSubjects.length > 0 ? (
-              <div className="flex items-center justify-between">
-                <span>{selectedSubjects.length} subjects selected</span>
-                <ChevronDown className="h-4 w-4" />
-              </div>
-            ) : null}
-          </div>
-
-          <div className="text-sm text-gray-400">
-            Select between {MIN_SUBJECTS} and {MAX_SUBJECTS} subjects that you have studied in high school and assign
-            grades to each.
+            Select between {MIN_SUBJECTS} and {MAX_SUBJECTS} subjects you studied in high school and assign grades to each.
           </div>
 
           <Button
@@ -276,5 +227,5 @@ export function FindCourseForm({ onClose }: FindCourseFormProps) {
         </div>
       </div>
     </div>
-  );
+  )
 }

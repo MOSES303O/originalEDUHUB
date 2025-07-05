@@ -1,3 +1,4 @@
+//Layout.tsx
 import type React from "react"
 import type { Metadata } from "next"
 import { Inter } from "next/font/google"
@@ -9,13 +10,16 @@ import { Toaster } from "@/components/ui/toaster"
 const inter = Inter({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
-  title: "EduPathway - Find Your Perfect University Course",
+  title: "EduHub - Find Your Perfect University Course",
   description: "Discover university courses tailored to your high school subjects and interests.",
   keywords: "education, university, courses, career, high school, subjects, Kenya, university courses",
-  authors: [{ name: "EduPathway Team" }],
-  viewport: "width=device-width, initial-scale=1",
+  authors: [{ name: "EduHub Team" }],
 }
-
+// ✅ ADD this separately
+export const viewport = {
+  width: "device-width",
+  initialScale: 1,
+}
 export default function RootLayout({
   children,
 }: Readonly<{

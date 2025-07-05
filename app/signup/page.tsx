@@ -102,7 +102,7 @@ export default function SignupPage() {
   return (
     <div className="flex min-h-screen flex-col">
       <Header />
-      <main className="flex-1 flex items-center justify-center bg-gradient-to-b from-white to-gray-50 dark:from-gray-950 dark:to-gray-900 p-4">
+      <main className="flex-1 flex items-center justify-center p-4">
         <Card className="w-full max-w-md">
           <CardHeader className="space-y-1">
             <CardTitle className="text-2xl font-bold">Sign up for EduPathway</CardTitle>
@@ -180,7 +180,7 @@ export default function SignupPage() {
                 <div className="space-y-2">
                   <div className="flex items-center justify-between p-4 border rounded-md bg-muted/50">
                     <div>
-                      <p className="font-medium">EduPathway Premium</p>
+                      <p className="font-medium">EduHub Premium</p>
                       <p className="text-sm text-gray-500">One-time payment</p>
                     </div>
                     <div className="text-right">
@@ -207,7 +207,7 @@ export default function SignupPage() {
           </CardContent>
           <CardFooter className="flex flex-col space-y-4">
             <div className="text-center text-sm text-gray-500">
-              By signing up, you agree to our{" "}
+              By initiating PAY, you agree to our{" "}
               <Link href="#" className="text-emerald-600 hover:underline">
                 Terms of Service
               </Link>{" "}
@@ -217,9 +217,9 @@ export default function SignupPage() {
               </Link>
             </div>
             <div className="text-center text-sm">
-              Already have an account?{" "}
+              Have Not Paid?{" "}
               <Link href="#" className="text-emerald-600 hover:underline">
-                Sign in
+                PAY NOW
               </Link>
             </div>
           </CardFooter>
