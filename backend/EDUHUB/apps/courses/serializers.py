@@ -50,7 +50,7 @@ class CourseListSerializer(serializers.ModelSerializer):
         model = Course
         fields = [
             'id', 'name', 'code', 'university_name', 'university_code',
-            'category', 'duration_years', 'minimum_grade',
+            'category','description', 'duration_years', 'minimum_grade',
             'tuition_fee_per_year', 'application_fee',
             'average_rating', 'total_reviews', 'is_selected'
         ]

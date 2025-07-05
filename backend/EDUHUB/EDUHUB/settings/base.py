@@ -113,7 +113,6 @@ LANGUAGE_CODE = 'en-us'
 TIME_ZONE = 'Africa/Nairobi'
 USE_I18N = True
 USE_TZ = True
-
 # Static files (CSS, JavaScript, Images)
 STATIC_URL = '/static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'
@@ -155,7 +154,7 @@ REST_FRAMEWORK = {
     'DEFAULT_PAGINATION_CLASS': None,  # removes `page`
     'DEFAULT_FILTER_BACKENDS': ['django_filters.rest_framework.DjangoFilterBackend',
         ],
-    'PAGE_SIZE': 20,  # Default page size for pagination
+    'PAGE_SIZE': 10,
 }
 
 # JWT Configuration
@@ -183,8 +182,8 @@ SIMPLE_JWT = {
 }
 # CORS Configuration
 CORS_ALLOWED_ORIGINS = [
-    "http://localhost:3000",
     "http://127.0.0.1:3000",
+    "http://localhost:3000",
 ]
 
 CORS_ALLOW_CREDENTIALS = True

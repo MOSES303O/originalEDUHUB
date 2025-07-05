@@ -52,6 +52,35 @@ from apps.core.utils import APIResponseMixin
 from apps.core.mixins import RateLimitMixin
 logger = logging.getLogger(__name__)
 
+def log_user_activity(user, action, ip_address, details=None):
+    """
+    Log user activity to the database.
+    
+    :param user: User instance
+    :param action: Action performed by the user
+    :param ip_address: IP address of the user
+    :param details: Additional details about the action
+    """
+    from apps.core.models import UserActivityLog  # Import here to avoid circular imports
+    UserActivityLog.objects.create(
+        user=user,
+        action=action,
+        ip_address=ip_address,
+        details=json.dumps(details) if details else None
+    )
+def create_error_response(message="", errors=None, status_code=400):
+    return Response({
+        "status": "error",
+        "message": message,
+        "errors": errors,
+    }, status=status_code)
+
+def create_success_response(success=True, message="", data=None, status_code=200):
+    return Response({
+        "status": "success" if success else "error",
+        "message": message,
+        "data": data,
+    }, status=status_code)
 
 class CustomAnonRateThrottle(AnonRateThrottle):
     """Custom rate throttle for anonymous users"""
@@ -165,7 +194,7 @@ class UserRegistrationView(RateLimitMixin, APIView):
                 )
                 
                 # Log successful registration
-                log_user_action(
+                log_user_activity(
                     user=user,
                     action='USER_REGISTERED',
                     ip_address=ip_address,
@@ -305,7 +334,7 @@ class UserLoginView(APIResponseMixin, RateLimitMixin, APIView):
             user.last_login = timezone.now()
             user.save(update_fields=['last_login'])
 
-            log_user_action(
+            log_user_activity(
                 user=user,
                 action='USER_LOGIN',
                 ip_address=ip_address,
@@ -738,7 +767,7 @@ def get_user_sessions(request):
         
     except Exception as e:
         logger.error(f"Get sessions error: {str(e)}")
-        return create_error_responsee(
+        return create_error_response(
             success=False,
             message="Failed to retrieve sessions",
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR

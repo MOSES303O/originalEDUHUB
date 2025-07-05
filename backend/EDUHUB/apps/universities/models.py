@@ -11,6 +11,7 @@ class University(models.Model):
     code = models.CharField(max_length=20, unique=True, help_text="University code (e.g., UON, KU)")
     description = models.TextField(blank=True)
     website = models.URLField(blank=True)
+    campus = models.CharField(blank=True)
     logo = models.ImageField(upload_to='universities/logos/', blank=True, null=True)
     address = models.TextField(blank=True)
     city = models.CharField(max_length=100, blank=True)

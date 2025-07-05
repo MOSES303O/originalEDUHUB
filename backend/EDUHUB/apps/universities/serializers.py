@@ -37,7 +37,7 @@ class UniversityListSerializer(serializers.ModelSerializer):
     """
     class Meta:
         model = University
-        fields = ['id', 'name', 'slug', 'code', 'logo', 'city', 'ranking']
+        fields = ['id', 'name', 'slug', 'code', 'logo', 'city','campus', 'ranking']
 
 
 class UniversityDetailSerializer(serializers.ModelSerializer):
@@ -51,6 +51,6 @@ class UniversityDetailSerializer(serializers.ModelSerializer):
         model = University
         fields = [
             'id', 'name', 'slug', 'code', 'description', 'website', 
-            'logo', 'address', 'city', 'ranking', 
+            'logo', 'address', 'city', 'ranking','campus', 
             'established_year', 'faculties', 'requirements'
         ]
