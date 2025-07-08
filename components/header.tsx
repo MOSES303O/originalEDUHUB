@@ -7,15 +7,19 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { useRouter } from "next/navigation";
-import { useAuth } from "@/lib/auth-context";
 import { motion } from "framer-motion";
 
-export function Header({ onGetStarted }: { onGetStarted?: () => void }) {
+interface HeaderProps {
+  currentPage?: string; // Define currentPage prop
+  onGetStarted?: () => void; // Add onGetStarted prop
+  user?: any; // Define user prop if needed
+}
+
+export function Header({ currentPage, onGetStarted, user }: HeaderProps) {
   const [isScrolled, setIsScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const pathname = usePathname();
   const router = useRouter();
-  const { user } = useAuth();
 
   const handleGetStarted = () => {
     console.log("Header: Get Started clicked, user:", user, "onGetStarted exists:", !!onGetStarted);
@@ -42,6 +46,7 @@ export function Header({ onGetStarted }: { onGetStarted?: () => void }) {
     { name: "Home", path: "/" },
     { name: "About", path: "/about" },
     { name: "Courses", path: "/courses" },
+    { name: "Universities", path: "/university" },
     { name: "Contact", path: "/contact" },
   ];
 

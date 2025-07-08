@@ -1,10 +1,9 @@
 "use client"
 
-import  React from "react"
-
-import { useState, useEffect } from "react"
+import React from "react"
+import { useState, useEffect, useMemo } from "react"
 import { Button } from "@/components/ui/button"
-import { ArrowLeft, ChevronDown, ChevronRight, CheckCircle, XCircle, Check, Heart } from "lucide-react"
+import { ArrowLeft, ChevronDown, ChevronRight, CheckCircle, XCircle, Check, Heart, Search } from "lucide-react"
 import Link from "next/link"
 import { useSearchParams, useRouter } from "next/navigation"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
@@ -12,11 +11,12 @@ import { Badge } from "@/components/ui/badge"
 import { fetchCourses } from "@/lib/api"
 import { CoursesSkeleton } from "@/components/courses-skeleton"
 import { useSelectedCourses, type Course } from "@/lib/course-store"
-import { useToast } from "@/hooks/use-toast";
+import { useToast } from "@/hooks/use-toast"
 import { AuthenticationModal } from "@/components/authentication-modal"
 import { useAuth } from "@/lib/auth-context"
 import { Header } from "@/components/header"
 import { Footer } from "@/components/footer"
+import { Input } from "@/components/ui/input"
 
 const gradeMap: Record<string, number> = {
   A: 12,
@@ -32,32 +32,33 @@ const gradeMap: Record<string, number> = {
   "D-": 2,
   E: 1,
 }
+
 export default function CoursesPage() {
   const [expandedRows, setExpandedRows] = useState<Record<string, boolean>>({})
   const [coursesData, setCoursesData] = useState<Course[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [showAuthModal, setShowAuthModal] = useState(false)
+  const [searchTerm, setSearchTerm] = useState("")
   const router = useRouter()
   const { user } = useAuth()
-
   const searchParams = useSearchParams()
-  const { toast } = useToast() // ✅ Fix for toast error
-  // Get user's total points from URL params
-  const userPoints = Number.parseInt(searchParams.get("points") || "0", 10)
-  const userGrade = searchParams.get("grade") || ""
- 
-  // Get subject filters and points from URL once
-  const subjectParams = searchParams.getAll("subjects")
-  const pointsParam = searchParams.get("points")
-
-  // Use our custom hook for selected courses
+  const { toast } = useToast()
   const { selectedCourses, toggleCourseSelection, isCourseSelected } = useSelectedCourses()
 
+  // Get user's total points and grade from URL params
+  const userPoints = Number.parseInt(searchParams.get("points") || "0", 10)
+  const userGrade = searchParams.get("grade") || ""
+
+  // Memoize subjectParams to stabilize the dependency
+  const subjectParams = useMemo(() => searchParams.getAll("subjects"), [searchParams])
+
   useEffect(() => {
+    // Debugging: Log when useEffect runs
+    console.log("useEffect triggered with subjectParams:", subjectParams, "userPoints:", userPoints)
+
     // Check if user is authenticated and has paid
     if (user && !user.hasPaid) {
-      // User exists but hasn't paid - show authentication modal
       setShowAuthModal(true)
       return
     }
@@ -100,10 +101,10 @@ export default function CoursesPage() {
             code: "BSC-CS-001",
             name: "Bachelor of Computer Science",
             university_name: "University of Nairobi",
-            description:"IT all the the way",
-            minimum_grade: "B", // ✅ required
-            tuition_fee_per_year: "50000.00", // optional if required
-            application_fee: "1000.00", // optional
+            description: "IT all the way",
+            minimum_grade: "B",
+            tuition_fee_per_year: "50000.00",
+            application_fee: "1000.00",
             average_rating: 4,
             total_reviews: 10,
             category: "technology",
@@ -115,8 +116,8 @@ export default function CoursesPage() {
             code: "BBA-001",
             name: "Bachelor of Business Administration",
             university_name: "Strathmore University",
-            description:"biashara ni biashara",
-            minimum_grade: "B-", // ✅ required
+            description: "biashara ni biashara",
+            minimum_grade: "B-",
             tuition_fee_per_year: "60000.00",
             application_fee: "1500.00",
             average_rating: 4,
@@ -130,8 +131,8 @@ export default function CoursesPage() {
             code: "MBChB-001",
             name: "Bachelor of Medicine and Surgery",
             university_name: "Kenyatta University",
-            description:"medicine is the dawa",
-            minimum_grade: "A-", // ✅ required
+            description: "medicine is the dawa",
+            minimum_grade: "A-",
             tuition_fee_per_year: "70000.00",
             application_fee: "2000.00",
             average_rating: 5,
@@ -140,15 +141,14 @@ export default function CoursesPage() {
             duration_years: 6,
             is_selected: false,
           },
-        ]  
+        ]
         const transformedData = fallbackData.map((course) => ({
           ...course,
-          duration_years: course.duration_years.toString(), // Convert number to string
-        }));
-        
-        setCoursesData(transformedData);
+          duration_years: course.duration_years.toString(),
+        }))
+
+        setCoursesData(transformedData)
       } finally {
-        // Add a slight delay to ensure smooth transition
         setTimeout(() => {
           setLoading(false)
         }, 500)
@@ -156,9 +156,20 @@ export default function CoursesPage() {
     }
 
     loadCourses()
-    // Use stable references to avoid infinite loops
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+  }, [subjectParams, userPoints, user])
+
+  // Filter courses based on search term
+  const filteredCourses = useMemo(() => {
+    console.log("Filtering courses with searchTerm:", searchTerm)
+    return coursesData.filter((course) => {
+      const matchesSearch =
+        searchTerm === "" ||
+        course.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        course.code.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        course.university_name.toLowerCase().includes(searchTerm.toLowerCase())
+      return matchesSearch
+    })
+  }, [coursesData, searchTerm])
 
   const toggleRow = (id: string) => {
     setExpandedRows((prev) => ({
@@ -179,13 +190,13 @@ export default function CoursesPage() {
       if (!isCourseSelected(course.id)) {
         toast({
           title: "Course Selected",
-          description: `${(course as Course).name} has been added to your selected courses.`,
+          description: `${course.name} has been added to your selected courses.`,
           duration: 3000,
         })
       } else {
         toast({
           title: "Course Removed",
-          description: `${(course as Course).name} has been removed from your selected courses.`,
+          description: `${course.name} has been removed from your selected courses.`,
           duration: 3000,
         })
       }
@@ -204,7 +215,7 @@ export default function CoursesPage() {
     <div className="flex min-h-screen flex-col">
       <Header />
       <main className="flex-1">
-        <section className="w-full py-12 md:py-24 lg:py-32 ">
+        <section className="w-full py-12 md:py-24 lg:py-32">
           <div className="container px-4 md:px-6">
             <div className="flex flex-col items-start gap-4 mb-8">
               <Button variant="outline" size="sm" asChild className="mb-2">
@@ -231,7 +242,16 @@ export default function CoursesPage() {
                   </Button>
                 </div>
               </div>
-
+              {/* Search */}
+              <div className="flex-1 relative w-full mb-6">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                <Input
+                  placeholder="Search courses by name, ID, or university..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-10 bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-400"
+                />
+              </div>
               {userPoints > 0 && (
                 <div className="flex items-center mt-2">
                   <Badge variant="outline" className="text-sm py-1 px-3 border-emerald-200 dark:border-emerald-800">
@@ -250,7 +270,7 @@ export default function CoursesPage() {
                   Try Again
                 </Button>
               </div>
-            ) : coursesData.length === 0 ? (
+            ) : filteredCourses.length === 0 ? (
               <div className="flex flex-col items-center justify-center p-8 rounded-md border bg-gray-50 dark:bg-gray-800">
                 <p className="text-gray-500 dark:text-gray-400 mb-4">No courses found matching your criteria.</p>
                 <Button asChild variant="outline">
@@ -273,115 +293,115 @@ export default function CoursesPage() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {coursesData.map((course) => (
+                    {filteredCourses.map((course) => (
                       <React.Fragment key={course.id}>
-                      <TableRow
-                        className="cursor-pointer hover:bg-muted/50"
-                        onClick={() => toggleRow(course.id)}
-                      >
-                        <TableCell>
-                          {expandedRows[course.id] ? (
-                            <ChevronDown className="h-4 w-4" />
-                          ) : (
-                            <ChevronRight className="h-4 w-4" />
-                          )}
-                        </TableCell>
-                        <TableCell className="font-medium">{course.code}</TableCell>
-                        <TableCell>{(course as Course).name}</TableCell>
-                        <TableCell>{(course as Course).university_name}</TableCell>
-                        <TableCell>{(course as Course).minimum_grade}</TableCell>
-                        <TableCell>
-                          {isQualified((course as Course).minimum_grade) ? (
-                            <div className="flex items-center">
-                              <CheckCircle className="h-5 w-5 text-green-500 mr-1" />
-                              <span className="text-green-500">Qualified</span>
-                            </div>
-                          ) : (
-                            <div className="flex items-center">
-                              <XCircle className="h-5 w-5 text-red-500 mr-1" />
-                              <span className="text-red-500">Not Qualified</span>
-                            </div>
-                          )}
-                        </TableCell>
-                        <TableCell>
-                          <Button
-                            variant={isCourseSelected(course.id) ? "default" : "outline"}
-                            size="sm"
-                            className={isCourseSelected(course.id) ? "bg-emerald-600 hover:bg-emerald-700" : ""}
-                            onClick={(e) => handleSelectCourse(e, course)}
-                          >
-                            {isCourseSelected(course.id) ? <Check className="h-4 w-4" /> : "Select"}
-                          </Button>
-                        </TableCell>
-                        <TableCell className="text-right">
-                          <Button
-                            size="sm"
-                            className="bg-emerald-600 hover:bg-emerald-700"
-                            onClick={(e) => {
-                              e.stopPropagation()
-                              router.push(`/courses/${course.id}`)
-                            }}
-                          >
-                            View
-                          </Button>
-                        </TableCell>
-                      </TableRow>
-                      {expandedRows[course.id] && (
-                        <TableRow className="bg-muted/50">
-                          <TableCell colSpan={8} className="p-4">
-                            <div className="space-y-2">
-                              <div className="grid grid-cols-2 gap-4">
-                                <div>
-                                  <h4 className="text-sm font-semibold">Course Code</h4>
-                                  <p>{course.code}</p>
-                                </div>
-                                <div>
-                                  <h4 className="text-sm font-semibold">Course Name</h4>
-                                  <p>{course.name}</p>
-                                </div>
-                                <div>
-                                  <h4 className="text-sm font-semibold">University</h4>
-                                  <p>{course.university_name}</p>
-                                </div>
-                                <div>
-                                  <h4 className="text-sm font-semibold">Qualification Status</h4>
-                                  {isQualified(course.minimum_grade) ? (
-                                    <div className="flex items-center">
-                                      <CheckCircle className="h-5 w-5 text-green-500 mr-1" />
-                                      <span className="text-green-500">You meet the cluster weight requirements</span>
-                                    </div>
-                                  ) : (
-                                    <div className="flex items-center">
-                                      <XCircle className="h-5 w-5 text-red-500 mr-1" />
-                                      <span className="text-red-500">You do not meet the cluster weight requirements</span>
-                                    </div>
-                                  )}
-                                </div>
+                        <TableRow
+                          className="cursor-pointer hover:bg-muted/50"
+                          onClick={() => toggleRow(course.id)}
+                        >
+                          <TableCell>
+                            {expandedRows[course.id] ? (
+                              <ChevronDown className="h-4 w-4" />
+                            ) : (
+                              <ChevronRight className="h-4 w-4" />
+                            )}
+                          </TableCell>
+                          <TableCell className="font-medium">{course.code}</TableCell>
+                          <TableCell>{course.name}</TableCell>
+                          <TableCell>{course.university_name}</TableCell>
+                          <TableCell>{course.minimum_grade}</TableCell>
+                          <TableCell>
+                            {isQualified(course.minimum_grade) ? (
+                              <div className="flex items-center">
+                                <CheckCircle className="h-5 w-5 text-green-500 mr-1" />
+                                <span className="text-green-500">Qualified</span>
                               </div>
-                              <div className="pt-2 flex gap-2">
-                                <Button
-                                  variant={isCourseSelected(course.id) ? "default" : "outline"}
-                                  className={isCourseSelected(course.id) ? "bg-emerald-600 hover:bg-emerald-700" : ""}
-                                  onClick={(e) => handleSelectCourse(e, course)}
-                                >
-                                  {isCourseSelected(course.id) ? (
-                                    <>
-                                      <Check className="h-4 w-4 mr-2" />
-                                      Selected
-                                    </>
-                                  ) : (
-                                    "Add to Selected"
-                                  )}
-                                </Button>
-                                <Button className="bg-emerald-600 hover:bg-emerald-700" asChild>
-                                  <Link href={`/courses/courses/${course.id}`}>View Course Details</Link>
-                                </Button>
+                            ) : (
+                              <div className="flex items-center">
+                                <XCircle className="h-5 w-5 text-red-500 mr-1" />
+                                <span className="text-red-500">Not Qualified</span>
                               </div>
-                            </div>
+                            )}
+                          </TableCell>
+                          <TableCell>
+                            <Button
+                              variant={isCourseSelected(course.id) ? "default" : "outline"}
+                              size="sm"
+                              className={isCourseSelected(course.id) ? "bg-emerald-600 hover:bg-emerald-700" : ""}
+                              onClick={(e) => handleSelectCourse(e, course)}
+                            >
+                              {isCourseSelected(course.id) ? <Check className="h-4 w-4" /> : "Select"}
+                            </Button>
+                          </TableCell>
+                          <TableCell className="text-right">
+                            <Button
+                              size="sm"
+                              className="bg-emerald-600 hover:bg-emerald-700"
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                router.push(`/courses/${course.id}`)
+                              }}
+                            >
+                              View
+                            </Button>
                           </TableCell>
                         </TableRow>
-                      )}
-                    </React.Fragment>
+                        {expandedRows[course.id] && (
+                          <TableRow className="bg-muted/50">
+                            <TableCell colSpan={8} className="p-4">
+                              <div className="space-y-2">
+                                <div className="grid grid-cols-2 gap-4">
+                                  <div>
+                                    <h4 className="text-sm font-semibold">Course Code</h4>
+                                    <p>{course.code}</p>
+                                  </div>
+                                  <div>
+                                    <h4 className="text-sm font-semibold">Course Name</h4>
+                                    <p>{course.name}</p>
+                                  </div>
+                                  <div>
+                                    <h4 className="text-sm font-semibold">University</h4>
+                                    <p>{course.university_name}</p>
+                                  </div>
+                                  <div>
+                                    <h4 className="text-sm font-semibold">Qualification Status</h4>
+                                    {isQualified(course.minimum_grade) ? (
+                                      <div className="flex items-center">
+                                        <CheckCircle className="h-5 w-5 text-green-500 mr-1" />
+                                        <span className="text-green-500">You meet the cluster weight requirements</span>
+                                      </div>
+                                    ) : (
+                                      <div className="flex items-center">
+                                        <XCircle className="h-5 w-5 text-red-500 mr-1" />
+                                        <span className="text-red-500">You do not meet the cluster weight requirements</span>
+                                      </div>
+                                    )}
+                                  </div>
+                                </div>
+                                <div className="pt-2 flex gap-2">
+                                  <Button
+                                    variant={isCourseSelected(course.id) ? "default" : "outline"}
+                                    className={isCourseSelected(course.id) ? "bg-emerald-600 hover:bg-emerald-700" : ""}
+                                    onClick={(e) => handleSelectCourse(e, course)}
+                                  >
+                                    {isCourseSelected(course.id) ? (
+                                      <>
+                                        <Check className="h-4 w-4 mr-2" />
+                                        Selected
+                                      </>
+                                    ) : (
+                                      "Add to Selected"
+                                    )}
+                                  </Button>
+                                  <Button className="bg-emerald-600 hover:bg-emerald-700" asChild>
+                                    <Link href={`/courses/${course.id}`}>View Course Details</Link>
+                                  </Button>
+                                </div>
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        )}
+                      </React.Fragment>
                     ))}
                   </TableBody>
                 </Table>
@@ -391,8 +411,6 @@ export default function CoursesPage() {
         </section>
       </main>
       <Footer />
-
-      {/* Authentication Modal for Existing Users */}
       {showAuthModal && <AuthenticationModal onClose={() => setShowAuthModal(false)} />}
     </div>
   )
