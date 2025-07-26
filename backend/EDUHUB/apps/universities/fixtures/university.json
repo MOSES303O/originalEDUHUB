@@ -1,0 +1,60 @@
+[
+    {
+      "model": "universities.university",
+      "pk": 1,
+      "fields": {
+        "name": "University of Nairobi",
+        "slug": "university-of-nairobi",
+        "code": "UON",
+        "description": "The University of Nairobi is the largest university in Kenya. It has a distinguished reputation for training, research and community service.",
+        "website": "https://www.uonbi.ac.ke",
+        "address": "University Way, Nairobi",
+        "city": "Nairobi",
+        "country": "Kenya",
+        "is_active": true,
+        "ranking": 1,
+        "established_year": 1970,
+        "created_at": "2023-01-01T00:00:00Z",
+        "updated_at": "2023-01-01T00:00:00Z"
+      }
+    },
+    {
+      "model": "universities.university",
+      "pk": 2,
+      "fields": {
+        "name": "Kenyatta University",
+        "slug": "kenyatta-university",
+        "code": "KU",
+        "description": "Kenyatta University is a public research university with its main campus in Nairobi County, Kenya.",
+        "website": "https://www.ku.ac.ke",
+        "address": "Thika Road, Nairobi",
+        "city": "Nairobi",
+        "country": "Kenya",
+        "is_active": true,
+        "ranking": 2,
+        "established_year": 1985,
+        "created_at": "2023-01-01T00:00:00Z",
+        "updated_at": "2023-01-01T00:00:00Z"
+      }
+    },
+    {
+      "model": "universities.university",
+      "pk": 3,
+      "fields": {
+        "name": "Strathmore University",
+        "slug": "strathmore-university",
+        "code": "SU",
+        "description": "Strathmore University is a private university in Nairobi, Kenya. It provides all-round quality education in an atmosphere of freedom and responsibility.",
+        "website": "https://www.strathmore.edu",
+        "address": "Ole Sangale Road, Nairobi",
+        "city": "Nairobi",
+        "country": "Kenya",
+        "is_active": true,
+        "ranking": 3,
+        "established_year": 2002,
+        "created_at": "2023-01-01T00:00:00Z",
+        "updated_at": "2023-01-01T00:00:00Z"
+      }
+    }
+  ]
+  
