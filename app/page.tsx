@@ -1,3 +1,4 @@
+// frontend/app/page.tsx
 "use client";
 
 import './globals.css';
@@ -87,14 +88,14 @@ export default function Home() {
               <Image
                 alt="Students studying"
                 className="mx-auto aspect-video overflow-hidden rounded-xl object-cover object-center sm:w-full lg:order-last"
-                src="/placeholder.svg"
+                src="/image.png"
                 width={800}
                 height={550}
               />
             </div>
           </div>
         </section>
-        <section id="how-it-works" className="w-full py-12 md:py-24 lg:py-32 ">
+        <section id="how-it-works" className="w-full py-12 md:py-24 lg:py-32">
           <div className="container px-4 md:px-6">
             <div className="flex flex-col items-center justify-center space-y-4 text-center">
               <div className="space-y-2">
@@ -184,7 +185,7 @@ export default function Home() {
               </div>
             </div>
             <div className="rounded-lg border mx-auto grid max-w-5xl items-center gap-6 py-12 lg:grid-cols-2 lg:gap-12">
-              <div className="flex flex-col justify-center space-y-4 rounded-lg border  p-6 shadow-sm">
+              <div className="flex flex-col justify-center space-y-4 rounded-lg border p-6 shadow-sm">
                 <div className="space-y-2">
                   <p className="text-gray-700 dark:text-gray-200">
                     EduHub helped me find a computer science course that perfectly matched my math and physics
@@ -199,7 +200,7 @@ export default function Home() {
                   </div>
                 </div>
               </div>
-              <div className="flex flex-col justify-center space-y-4 rounded-lg border  p-6 shadow-sm">
+              <div className="flex flex-col justify-center space-y-4 rounded-lg border p-6 shadow-sm">
                 <div className="space-y-2">
                   <p className="text-gray-700 dark:text-gray-200">
                     I was unsure about which course to take after high school. EduHub showed me options I had not
@@ -248,7 +249,7 @@ export default function Home() {
                   </div>
                 </details>
               </div>
-              <div className="rounded-lg border ">
+              <div className="rounded-lg border">
                 <details className="group p-6">
                   <summary className="flex cursor-pointer items-center justify-between">
                     <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100">Is this service free to use?</h3>
@@ -278,7 +279,7 @@ export default function Home() {
                   </div>
                 </details>
               </div>
-              <div className="rounded-lg border ">
+              <div className="rounded-lg border">
                 <details className="group p-6">
                   <summary className="flex cursor-pointer items-center justify-between">
                     <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100">Can I download my selected courses?</h3>
@@ -308,13 +309,16 @@ export default function Home() {
       <Footer />
       {isFormOpen && (
         <ErrorBoundary>
-          <FindCourseForm onClose={() => {
-            console.log("Home: Closing FindCourseForm");
-            setIsFormOpen(false);
-          }} />
+          <FindCourseForm
+            onClose={() => {
+              console.log("Home: Closing FindCourseForm");
+              setIsFormOpen(false);
+            }}
+            setShowFindCourseForm={setIsFormOpen}
+          />
         </ErrorBoundary>
       )}
-      {isAuthModalOpen && <AuthenticationModal onClose={() => setIsAuthModalOpen(false)} />}
+      {isAuthModalOpen && <AuthenticationModal onClose={() => setIsAuthModalOpen(false)}  canClose={false} />}
     </div>
   );
 }

@@ -1,26 +1,24 @@
-"use client"
+// frontend/components/university-row.tsx
+"use client";
 
-import { useState } from "react"
-import { Button } from "@/components/ui/button"
-import { ChevronRight, ChevronDown, MapPin, Calendar, Award, ExternalLink } from "lucide-react"
-import { Badge } from "@/components/ui/badge"
-import Image from "next/image"
-import Link from "next/link"
-import type { UniversityWithCourses } from "@/types/university"
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { ChevronRight, ChevronDown, MapPin, Calendar, Award, ExternalLink } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import Image from "next/image";
+import { University } from "@/types"; // Import University type from types.ts
 
 interface UniversityRowProps {
-  university: UniversityWithCourses
-  isSelected: boolean
-  onSelect: () => void
-  onViewCourses: (universityId: number, universityName: string) => void; // Add this property
+  university: University; // Use University type
+  onViewCourses: () => void; // Simplified, no parameters needed since using university.code
 }
 
-export function UniversityRow({ university, isSelected, onSelect, onViewCourses }: UniversityRowProps) {
-  const [isExpanded, setIsExpanded] = useState(false)
+export function UniversityRow({ university, onViewCourses }: UniversityRowProps) {
+  const [isExpanded, setIsExpanded] = useState(false);
 
   const toggleExpanded = () => {
-    setIsExpanded(!isExpanded)
-  }
+    setIsExpanded(!isExpanded);
+  };
 
   return (
     <>
@@ -41,7 +39,7 @@ export function UniversityRow({ university, isSelected, onSelect, onViewCourses 
           <div className="flex items-center gap-3">
             {university.logo ? (
               <Image
-                src="/placeholder.svg?height=32&width=32"
+                src={university.logo} // Use actual logo URL
                 alt={`${university.name} logo`}
                 width={32}
                 height={32}
@@ -58,36 +56,24 @@ export function UniversityRow({ university, isSelected, onSelect, onViewCourses 
         <td className="p-4 text-gray-600 dark:text-gray-300 capitalize">{university.city}</td>
         <td className="p-4 text-center">
           <Badge variant="outline" className="border-emerald-500 text-emerald-600 dark:text-emerald-400">
-            {university.courseCount} Courses
+            {university.available_courses ?? 0} Courses
           </Badge>
         </td>
         <td className="p-4 text-center">
           <Badge variant="outline" className="border-blue-500 text-blue-600 dark:text-blue-400">
-            {university.accreditation}
+            {university.accreditation ?? "N/A"}
           </Badge>
         </td>
         <td className="p-4">
-          <Button
-            variant={isSelected ? "default" : "outline"}
-            size="sm"
-            onClick={onSelect}
-            className={
-              isSelected
-                ? "bg-emerald-500 hover:bg-emerald-600 text-white"
-                : "border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100"
-            }
-          >
-            {isSelected ? "Selected" : "Select"}
-          </Button>
-        </td>
-        <td className="p-4">
           <div className="flex gap-2">
-            <Link href={`/university/${university.id}/courses`}>
-                    <Button size="sm" className="bg-emerald-500 hover:bg-emerald-600 text-white">
-                      <ExternalLink className="w-3 h-3 mr-1" />
-                      View Courses
-                    </Button>
-            </Link>            
+            <Button
+              size="sm"
+              className="bg-emerald-500 hover:bg-emerald-600 text-white"
+              onClick={onViewCourses}
+            >
+              <ExternalLink className="w-3 h-3 mr-1" />
+              View Courses
+            </Button>
           </div>
         </td>
       </tr>
@@ -113,11 +99,11 @@ export function UniversityRow({ university, isSelected, onSelect, onViewCourses 
                     </div>
                     <div className="flex items-center gap-2 text-gray-600 dark:text-gray-300">
                       <Calendar className="w-4 h-4" />
-                      <span>Established: {university.establishedYear}</span>
+                      <span>Established: {university.established_year ?? "Unknown"}</span>
                     </div>
                     <div className="flex items-center gap-2 text-gray-600 dark:text-gray-300">
                       <Award className="w-4 h-4" />
-                      <span>Accreditation: {university.accreditation}</span>
+                      <span>Accreditation: {university.accreditation ?? "N/A"}</span>
                     </div>
                   </div>
                 </div>
@@ -128,78 +114,28 @@ export function UniversityRow({ university, isSelected, onSelect, onViewCourses 
                     Faculties ({university.faculties.length})
                   </h4>
                   <div className="space-y-2">
-                    {university.faculties.map((faculty, index) => (
-                      <div
-                        key={index}
-                        className="p-3 rounded-lg border border-gray-200 dark:border-gray-600"
-                      >
-                        <div className="flex justify-between items-start mb-2">
-                          <span className="text-gray-900 dark:text-gray-100 font-medium text-sm">{faculty.name}</span>
-                          <Badge variant="secondary" className="text-xs">
-                            {faculty.courseCount} courses
-                          </Badge>
-                        </div>
-                        <div className="flex flex-wrap gap-1">
-                          {faculty.departments.map((dept, deptIndex) => (
-                            <Badge
-                              key={deptIndex}
-                              variant="outline"
-                              className="text-xs border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-300"
-                            >
-                              {dept}
+                    {university.faculties.length > 0 ? (
+                      university.faculties.map((faculty) => (
+                        <div
+                          key={faculty.id}
+                          className="p-3 rounded-lg border border-gray-200 dark:border-gray-600"
+                        >
+                          <div className="flex justify-between items-start mb-2">
+                            <span className="text-gray-900 dark:text-gray-100 font-medium text-sm">
+                              {faculty.name}
+                            </span>
+                            <Badge variant="secondary" className="text-xs">
+                              {faculty.courseCount ?? 0} courses
                             </Badge>
-                          ))}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
-
-              {/* Departments with Course Links */}
-              <div className="mt-6">
-                <div className="flex justify-between items-center mb-4">
-                  <h4 className="text-gray-900 dark:text-gray-100 font-semibold">
-                    Departments ({university.departments.length})
-                  </h4>
-                  <Link href={`/university/${university.id}/courses`}>
-                    <Button size="sm" className="bg-emerald-500 hover:bg-emerald-600 text-white">
-                      <ExternalLink className="w-3 h-3 mr-1" />
-                      View All Courses
-                    </Button>
-                  </Link>
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                  {university.departments.map((department, index) => (
-                    <div
-                      key={index}
-                      className="bg-white dark:bg-gray-700/50 p-3 rounded-lg border border-gray-200 dark:border-gray-600"
-                    >
-                      <div className="flex justify-between items-center mb-2">
-                        <span className="text-gray-900 dark:text-gray-100 font-medium text-sm">{department.name}</span>
-                        <Badge variant="secondary" className="text-xs">
-                          {department.courseCount}
-                        </Badge>
-                      </div>
-                      <div className="space-y-1">
-                        {department.courses.slice(0, 3).map((course, courseIndex) => (
-                          <div
-                            key={courseIndex}
-                            className="text-xs text-gray-600 dark:text-gray-400 hover:text-emerald-600 dark:hover:text-emerald-400 cursor-pointer transition-colors"
-                          >
-                            • {course.name}
                           </div>
-                        ))}
-                        {department.courses.length > 3 && (
-                          <Link href={`/university/${university.id}/courses`}>
-                            <button className="text-xs text-emerald-600 dark:text-emerald-400 hover:text-emerald-700 dark:hover:text-emerald-300 transition-colors">
-                              +{department.courses.length - 3} more courses →
-                            </button>
-                          </Link>
-                        )}
+                        </div>
+                      ))
+                    ) : (
+                      <div className="text-gray-600 dark:text-gray-300 text-sm">
+                        No faculties available
                       </div>
-                    </div>
-                  ))}
+                    )}
+                  </div>
                 </div>
               </div>
             </div>
@@ -207,5 +143,5 @@ export function UniversityRow({ university, isSelected, onSelect, onViewCourses 
         </tr>
       )}
     </>
-  )
+  );
 }

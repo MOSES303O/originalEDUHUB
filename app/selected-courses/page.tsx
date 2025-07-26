@@ -1,3 +1,4 @@
+// frontend/app/selected-courses/page.tsx
 "use client";
 
 import { useState, useEffect } from "react";
@@ -8,7 +9,7 @@ import { ArrowLeft, Trash2, Heart, Download } from "lucide-react";
 import Link from "next/link";
 import { useToast } from "@/hooks/use-toast";
 import { PDFNotification } from "@/components/pdf-notification";
-import { generateCoursesPDF } from "@/lib/pdf-generator";
+import { generateCoursesPDF } from "@/lib/pdf-generator"; // Use updated generateCoursesPDF
 import {
   AlertDialog,
   AlertDialogAction,
@@ -22,59 +23,65 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Header } from "@/components/header";
 import { Footer } from "@/components/footer";
-import { fetchSelectedCourses, insertSelectedCourse } from "@/lib/api"; // Import the API functions
+import { useSelectedCourses, initializeSelectedCourses } from "@/lib/course-store";
+import { useAuth } from "@/lib/auth-context";
+import { AuthenticationModal } from "@/components/authentication-modal";
+import { removeSelectedCourse } from "@/lib/api";
+import { Course } from "@/types";
 
 export default function SelectedCoursesPage() {
-  const [selectedCourses, setSelectedCourses] = useState<any[]>([]); // State for selected courses
+  const { selectedCourses, setSelectedCourses } = useSelectedCourses();
+  const { user, loading: authLoading } = useAuth();
+  const { toast } = useToast();
   const [courseToRemove, setCourseToRemove] = useState<string | null>(null);
   const [showPdfNotification, setShowPdfNotification] = useState(false);
-  const { toast } = useToast();
+  const [showAuthModal, setShowAuthModal] = useState(false);
 
-  // Fetch selected courses from the API
+  // Fetch selected courses for authenticated users
   useEffect(() => {
-    const fetchCourses = async () => {
-      try {
-        const courses = await fetchSelectedCourses();
-        setSelectedCourses(courses); // Update state with API response
-      } catch (error) {
-        console.error("Failed to fetch selected courses:", error);
+    if (!authLoading && !user) {
+      setShowAuthModal(true);
+    } else if (user) {
+      initializeSelectedCourses().catch((err) => {
+        console.error("Failed to initialize selected courses:", JSON.stringify(err, null, 2));
         toast({
           title: "Error",
           description: "Failed to fetch selected courses.",
+          variant: "destructive",
           duration: 3000,
         });
-      }
-    };
+      });
+    }
+  }, [authLoading, user, toast]);
 
-    fetchCourses();
-  }, []);
-
-  const handleRemoveCourse = (courseId: string) => {
-    setSelectedCourses((prevCourses) => prevCourses.filter((course) => course.id !== courseId));
-    toast({
-      title: "Course Removed",
-      description: "The course has been removed from your selected courses.",
-      duration: 3000,
-    });
-  };
-
-  const handleAddCourse = async (courseId: string) => {
-    try {
-      const newCourse = await insertSelectedCourse(courseId);
-      setSelectedCourses((prevCourses) => [...prevCourses, newCourse]);
+  const handleRemoveCourse = async (courseId: string, selectionId?: string | number) => {
+    if (!selectionId) {
       toast({
-        title: "Course Added",
-        description: "The course has been added to your selected courses.",
+        title: "Error",
+        description: "Cannot remove course: selection ID not found.",
+        variant: "destructive",
+        duration: 3000,
+      });
+      return;
+    }
+    try {
+      await removeSelectedCourse(selectionId);
+      setSelectedCourses(selectedCourses.filter((course) => course.id !== courseId));
+      toast({
+        title: "Course Removed",
+        description: "The course has been removed from your selected courses.",
         duration: 3000,
       });
     } catch (error) {
-      console.error("Failed to add course:", error);
+      console.error("Failed to remove course:", JSON.stringify(error, null, 2));
       toast({
         title: "Error",
-        description: "Failed to add the course.",
+        description: "Failed to remove the course.",
+        variant: "destructive",
         duration: 3000,
       });
     }
+    setCourseToRemove(null);
   };
 
   const handleClosePdfNotification = () => {
@@ -83,19 +90,49 @@ export default function SelectedCoursesPage() {
   };
 
   const handleDownloadPdf = () => {
-    generateCoursesPDF(selectedCourses, "Student");
-    toast({
-      title: "PDF Generated",
-      description: "Your selected courses have been downloaded as a PDF.",
-      duration: 3000,
-    });
+    if (!user) {
+      setShowAuthModal(true);
+      toast({
+        title: "Authentication Required",
+        description: "Please log in to download your selected courses as a PDF.",
+        variant: "destructive",
+        duration: 3000,
+      });
+      return;
+    }
+    if (selectedCourses.length === 0) {
+      toast({
+        title: "No Courses Selected",
+        description: "Please select at least one course to generate a PDF.",
+        variant: "destructive",
+        duration: 3000,
+      });
+      return;
+    }
+    try {
+      generateCoursesPDF(selectedCourses, user.first_name || "Student");
+      toast({
+        title: "PDF Generated",
+        description: "Your selected courses have been downloaded as a PDF.",
+        duration: 3000,
+      });
+    } catch (error) {
+      console.error("Error generating PDF:", JSON.stringify(error, null, 2));
+      toast({
+        title: "Error",
+        description: "Failed to generate PDF. Please try again.",
+        variant: "destructive",
+        duration: 3000,
+      });
+    }
   };
 
   return (
     <div className="flex min-h-screen flex-col">
       <Header />
+      {showAuthModal && <AuthenticationModal onClose={() => setShowAuthModal(false)} canClose={false} />}
       <main className="flex-1">
-        <section className="w-full py-12 md:py-24 lg:py-32 ">
+        <section className="w-full py-12 md:py-24 lg:py-32">
           <div className="container px-4 md:px-6">
             <div className="flex flex-col items-start gap-4 mb-8">
               <Button variant="outline" size="sm" asChild className="mb-2">
@@ -112,7 +149,6 @@ export default function SelectedCoursesPage() {
                   </h1>
                   <p className="text-gray-500 md:text-xl">Courses you've shown interest in</p>
                 </div>
-
                 {selectedCourses.length > 0 && (
                   <Button onClick={handleDownloadPdf} className="mt-4 md:mt-0 bg-emerald-600 hover:bg-emerald-700">
                     <Download className="mr-2 h-4 w-4" />
@@ -133,7 +169,7 @@ export default function SelectedCoursesPage() {
               </div>
             ) : (
               <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-                {selectedCourses.map((course) => (
+                {selectedCourses.map((course: Course) => (
                   <Card key={course.id} className="overflow-hidden">
                     <CardHeader className="pb-3">
                       <div className="flex justify-between items-start">
@@ -144,6 +180,7 @@ export default function SelectedCoursesPage() {
                               variant="ghost"
                               size="icon"
                               className="text-red-500 hover:text-red-700 hover:bg-red-50"
+                              onClick={() => setCourseToRemove(course.id)}
                             >
                               <Trash2 className="h-5 w-5" />
                             </Button>
@@ -156,10 +193,12 @@ export default function SelectedCoursesPage() {
                               </AlertDialogDescription>
                             </AlertDialogHeader>
                             <AlertDialogFooter>
-                              <AlertDialogCancel>Cancel</AlertDialogCancel>
+                              <AlertDialogCancel onClick={() => setCourseToRemove(null)}>
+                                Cancel
+                              </AlertDialogCancel>
                               <AlertDialogAction
                                 className="bg-red-500 hover:bg-red-600"
-                                onClick={() => handleRemoveCourse(course.id)}
+                                onClick={() => handleRemoveCourse(course.id, course.selectionId)}
                               >
                                 Remove
                               </AlertDialogAction>
@@ -196,8 +235,6 @@ export default function SelectedCoursesPage() {
         </section>
       </main>
       <Footer />
-
-      {/* PDF Download Notification */}
       {showPdfNotification && <PDFNotification onClose={handleClosePdfNotification} onDownload={handleDownloadPdf} />}
     </div>
   );

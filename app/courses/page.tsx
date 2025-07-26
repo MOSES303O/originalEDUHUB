@@ -1,219 +1,132 @@
-"use client"
+// frontend/app/courses/page.tsx
+"use client";
 
-import React from "react"
-import { useState, useEffect, useMemo } from "react"
-import { Button } from "@/components/ui/button"
-import { ArrowLeft, ChevronDown, ChevronRight, CheckCircle, XCircle, Check, Heart, Search } from "lucide-react"
-import Link from "next/link"
-import { useSearchParams, useRouter } from "next/navigation"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Badge } from "@/components/ui/badge"
-import { fetchCourses } from "@/lib/api"
-import { CoursesSkeleton } from "@/components/courses-skeleton"
-import { useSelectedCourses, type Course } from "@/lib/course-store"
-import { useToast } from "@/hooks/use-toast"
-import { AuthenticationModal } from "@/components/authentication-modal"
-import { useAuth } from "@/lib/auth-context"
-import { Header } from "@/components/header"
-import { Footer } from "@/components/footer"
-import { Input } from "@/components/ui/input"
+import React, { useState, useEffect, useMemo } from "react";
+import { Button } from "@/components/ui/button";
+import { ArrowLeft, Heart, Search } from "lucide-react";
+import Link from "next/link";
+import { useSearchParams, useRouter } from "next/navigation";
+import { Table, TableBody, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Badge } from "@/components/ui/badge";
+import { fetchCourses } from "@/lib/api";
+import { CoursesSkeleton } from "@/components/courses-skeleton";
+import { useSelectedCourses, initializeSelectedCourses, type Course } from "@/lib/course-store";
+import { useToast } from "@/hooks/use-toast";
+import { AuthenticationModal } from "@/components/authentication-modal";
+import { useAuth } from "@/lib/auth-context";
+import { Header } from "@/components/header";
+import { Footer } from "@/components/footer";
+import { Input } from "@/components/ui/input";
+import { CourseRow } from "@/components/course-row";
 
 const gradeMap: Record<string, number> = {
-  A: 12,
-  "A-": 11,
-  "B+": 10,
-  B: 9,
-  "B-": 8,
-  "C+": 7,
-  C: 6,
-  "C-": 5,
-  "D+": 4,
-  D: 3,
-  "D-": 2,
-  E: 1,
-}
+  A: 12, "A-": 11, "B+": 10, B: 9, "B-": 8, "C+": 7, C: 6, "C-": 5, "D+": 4, D: 3, "D-": 2, E: 1,
+};
 
 export default function CoursesPage() {
-  const [expandedRows, setExpandedRows] = useState<Record<string, boolean>>({})
-  const [coursesData, setCoursesData] = useState<Course[]>([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
-  const [showAuthModal, setShowAuthModal] = useState(false)
-  const [searchTerm, setSearchTerm] = useState("")
-  const router = useRouter()
-  const { user } = useAuth()
-  const searchParams = useSearchParams()
-  const { toast } = useToast()
-  const { selectedCourses, toggleCourseSelection, isCourseSelected } = useSelectedCourses()
+  const [coursesData, setCoursesData] = useState<Course[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [showAuthModal, setShowAuthModal] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
+  const router = useRouter();
+  const { user, loading: authLoading, requirePayment } = useAuth();
+  const searchParams = useSearchParams();
+  const { toast } = useToast();
+  const { selectedCourses } = useSelectedCourses();
 
-  // Get user's total points and grade from URL params
-  const userPoints = Number.parseInt(searchParams.get("points") || "0", 10)
-  const userGrade = searchParams.get("grade") || ""
-
-  // Memoize subjectParams to stabilize the dependency
-  const subjectParams = useMemo(() => searchParams.getAll("subjects"), [searchParams])
+  const userPoints = Number.parseInt(searchParams.get("points") || "0", 10);
+  const userGrade = searchParams.get("grade") || "";
+  const subjectParams = useMemo(() => searchParams.getAll("subjects"), [searchParams]);
 
   useEffect(() => {
-    // Debugging: Log when useEffect runs
-    console.log("useEffect triggered with subjectParams:", subjectParams, "userPoints:", userPoints)
-
-    // Check if user is authenticated and has paid
-    if (user && !user.hasPaid) {
-      setShowAuthModal(true)
-      return
-    }
-
-    async function loadCourses() {
+    async function loadData() {
       try {
-        setLoading(true)
+        setLoading(true);
+        setError(null);
 
-        // Get subject filters from URL if any
-        const subjects = subjectParams.map((s) => {
-          const [subject] = s.split(":")
-          return subject
-        })
+        if (user && !requirePayment) {
+          await initializeSelectedCourses();
+        } else {
+          console.log("No user logged in or payment required, skipping initializeSelectedCourses");
+        }
 
-        // Fetch courses from API
-        const params: Record<string, string | string[]> = {}
+        const subjects = subjectParams
+          .map((s) => {
+            const [subject] = s.split(":");
+            return subject;
+          })
+          .filter((subject) => subject);
+
+        const params: Record<string, string | string[]> = {};
         if (subjects.length > 0) {
-          params.subject = subjects
+          params.subjects = subjects;
         }
         if (userPoints > 0) {
-          params.min_points = userPoints.toString()
+          params.min_points = userPoints.toString();
         }
 
-        const data = await fetchCourses(params)
+        console.log("Fetching courses with params:", params);
+        const data = await fetchCourses(params);
 
-        // Check if data is valid
-        if (!data || !Array.isArray(data)) {
-          throw new Error("Invalid data received from API")
+        if (!Array.isArray(data)) {
+          console.warn("Invalid courses data received:", JSON.stringify(data, null, 2));
+          setCoursesData([]);
+          return;
         }
 
-        setCoursesData(data)
-      } catch (err) {
-        console.error("Error loading courses:", err)
-        setError("Failed to load courses. Please try again later.")
-
-        // Use fallback data
-        const fallbackData = [
-          {
-            id: "CS001",
-            code: "BSC-CS-001",
-            name: "Bachelor of Computer Science",
-            university_name: "University of Nairobi",
-            description: "IT all the way",
-            minimum_grade: "B",
-            tuition_fee_per_year: "50000.00",
-            application_fee: "1000.00",
-            average_rating: 4,
-            total_reviews: 10,
-            category: "technology",
-            duration_years: 4,
-            is_selected: false,
-          },
-          {
-            id: "BA001",
-            code: "BBA-001",
-            name: "Bachelor of Business Administration",
-            university_name: "Strathmore University",
-            description: "biashara ni biashara",
-            minimum_grade: "B-",
-            tuition_fee_per_year: "60000.00",
-            application_fee: "1500.00",
-            average_rating: 4,
-            total_reviews: 8,
-            category: "business",
-            duration_years: 4,
-            is_selected: false,
-          },
-          {
-            id: "MD001",
-            code: "MBChB-001",
-            name: "Bachelor of Medicine and Surgery",
-            university_name: "Kenyatta University",
-            description: "medicine is the dawa",
-            minimum_grade: "A-",
-            tuition_fee_per_year: "70000.00",
-            application_fee: "2000.00",
-            average_rating: 5,
-            total_reviews: 12,
-            category: "medical",
-            duration_years: 6,
-            is_selected: false,
-          },
-        ]
-        const transformedData = fallbackData.map((course) => ({
-          ...course,
-          duration_years: course.duration_years.toString(),
-        }))
-
-        setCoursesData(transformedData)
+        setCoursesData(data);
+      } catch (err: any) {
+        console.error("Error loading data:", JSON.stringify({
+          message: err.message,
+          status: err.response?.status,
+          data: err.response?.data,
+        }, null, 2));
+        let errorMessage = "Failed to load courses. Please try again later.";
+        if (err.message?.includes("Failed to fetch selected courses")) {
+          try {
+            const parsedError = JSON.parse(err.message.replace("Failed to fetch selected courses: ", ""));
+            errorMessage = parsedError.data?.message || parsedError.message || errorMessage;
+          } catch (parseErr) {
+            console.error("Failed to parse error:", parseErr);
+          }
+        }
+        setError(errorMessage);
       } finally {
-        setTimeout(() => {
-          setLoading(false)
-        }, 500)
+        setLoading(false);
       }
     }
 
-    loadCourses()
-  }, [subjectParams, userPoints, user])
+    loadData();
+  }, [subjectParams, userPoints, user, authLoading, requirePayment]);
 
-  // Filter courses based on search term
+  useEffect(() => {
+    if (!authLoading && (!user || requirePayment)) {
+      const timer = setTimeout(() => {
+        setShowAuthModal(true);
+      }, 120000); // 2 minutes (120 seconds)
+      return () => clearTimeout(timer);
+    } else {
+      setShowAuthModal(false);
+    }
+  }, [authLoading, user, requirePayment]);
+
   const filteredCourses = useMemo(() => {
-    console.log("Filtering courses with searchTerm:", searchTerm)
+    console.log("Filtering courses with searchTerm:", searchTerm);
     return coursesData.filter((course) => {
       const matchesSearch =
         searchTerm === "" ||
         course.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         course.code.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        course.university_name.toLowerCase().includes(searchTerm.toLowerCase())
-      return matchesSearch
-    })
-  }, [coursesData, searchTerm])
-
-  const toggleRow = (id: string) => {
-    setExpandedRows((prev) => ({
-      ...prev,
-      [id]: !prev[id],
-    }))
-  }
-
-  const isQualified = (minGrade: string): boolean => {
-    return gradeMap[userGrade] >= gradeMap[minGrade]
-  }
-
-  const handleSelectCourse = (e: React.MouseEvent, course: Course) => {
-    e.stopPropagation()
-    try {
-      toggleCourseSelection(course)
-
-      if (!isCourseSelected(course.id)) {
-        toast({
-          title: "Course Selected",
-          description: `${course.name} has been added to your selected courses.`,
-          duration: 3000,
-        })
-      } else {
-        toast({
-          title: "Course Removed",
-          description: `${course.name} has been removed from your selected courses.`,
-          duration: 3000,
-        })
-      }
-    } catch (err) {
-      console.error("Error selecting course:", err)
-      toast({
-        title: "Error",
-        description: "Failed to update course selection. Please try again.",
-        variant: "destructive",
-        duration: 3000,
-      })
-    }
-  }
+        course.university_name.toLowerCase().includes(searchTerm.toLowerCase());
+      return matchesSearch;
+    });
+  }, [coursesData, searchTerm]);
 
   return (
     <div className="flex min-h-screen flex-col">
       <Header />
+      {showAuthModal && <AuthenticationModal onClose={() => setShowAuthModal(false)} canClose={!!(user && !requirePayment)} />}
       <main className="flex-1">
         <section className="w-full py-12 md:py-24 lg:py-32">
           <div className="container px-4 md:px-6">
@@ -235,14 +148,25 @@ export default function CoursesPage() {
                   <Button
                     variant="outline"
                     className="flex items-center gap-2"
-                    onClick={() => router.push("/selected-courses")}
+                    onClick={() => {
+                      if (!user || requirePayment) {
+                        setShowAuthModal(true);
+                        toast({
+                          title: "Authentication Required",
+                          description: "Please log in or complete payment to view selected courses.",
+                          variant: "destructive",
+                          duration: 3000,
+                        });
+                      } else {
+                        router.push("/selected-courses");
+                      }
+                    }}
                   >
                     <Heart className="h-4 w-4" />
                     Selected Courses ({selectedCourses.length})
                   </Button>
                 </div>
               </div>
-              {/* Search */}
               <div className="flex-1 relative w-full mb-6">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
                 <Input
@@ -261,7 +185,7 @@ export default function CoursesPage() {
               )}
             </div>
 
-            {loading ? (
+            {loading || authLoading ? (
               <CoursesSkeleton />
             ) : error ? (
               <div className="flex justify-center items-center p-8 rounded-md border bg-red-50 text-red-500 dark:bg-red-900/20 dark:text-red-300">
@@ -294,114 +218,11 @@ export default function CoursesPage() {
                   </TableHeader>
                   <TableBody>
                     {filteredCourses.map((course) => (
-                      <React.Fragment key={course.id}>
-                        <TableRow
-                          className="cursor-pointer hover:bg-muted/50"
-                          onClick={() => toggleRow(course.id)}
-                        >
-                          <TableCell>
-                            {expandedRows[course.id] ? (
-                              <ChevronDown className="h-4 w-4" />
-                            ) : (
-                              <ChevronRight className="h-4 w-4" />
-                            )}
-                          </TableCell>
-                          <TableCell className="font-medium">{course.code}</TableCell>
-                          <TableCell>{course.name}</TableCell>
-                          <TableCell>{course.university_name}</TableCell>
-                          <TableCell>{course.minimum_grade}</TableCell>
-                          <TableCell>
-                            {isQualified(course.minimum_grade) ? (
-                              <div className="flex items-center">
-                                <CheckCircle className="h-5 w-5 text-green-500 mr-1" />
-                                <span className="text-green-500">Qualified</span>
-                              </div>
-                            ) : (
-                              <div className="flex items-center">
-                                <XCircle className="h-5 w-5 text-red-500 mr-1" />
-                                <span className="text-red-500">Not Qualified</span>
-                              </div>
-                            )}
-                          </TableCell>
-                          <TableCell>
-                            <Button
-                              variant={isCourseSelected(course.id) ? "default" : "outline"}
-                              size="sm"
-                              className={isCourseSelected(course.id) ? "bg-emerald-600 hover:bg-emerald-700" : ""}
-                              onClick={(e) => handleSelectCourse(e, course)}
-                            >
-                              {isCourseSelected(course.id) ? <Check className="h-4 w-4" /> : "Select"}
-                            </Button>
-                          </TableCell>
-                          <TableCell className="text-right">
-                            <Button
-                              size="sm"
-                              className="bg-emerald-600 hover:bg-emerald-700"
-                              onClick={(e) => {
-                                e.stopPropagation()
-                                router.push(`/courses/${course.id}`)
-                              }}
-                            >
-                              View
-                            </Button>
-                          </TableCell>
-                        </TableRow>
-                        {expandedRows[course.id] && (
-                          <TableRow className="bg-muted/50">
-                            <TableCell colSpan={8} className="p-4">
-                              <div className="space-y-2">
-                                <div className="grid grid-cols-2 gap-4">
-                                  <div>
-                                    <h4 className="text-sm font-semibold">Course Code</h4>
-                                    <p>{course.code}</p>
-                                  </div>
-                                  <div>
-                                    <h4 className="text-sm font-semibold">Course Name</h4>
-                                    <p>{course.name}</p>
-                                  </div>
-                                  <div>
-                                    <h4 className="text-sm font-semibold">University</h4>
-                                    <p>{course.university_name}</p>
-                                  </div>
-                                  <div>
-                                    <h4 className="text-sm font-semibold">Qualification Status</h4>
-                                    {isQualified(course.minimum_grade) ? (
-                                      <div className="flex items-center">
-                                        <CheckCircle className="h-5 w-5 text-green-500 mr-1" />
-                                        <span className="text-green-500">You meet the cluster weight requirements</span>
-                                      </div>
-                                    ) : (
-                                      <div className="flex items-center">
-                                        <XCircle className="h-5 w-5 text-red-500 mr-1" />
-                                        <span className="text-red-500">You do not meet the cluster weight requirements</span>
-                                      </div>
-                                    )}
-                                  </div>
-                                </div>
-                                <div className="pt-2 flex gap-2">
-                                  <Button
-                                    variant={isCourseSelected(course.id) ? "default" : "outline"}
-                                    className={isCourseSelected(course.id) ? "bg-emerald-600 hover:bg-emerald-700" : ""}
-                                    onClick={(e) => handleSelectCourse(e, course)}
-                                  >
-                                    {isCourseSelected(course.id) ? (
-                                      <>
-                                        <Check className="h-4 w-4 mr-2" />
-                                        Selected
-                                      </>
-                                    ) : (
-                                      "Add to Selected"
-                                    )}
-                                  </Button>
-                                  <Button className="bg-emerald-600 hover:bg-emerald-700" asChild>
-                                    <Link href={`/courses/${course.id}`}>View Course Details</Link>
-                                  </Button>
-                                </div>
-                              </div>
-                            </TableCell>
-                          </TableRow>
-                        )}
-                      </React.Fragment>
+                      <CourseRow
+                        key={course.id}
+                        course={course}
+                        showUniversity={true}
+                      />
                     ))}
                   </TableBody>
                 </Table>
@@ -411,7 +232,6 @@ export default function CoursesPage() {
         </section>
       </main>
       <Footer />
-      {showAuthModal && <AuthenticationModal onClose={() => setShowAuthModal(false)} />}
     </div>
-  )
+  );
 }

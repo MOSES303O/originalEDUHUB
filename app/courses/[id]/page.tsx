@@ -24,17 +24,19 @@ import { useToast } from "@/hooks/use-toast";
 import { Header } from "@/components/header";
 import { Footer } from "@/components/footer";
 import { useAuth } from "@/lib/auth-context";
+import { AuthenticationModal } from "@/components/authentication-modal";
 
 export default function CourseDetailPage() {
   const params = useParams();
   const courseId = params.id as string;
   const router = useRouter();
-  const { user } = useAuth();
+  const { user, loading: authLoading, requirePayment } = useAuth();
   const { toast } = useToast();
   const [course, setCourse] = useState<Course | null>(null);
   const [courseCampus, setCourseCampus] = useState<string>("Not specified");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [showAuthModal, setShowAuthModal] = useState(false);
 
   const { addCourse, isCourseSelected, toggleCourseSelection } = useSelectedCourses();
 
@@ -50,13 +52,22 @@ export default function CourseDetailPage() {
         }
 
         setCourse(data);
-      } catch (err) {
-        console.error("Error loading course details:", err);
-        setError("Failed to load course details. Please try again later.");
+      } catch (err: any) {
+        console.error("Error loading course details:", JSON.stringify({
+          message: err.message,
+          status: err.response?.status,
+          data: err.response?.data,
+        }, null, 2));
+        let errorMessage = "Failed to load course details. Please try again later.";
+        try {
+          const parsedError = JSON.parse(err.message || "{}");
+          errorMessage = parsedError.data?.message || parsedError.message || errorMessage;
+        } catch {
+          // Fallback to default error message
+        }
+        setError(errorMessage);
       } finally {
-        setTimeout(() => {
-          setLoading(false);
-        }, 500);
+        setLoading(false);
       }
     }
 
@@ -65,7 +76,7 @@ export default function CourseDetailPage() {
         const campus = await matchUniversityCampus(courseId);
         setCourseCampus(campus);
       } catch (error) {
-        console.error("Failed to fetch campus:", error);
+        console.error("Failed to fetch campus:", JSON.stringify(error, null, 2));
         setCourseCampus("Not specified");
       }
     }
@@ -76,10 +87,21 @@ export default function CourseDetailPage() {
     }
   }, [courseId]);
 
-  const handleApplyNow = () => {
+  useEffect(() => {
+    if (!authLoading && (!user || requirePayment)) {
+      const timer = setTimeout(() => {
+        setShowAuthModal(true);
+      }, 120000); // 2 minutes (120 seconds)
+      return () => clearTimeout(timer);
+    } else {
+      setShowAuthModal(false);
+    }
+  }, [authLoading, user, requirePayment]);
+
+  const handleApplyNow = async () => {
     try {
       if (course && !isCourseSelected(course.id)) {
-        addCourse(course);
+        await addCourse(course);
         toast({
           title: "Course Selected",
           description: `${course.name} has been added to your selected courses.`,
@@ -87,15 +109,19 @@ export default function CourseDetailPage() {
         });
       }
 
-      if (!user) {
-        router.push("/signup");
-      } else if (!user.hasPaid) {
-        router.push("/signup");
+      if (!user || requirePayment) {
+        setShowAuthModal(true);
+        toast({
+          title: "Authentication Required",
+          description: "Please log in or complete payment to apply for this course.",
+          variant: "destructive",
+          duration: 3000,
+        });
       } else {
         router.push("/selected-courses");
       }
     } catch (err) {
-      console.error("Error applying for course:", err);
+      console.error("Error applying for course:", JSON.stringify(err, null, 2));
       toast({
         title: "Error",
         description: "Failed to apply for course. Please try again.",
@@ -105,10 +131,10 @@ export default function CourseDetailPage() {
     }
   };
 
-  const handleToggleSelection = () => {
+  const handleToggleSelection = async () => {
     try {
       if (course) {
-        toggleCourseSelection(course);
+        await toggleCourseSelection(course);
         if (!isCourseSelected(course.id)) {
           toast({
             title: "Course Added",
@@ -124,7 +150,7 @@ export default function CourseDetailPage() {
         }
       }
     } catch (err) {
-      console.error("Error toggling course selection:", err);
+      console.error("Error toggling course selection:", JSON.stringify(err, null, 2));
       toast({
         title: "Error",
         description: "Failed to update course selection. Please try again.",
@@ -286,8 +312,9 @@ export default function CourseDetailPage() {
   return (
     <div className="flex min-h-screen flex-col">
       <Header />
+      {showAuthModal && <AuthenticationModal onClose={() => setShowAuthModal(false)} canClose={!!(user && !requirePayment)} />}
       <main className="flex-1">
-        <section className="w-full py-12 md:py-24 lg:py-32 ">
+        <section className="w-full py-12 md:py-24 lg:py-32">
           <div className="container px-4 md:px-6">
             <div className="flex flex-col items-start gap-4 mb-8">
               <Button variant="outline" size="sm" asChild className="mb-2">
@@ -298,7 +325,7 @@ export default function CourseDetailPage() {
               </Button>
               <div className="flex flex-col md:flex-row md:items-center md:justify-between w-full">
                 <div>
-                  <Badge className="mb-2">{course.id}</Badge>
+                  <Badge className="mb-2">{course.code}</Badge>
                   <h1 className="text-3xl font-bold tracking-tighter sm:text-4xl md:text-5xl">{course.name}</h1>
                   <p className="text-xl text-gray-500 mt-2">{course.university_name}</p>
                 </div>
@@ -439,7 +466,7 @@ export default function CourseDetailPage() {
                       <div className="flex items-center gap-2">
                         <GradCap className="h-5 w-5 text-emerald-600" />
                         <div>
-                          <p className="text-sm text-gray-500">duration</p>
+                          <p className="text-sm text-gray-500">Duration</p>
                           <p className="font-medium">{course.duration_years} years</p>
                         </div>
                       </div>
@@ -447,7 +474,7 @@ export default function CourseDetailPage() {
                         <Calendar className="h-5 w-5 text-emerald-600" />
                         <div>
                           <p className="text-sm text-gray-500">Start Date</p>
-                          <p className="font-medium">{course.startDate || "Not specified"}</p>
+                          <p className="font-medium">{course.startDate?.[0] || "Not specified"}</p>
                         </div>
                       </div>
                       <div className="flex items-center gap-2">
