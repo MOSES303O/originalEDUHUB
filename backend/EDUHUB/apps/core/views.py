@@ -19,24 +19,35 @@ from .utils import (
 
 logger = logging.getLogger(__name__)
 
-class BaseAPIView(APIView, APIResponseMixin, RateLimitMixin):
-    """
-    Base API view class with safe DRF behavior and standardized extensions.
-    """
+# apps/core/views.py
+import logging
+from typing import Dict, Any, Optional
+from rest_framework import status
+from rest_framework.views import APIView
+from rest_framework.viewsets import ModelViewSet
+from rest_framework.response import Response
+from rest_framework.permissions import IsAuthenticated
+from rest_framework import exceptions
+from django.utils import timezone
+from django.core.cache import cache
+from .utils import (
+    standardize_response, get_client_ip, log_user_activity,
+    cache_key, APIResponseMixin, RateLimitMixin
+)
 
+logger = logging.getLogger(__name__)
+
+class BaseAPIView(APIView, APIResponseMixin, RateLimitMixin):
     rate_limit_scope = 'default'
     rate_limit_count = 60
     rate_limit_window = 3600
     authentication_required = True
 
     def initial(self, request, *args, **kwargs):
-        """
-        DRF lifecycle method called before any action (get/post/etc).
-        """
         super().initial(request, *args, **kwargs)
 
         # Rate limiting
-        if not self.check_rate_limit(request):
+        if not self.check_rate_limit(request, self.rate_limit_scope, self.rate_limit_count, self.rate_limit_window):
             raise exceptions.Throttled(detail="Rate limit exceeded.")
 
         # Capture request metadata
@@ -44,12 +55,8 @@ class BaseAPIView(APIView, APIResponseMixin, RateLimitMixin):
         self.request_timestamp = timezone.now()
 
     def handle_exception(self, exc):
-        """
-        DRF-compliant exception handling.
-        """
         logger.error(f"API Error in {self.__class__.__name__}: {str(exc)}")
 
-        # Log user error
         if hasattr(self.request, 'user') and self.request.user.is_authenticated:
             log_user_activity(
                 user=self.request.user,
@@ -71,24 +78,12 @@ class BaseAPIView(APIView, APIResponseMixin, RateLimitMixin):
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR
         )
 
-    def check_rate_limit(self, request) -> bool:
-        return self.check_rate_limit_for_view(
-            request,
-            self.rate_limit_scope,
-            self.rate_limit_count,
-            self.rate_limit_window
-        )
-
     def get_permissions(self):
-        """
-        Add `IsAuthenticated` only if authentication_required is True.
-        """
         permissions = super().get_permissions()
         if self.authentication_required:
             permissions.append(IsAuthenticated())
         return permissions
-
-
+# BaseModelViewSet remains unchanged (as provided previously)
 class BaseModelViewSet(ModelViewSet, APIResponseMixin, RateLimitMixin):
     """
     Base ModelViewSet with standardized functionality for CRUD operations.
@@ -411,7 +406,7 @@ class APIDocumentationView(BaseAPIView):
         Return API documentation.
         """
         documentation = {
-            'title': 'EduPathway API',
+            'title': 'EduHub API',
             'version': '1.0.0',
             'description': 'Educational platform API for course management and payments',
             'base_url': request.build_absolute_uri('/api/v1/'),

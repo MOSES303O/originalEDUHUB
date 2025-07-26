@@ -95,7 +95,6 @@ def log_user_activity(
     """
     try:
         from apps.authentication.models import UserActivity
-        
         UserActivity.objects.create(
             user=user,
             action=action,
@@ -103,13 +102,13 @@ def log_user_activity(
             details=details or {},
             success=success,
             error_message=error_message,
-            request_id=request_id
+            request_id=request_id or str(uuid.uuid4())  # Generate UUID if None
         )
         
-        logger.info(f"User activity logged: {user.email} - {action} - Success: {success}")
+        logger.info(f"User activity logged: {user.phone_number} - {action} - Success: {success}")
         
     except Exception as e:
-        logger.error(f"Failed to log user activity: {str(e)}")
+        logger.error(f"Failed to log user activity: {str(e)}", exc_info=True)
 
 
 class APIResponseMixin:
@@ -409,35 +408,6 @@ def get_client_ip(request) -> str:
     else:
         ip = request.META.get('REMOTE_ADDR')
     return ip
-
-
-def log_user_activity(user, action: str, details: dict = None, request=None):
-    """
-    Log user activity for audit purposes.
-    
-    Args:
-        user: User instance
-        action: Action performed
-        details: Additional details
-        request: Django request object
-    """
-    log_data = {
-        'user_id': user.id if user else None,
-        'user_email': user.email if user else None,
-        'action': action,
-        'timestamp': timezone.now().isoformat(),
-        'details': details or {}
-    }
-    
-    if request:
-        log_data.update({
-            'ip_address': get_client_ip(request),
-            'user_agent': request.META.get('HTTP_USER_AGENT', ''),
-            'method': request.method,
-            'path': request.path
-        })
-    
-    logger.info(f"User activity: {log_data}")
 
 
 def format_currency(amount, currency='KES') -> str:

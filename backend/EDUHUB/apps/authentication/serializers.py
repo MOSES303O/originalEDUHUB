@@ -1,226 +1,179 @@
-"""
-Serializers for authentication app using updated core utils.
-"""
-
+# apps/authentication/serializers.py
 from rest_framework import serializers
 from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError
 from django.contrib.auth import authenticate
 from django.utils import timezone
-
-from .models import User, UserProfile, UserSubject, UserSession, UserActivity
+from apps.courses.models import Subject, Course
+from apps.courses.serializers import CourseListSerializer
+from .models import User, UserProfile, UserSubject, UserSelectedCourse
 from apps.core.utils import validate_kenyan_phone, standardize_phone_number
 
+class UserSubjectSerializer(serializers.Serializer):
+    subject_id = serializers.UUIDField()
+    grade = serializers.ChoiceField(choices=[
+        ('A', 'A'), ('A-', 'A-'), ('B+', 'B+'), ('B', 'B'), ('B-', 'B-'),
+        ('C+', 'C+'), ('C', 'C'), ('C-', 'C-'), ('D+', 'D+'), ('D', 'D'),
+        ('D-', 'D-'), ('E', 'E')
+    ])
+
+    def validate_subject_id(self, value):
+        if not Subject.objects.filter(id=value, is_active=True).exists():
+            raise serializers.ValidationError(f"Subject with ID {value} does not exist or is inactive.")
+        return value
 
 class UserRegistrationSerializer(serializers.ModelSerializer):
-    """
-    Serializer for user registration with updated phone validation.
-    """
-    
     password = serializers.CharField(
         write_only=True,
         min_length=8,
-        style={'input_type': 'password'}
+        style={'input_type': 'password'},
+        required=True
     )
     password_confirm = serializers.CharField(
         write_only=True,
-        style={'input_type': 'password'}
+        style={'input_type': 'password'},
+        required=True
     )
-    
+    subjects = UserSubjectSerializer(many=True, required=True)
+
     class Meta:
         model = User
         fields = [
-            'email', 'password', 'password_confirm',
-            'first_name', 'last_name', 'phone_number',
-            'date_of_birth'
+            'phone_number', 'email', 'password', 'password_confirm',
+            'subjects'
         ]
         extra_kwargs = {
-            'email': {'required': True},
-            'first_name': {'required': True},
-            'last_name': {'required': True},
+            'phone_number': {'required': True},
+            'first_name': {'required': False, 'allow_blank': True},
+            'last_name': {'required': False, 'allow_blank': True},
+            'email': {'required': False, 'allow_null': True, 'allow_blank': True}
         }
-    
-    def validate_email(self, value):
-        """Validate email format and uniqueness."""
-        if User.objects.filter(email=value.lower()).exists():
-            raise serializers.ValidationError(
-                "A user with this email already exists."
-            )
-        return value.lower()
-    
+
     def validate_phone_number(self, value):
-        """Validate Kenyan phone number using core utils."""
-        if value and not validate_kenyan_phone(value):
+        if not validate_kenyan_phone(value):
             raise serializers.ValidationError(
                 "Please enter a valid Kenyan phone number (e.g., +254712345678 or 0712345678)"
             )
-        return value
-    
-    def validate_password(self, value):
-        """Validate password strength."""
-        try:
-            validate_password(value)
-        except ValidationError as e:
-            raise serializers.ValidationError(list(e.messages))
-        return value
-    
-    def validate(self, attrs):
-        """Validate password confirmation and other cross-field validation."""
-        if attrs['password'] != attrs['password_confirm']:
-            raise serializers.ValidationError({
-                'password_confirm': "Password confirmation doesn't match."
-            })
-        
-        # Validate date of birth
-        if attrs.get('date_of_birth'):
-            today = timezone.now().date()
-            age = today.year - attrs['date_of_birth'].year
-            if age < 16 or age > 100:
-                raise serializers.ValidationError({
-                    'date_of_birth': "Age must be between 16 and 100 years."
-                })
-        
-        return attrs
-    
-    def create(self, validated_data):
-        """Create user and profile with standardized phone number."""
-        # Remove password_confirm
-        validated_data.pop('password_confirm')
-        
-        # Standardize phone number if provided
-        if validated_data.get('phone_number'):
-            validated_data['phone_number'] = standardize_phone_number(
-                validated_data['phone_number']
+        standardized_phone = standardize_phone_number(value)
+        if User.objects.filter(phone_number=standardized_phone).exists():
+            raise serializers.ValidationError(
+                "A user with this phone number already exists."
             )
-        
-        # Create user
-        user = User.objects.create_user(**validated_data)
-        
-        # Create profile
+        return standardized_phone
+
+    def validate_email(self, value):
+        if value and User.objects.filter(email=value.lower()).exists():
+            raise serializers.ValidationError(
+                "A user with this email already exists."
+            )
+        return value.lower() if value else None
+
+    def validate_subjects(self, value):
+        if not (7 <= len(value) <= 9):
+            raise serializers.ValidationError(
+                "You must select between 7 and 9 subjects."
+            )
+        subject_ids = [item['subject_id'] for item in value]
+        if len(subject_ids) != len(set(subject_ids)):
+            raise serializers.ValidationError(
+                "Duplicate subjects are not allowed."
+            )
+        return value
+
+    def validate(self, attrs):
+        if attrs.get('password') != attrs.get('password_confirm'):
+            raise serializers.ValidationError({
+                'password_confirm': "Passwords do not match."
+            })
+        return attrs
+
+    def create(self, validated_data):
+        subjects_data = validated_data.pop('subjects', [])
+        validated_data.pop('password_confirm', None)
+        user = User.objects.create_user(
+            phone_number=validated_data['phone_number'],
+            email=validated_data.get('email'),
+            password=validated_data.get('password'),
+            first_name=validated_data.get('first_name', ''),
+            last_name=validated_data.get('last_name', '')
+        )
         UserProfile.objects.create(user=user)
-        
+
+        for subject_data in subjects_data:
+            UserSubject.objects.create(
+                user=user,
+                subject_id=subject_data['subject_id'],
+                grade=subject_data['grade']
+            )
+
         return user
 
-
 class UserLoginSerializer(serializers.Serializer):
-    """
-    Serializer for user login.
-    """
-    
-    email = serializers.EmailField(required=True)
+    phone_number = serializers.CharField(required=True)
     password = serializers.CharField(
         required=True,
         style={'input_type': 'password'}
     )
-    
-    def validate_email(self, value):
-        """Normalize email."""
-        return value.lower()
-    
+
     def validate(self, attrs):
-        """Validate user credentials."""
-        email = attrs.get('email')
+        phone_number = standardize_phone_number(attrs.get('phone_number'))
         password = attrs.get('password')
-        
-        if email and password:
-            # Check if user exists
-            try:
-                user = User.objects.get(email=email)
-                if not user.is_active:
-                    raise serializers.ValidationError(
-                        "User account is deactivated."
-                    )
-            except User.DoesNotExist:
-                raise serializers.ValidationError(
-                    "Invalid email or password."
-                )
-            
-            # Authenticate user
-            user = authenticate(username=email, password=password)
-            if not user:
-                raise serializers.ValidationError(
-                    "Invalid email or password."
-                )
-            
-            attrs['user'] = user
-        else:
+
+        if not phone_number or not password:
             raise serializers.ValidationError(
-                "Must include email and password."
+                "Must include phone number and password."
             )
-        
+
+        user = authenticate(phone_number=phone_number, password=password)
+        if not user:
+            raise serializers.ValidationError(
+                "Invalid phone number or password.",
+                code='authentication'
+            )
+        if not user.is_active:
+            raise serializers.ValidationError(
+                "User account is deactivated."
+            )
+
+        attrs['user'] = user
+        attrs['phone_number'] = phone_number
         return attrs
 
-
 class UserProfileSerializer(serializers.ModelSerializer):
-    """
-    Serializer for user profile management.
-    """
-    
     phone_number = serializers.CharField(source='user.phone_number', read_only=True)
     email = serializers.EmailField(source='user.email', read_only=True)
     full_name = serializers.CharField(source='user.get_full_name', read_only=True)
-    
+
     class Meta:
         model = UserProfile
         fields = [
             'email', 'full_name', 'phone_number',
-            'preferred_study_mode', 'preferred_location',
-            'bio','email_notifications', 'sms_notifications',
-            'marketing_emails', 'created_at', 'updated_at'
+             'created_at', 'updated_at'
         ]
         read_only_fields = ['created_at', 'updated_at']
 
+class UserSubjectModelSerializer(serializers.ModelSerializer):
+    subject_name = serializers.CharField(source='subject.name', read_only=True)
+    subject = serializers.PrimaryKeyRelatedField(queryset=Subject.objects.all())
 
-class UserSubjectSerializer(serializers.ModelSerializer):
-    """
-    Serializer for user subjects and grades.
-    """
-    
-    grade_points = serializers.ReadOnlyField()
-    
     class Meta:
         model = UserSubject
-        fields = [
-            'id', 'subject_name', 'grade', 'year',
-            'exam_type', 'grade_points', 'created_at', 'updated_at'
-        ]
-        read_only_fields = ['id', 'created_at', 'updated_at']
-    
-    def validate_subject_name(self, value):
-        """Validate and normalize subject name."""
-        return value.strip().title()
-    
+        fields = ['id', 'subject', 'subject_name', 'grade', 'created_at', 'updated_at']
+        read_only_fields = ['id', 'subject_name', 'created_at', 'updated_at']
+
     def validate(self, attrs):
-        """Validate unique constraint."""
         user = self.context['request'].user
-        subject_name = attrs.get('subject_name')
-        year = attrs.get('year')
-        exam_type = attrs.get('exam_type')
-        
-        # Check for existing subject (excluding current instance for updates)
-        queryset = UserSubject.objects.filter(
-            user=user,
-            subject_name=subject_name,
-            year=year,
-            exam_type=exam_type
-        )
-        
+        subject = attrs.get('subject')
+        queryset = UserSubject.objects.filter(user=user, subject=subject)
         if self.instance:
             queryset = queryset.exclude(pk=self.instance.pk)
-        
         if queryset.exists():
             raise serializers.ValidationError(
-                "You have already added this subject for this year and exam type."
+                f"You have already added the subject '{subject.name}'."
             )
-        
         return attrs
 
-
 class PasswordChangeSerializer(serializers.Serializer):
-    """
-    Serializer for password change.
-    """
-    
     old_password = serializers.CharField(
         required=True,
         style={'input_type': 'password'}
@@ -234,33 +187,26 @@ class PasswordChangeSerializer(serializers.Serializer):
         required=True,
         style={'input_type': 'password'}
     )
-    
+
     def validate_new_password(self, value):
-        """Validate new password strength."""
         try:
             validate_password(value)
         except ValidationError as e:
             raise serializers.ValidationError(list(e.messages))
         return value
-    
+
     def validate(self, attrs):
-        """Validate password confirmation."""
         if attrs['new_password'] != attrs['new_password_confirm']:
             raise serializers.ValidationError({
                 'new_password_confirm': "Password confirmation doesn't match."
             })
         return attrs
 
-
 class UserDetailSerializer(serializers.ModelSerializer):
-    """
-    Detailed user serializer with profile and related data.
-    """
-    
     profile = UserProfileSerializer(read_only=True)
-    subjects = UserSubjectSerializer(many=True, read_only=True)
+    subjects = UserSubjectModelSerializer(many=True, read_only=True)
     masked_phone = serializers.SerializerMethodField()
-    
+
     class Meta:
         model = User
         fields = [
@@ -271,8 +217,36 @@ class UserDetailSerializer(serializers.ModelSerializer):
         read_only_fields = [
             'id', 'date_joined', 'last_login', 'is_verified'
         ]
-    
+
     def get_masked_phone(self, obj):
-        """Get masked phone number for display."""
         from apps.core.utils import mask_phone_number
         return mask_phone_number(obj.phone_number) if obj.phone_number else None
+
+class UserSelectedCourseSerializer(serializers.ModelSerializer):
+    course = CourseListSerializer(read_only=True)
+    course_id = serializers.UUIDField(write_only=True)
+
+    class Meta:
+        model = UserSelectedCourse
+        fields = [
+            'id', 'course', 'course_id',
+            'is_applied', 'application_date', 'created_at'
+        ]
+        read_only_fields = ['id', 'created_at', 'is_applied', 'application_date']
+
+    def validate_course_id(self, value):
+        try:
+            course = Course.objects.get(id=value, is_active=True)
+            return value
+        except Course.DoesNotExist:
+            raise serializers.ValidationError("Course not found or inactive")
+
+    def validate(self, data):
+        user = self.context['request'].user
+        course_id = data.get('course_id')
+        
+        if self.instance is None:  # Creating new selection
+            if UserSelectedCourse.objects.filter(user=user, course_id=course_id).exists():
+                raise serializers.ValidationError("Course already selected")
+        
+        return data

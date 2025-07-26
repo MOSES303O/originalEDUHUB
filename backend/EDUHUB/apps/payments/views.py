@@ -1,59 +1,66 @@
+# apps/payments/views.py
 from decimal import Decimal
-from rest_framework import permissions, status
-from rest_framework.response import Response
+from rest_framework import permissions, status, generics
 from rest_framework.views import APIView
+from rest_framework.response import Response
 from rest_framework.decorators import action
 from django.utils import timezone
 from django.core.cache import cache
 from django.conf import settings
-from django.utils.timezone import now
+from apps.authentication.models import User
 import logging
-import base64
-import requests
-from rest_framework.permissions import IsAuthenticated
-from rest_framework import generics
+from datetime import timedelta
+from rest_framework_simplejwt.authentication import JWTAuthentication
 from apps.core.views import BaseAPIView, BaseModelViewSet
-from apps.core.utils import (standardize_response,generate_reference,standardize_phone_number,validate_kenyan_phone, log_user_activity,cache_key, format_currency,sanitize_callback_data)
-from .models import Payment, Subscription, UserSubscription,SubscriptionPlan
+from apps.core.utils import (
+    standardize_response,
+    generate_reference,
+    standardize_phone_number,
+    validate_kenyan_phone,
+    log_user_activity,
+    cache_key,
+    format_currency,
+    sanitize_callback_data,
+)
+from .models import Payment, SubscriptionPlan, UserSubscription, Subscription
 from .serializers import (
-    PaymentSerializer, SubscriptionSerializer,RenewalPaymentSerializer,UserSubscriptionSerializer,SubscriptionStatusSerializer, PaymentInitiationSerializer
+    PaymentSerializer,
+    SubscriptionSerializer,
+    RenewalPaymentSerializer,
+    UserSubscriptionSerializer,
+    SubscriptionStatusSerializer,
+    PaymentInitiationSerializer,
 )
 from .utils import MpesaService, PaymentProcessor
+
 logger = logging.getLogger(__name__)
 
 class SubscriptionViewSet(generics.ListAPIView):
     """
-    Viewset for managing subscription plans.
-    Provides list and retrieve actions only.
+    Viewset for listing subscription plans.
+    Provides read-only access to active plans.
     """
-
     serializer_class = SubscriptionSerializer
-    authentication_required = False  # Allow public read-only access
-    #permission_classes = [permissions.AllowAny]  # Explicitly allow public read for GET
-
+    permission_classes = [permissions.AllowAny]
     rate_limit_scope = 'subscriptions'
     rate_limit_count = 100
-    rate_limit_window = 3600  # 1 hour
+    rate_limit_window = 3600
 
     def get_queryset(self):
-        # Update status for all before filtering active ones
-        subscriptions = Subscription.objects.all()
+        subscriptions = SubscriptionPlan.objects.all()
         for subscription in subscriptions:
             subscription.update_status()
         return subscriptions.filter(is_active=True)
 
-    def get_permissions(self):
-        if self.request.method in permissions.SAFE_METHODS:
-            return [permissions.AllowAny()]
-        return [permissions.IsAuthenticated()]
-
-class SubscriptionStatusView(APIView):
+class SubscriptionStatusView(BaseAPIView):
     """
     Provides current user subscription status.
     Requires authentication.
     """
-
-    #permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [permissions.IsAuthenticated]
+    rate_limit_scope = 'subscription_status'
+    rate_limit_count = 50
+    rate_limit_window = 3600
 
     def get(self, request):
         user = request.user
@@ -61,22 +68,22 @@ class SubscriptionStatusView(APIView):
 
         try:
             user_sub = (
-                UserSubscription.objects.select_related('subscription_type')
-                .filter(user=user, is_active=True, start_date__lte=today, end_date__gt=today)
-                .latest('start_date')
+                UserSubscription.objects.select_related('subscription')
+                .filter(user=user, active=True, subscription__end_date__gt=today)
+                .latest('subscription__start_date')
             )
-            subscription = user_sub.subscription_type
+            subscription = user_sub.subscription
             subscription.update_status()
 
             data = {
                 "is_active": True,
-                "plan": subscription.plan,
+                "plan": subscription.plan.name,
                 "status": subscription.status,
-                "billing_cycle": subscription.billing_cycle,
-                "start_date": user_sub.start_date,
-                "end_date": user_sub.end_date,
+                "billing_cycle": subscription.plan.duration_hours,
+                "start_date": subscription.start_date,
+                "end_date": subscription.end_date,
                 "amount_paid": user_sub.amount_paid,
-                "currency": subscription.currency,
+                "currency": "KES",
                 "message": "Active subscription found."
             }
         except UserSubscription.DoesNotExist:
@@ -93,16 +100,19 @@ class SubscriptionStatusView(APIView):
             }
 
         serializer = SubscriptionStatusSerializer(data)
-        return Response(serializer.data)
-
+        return standardize_response(
+            success=True,
+            message=data["message"],
+            data=serializer.data,
+            status_code=status.HTTP_200_OK
+        )
 
 class PaymentViewSet(BaseModelViewSet):
     """
     Manage user payments: list, create, retrieve.
     """
-
     serializer_class = PaymentSerializer
-    #permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [permissions.IsAuthenticated]
     rate_limit_scope = 'payments'
     rate_limit_count = 50
     rate_limit_window = 3600
@@ -111,15 +121,19 @@ class PaymentViewSet(BaseModelViewSet):
         return Payment.objects.filter(user=self.request.user).order_by('-created_at')
 
     def perform_create(self, serializer):
-        return serializer.save(user=self.request.user)
+        serializer.save(user=self.request.user)
 
-class PaymentInitiationView(APIView):
+class PaymentInitiationView(BaseAPIView):
     """
-    Initiates an M-Pesa STK Push payment for a subscription.
+    Initiates an M-Pesa payment for a subscription.
+    Requires authentication.
     """
-    #permission_classes = [IsAuthenticated]
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [permissions.IsAuthenticated]
     serializer_class = PaymentInitiationSerializer
-    throttle_scope = 'payment_initiation'
+    rate_limit_scope = 'payment_initiation'
+    rate_limit_count = 10
+    rate_limit_window = 3600
 
     def post(self, request):
         serializer = self.serializer_class(data=request.data)
@@ -132,39 +146,55 @@ class PaymentInitiationView(APIView):
             )
 
         validated = serializer.validated_data
-        phone = validated["phone_number"]
+        phone = standardize_phone_number(validated["phone_number"])
+        amount = validated["amount"]
+        reference = generate_reference("PAY")
+        description = validated.get("description", "EduPathway Basic Plan")
+        plan_id = validated.get("plan_id", 1)
+        user = request.user
 
-        if not standardize_phone_number(phone):
+        if not validate_kenyan_phone(phone):
             return standardize_response(
                 success=False,
                 message="Invalid Kenyan phone number",
                 status_code=status.HTTP_400_BAD_REQUEST
             )
 
-        phone = standardize_phone_number(phone)
-        amount = validated["amount"]
-        reference = PaymentProcessor.generate_reference(prefix="PAY")
-        description = validated.get("description", "EduPathway subscription")
-        plan = None
-        plan_id = validated.get("plan_id")
+        if user.phone_number != phone:
+            return standardize_response(
+                success=False,
+                message="Phone number must match user's registered phone number",
+                status_code=status.HTTP_400_BAD_REQUEST
+            )
 
-        if plan_id:
-            plan = SubscriptionPlan.objects.filter(id=plan_id).first()
+        try:
+            plan = SubscriptionPlan.objects.get(id=plan_id, is_active=True)
+            if amount != plan.price:
+                return standardize_response(
+                    success=False,
+                    message="Amount does not match subscription plan price",
+                    status_code=status.HTTP_400_BAD_REQUEST
+                )
+        except SubscriptionPlan.DoesNotExist:
+            return standardize_response(
+                success=False,
+                message="Invalid plan_id",
+                status_code=status.HTTP_400_BAD_REQUEST
+            )
 
-        if not plan:
-            plan = PaymentProcessor.get_or_create_premium_plan()
-
-        # Save pending payment
         payment = Payment.objects.create(
-            user=request.user,
+            user=user,
             phone_number=phone,
             amount=amount,
             reference=reference,
-            payment_method="MPESA",
-            status="PENDING",
-            subscription_type=None,
+            payment_method="mpesa",
+            status="pending",
             description=description,
         )
+
+        subscription = PaymentProcessor.create_subscription(user, plan, payment)
+        payment.subscription = subscription
+        payment.save()
 
         mpesa_service = MpesaService()
         try:
@@ -172,15 +202,14 @@ class PaymentInitiationView(APIView):
                 phone_number=phone,
                 amount=amount,
                 account_reference=reference,
-                description=description,
-                callback_url=validated.get("callback_url")
+                description=description
             )
         except Exception as e:
             PaymentProcessor.mark_payment_failed(payment, str(e))
             log_user_activity(
-                user=request.user,
+                user=user,
                 action='PAYMENT_INITIATION_FAILED',
-                details={'error': str(e)},
+                details={'error': str(e), 'phone_number': phone},
                 request=request,
             )
             return standardize_response(
@@ -190,47 +219,11 @@ class PaymentInitiationView(APIView):
                 status_code=status.HTTP_400_BAD_REQUEST
             )
 
-        checkout_id = mpesa_response.get("CheckoutRequestID")
-        if checkout_id:
-            payment.mpesa_checkout_request_id = checkout_id
+        if mpesa_response.get("status") == "success":
+            payment.checkout_request_id = mpesa_response.get("CheckoutRequestID")
             payment.save()
-
-            # Subscription logic
-            try:
-                if Decimal(amount) == plan.price:
-                    PaymentProcessor.create_subscription(request.user, plan, payment)
-                elif Decimal(amount) == plan.renewal_price:
-                    subscription, error = PaymentProcessor.attempt_renewal(request.user, plan, payment)
-                    if error:
-                        PaymentProcessor.mark_payment_failed(payment, error)
-                        return standardize_response(
-                            success=False,
-                            message="Subscription renewal failed",
-                            errors={"renewal": error},
-                            status_code=status.HTTP_400_BAD_REQUEST
-                        )
-                else:
-                    error = "Invalid payment amount: does not match plan or renewal price."
-                    PaymentProcessor.mark_payment_failed(payment, error)
-                    return standardize_response(
-                        success=False,
-                        message="Payment rejected",
-                        errors={"amount": error},
-                        status_code=status.HTTP_400_BAD_REQUEST
-                    )
-
-            except Exception as e:
-                PaymentProcessor.mark_payment_failed(payment, str(e))
-                logger.exception(f"Subscription processing error: {e}")
-                return standardize_response(
-                    success=False,
-                    message="Internal error during subscription processing",
-                    status_code=status.HTTP_500_INTERNAL_SERVER_ERROR
-                )
-
-            # Log and respond
             log_user_activity(
-                user=request.user,
+                user=user,
                 action='PAYMENT_INITIATED',
                 details={
                     "payment_reference": reference,
@@ -240,41 +233,34 @@ class PaymentInitiationView(APIView):
                 },
                 request=request,
             )
-
             return standardize_response(
                 success=True,
                 message="STK Push initiated. Check your phone to complete the payment.",
                 data={
+                    "status": "success",
                     "payment_reference": reference,
-                    "checkout_request_id": checkout_id,
-                    "amount": format_currency(amount),
-                    "phone_number": phone,
-                    "status": "pending"
+                    "checkout_request_id": mpesa_response.get("CheckoutRequestID"),
+                    "amount": str(amount),
+                    "phone_number": phone
                 },
                 status_code=status.HTTP_200_OK
             )
         else:
-            error_message = mpesa_response.get("error") or "M-Pesa STK Push failed."
-            PaymentProcessor.mark_payment_failed(payment, error_message)
+            PaymentProcessor.mark_payment_failed(payment, mpesa_response.get("error"))
             return standardize_response(
                 success=False,
-                message="STK Push failed",
-                errors={"mpesa_error": error_message},
+                message="M-Pesa STK Push failed",
+                errors={"mpesa_error": mpesa_response.get("error", "Unknown error")},
                 status_code=status.HTTP_400_BAD_REQUEST
             )
 
 class MpesaCallbackView(APIView):
-    """
-    Handles M-Pesa payment status callbacks.
-    """
-    #permission_classes = [IsAuthenticated]
-    authentication_classes = []  # No authentication for callbacks
-    #permission_classes = []
+    authentication_classes = []
+    permission_classes = [permissions.AllowAny]
     throttle_scope = 'mpesa_callback'
 
     def post(self, request):
         try:
-            # Sanitize and log incoming callback
             sanitized_data = sanitize_callback_data(request.data)
             log_user_activity(user=None, action='MPESA_CALLBACK_RECEIVED', details=sanitized_data, request=request)
 
@@ -287,52 +273,63 @@ class MpesaCallbackView(APIView):
                 return standardize_response(
                     success=False,
                     message="Invalid callback data: Missing CheckoutRequestID",
-                    status_code=status.HTTP_400_BAD_REQUEST
+                    status_code=400
                 )
 
             try:
-                payment = Payment.objects.get(mpesa_checkout_request_id=checkout_request_id)
+                payment = Payment.objects.get(checkout_request_id=checkout_request_id)
             except Payment.DoesNotExist:
                 return standardize_response(
                     success=False,
                     message="Payment not found for provided CheckoutRequestID",
-                    status_code=status.HTTP_404_NOT_FOUND
+                    status_code=404
                 )
 
-            # If payment already marked, skip further updates
             if payment.status in ['completed', 'failed']:
                 return standardize_response(
                     success=True,
                     message="Callback already processed",
-                    status_code=status.HTTP_200_OK
+                    status_code=200
                 )
 
             if result_code == 0:
-                # Success case
                 metadata_items = callback_data.get('CallbackMetadata', {}).get('Item', [])
                 metadata = {item.get('Name'): item.get('Value') for item in metadata_items}
                 
-                payment.mpesa_receipt_number = metadata.get('MpesaReceiptNumber')
-                payment.phone_number = metadata.get('PhoneNumber')
-                payment.transaction_date = now()
-                payment.mark_completed()
+                payment.phone_number = standardize_phone_number(metadata.get('PhoneNumber'))
+                payment.transaction_date = timezone.now()
+                payment.callback_metadata = metadata
+                PaymentProcessor.mark_payment_completed(payment, metadata.get('MpesaReceiptNumber'))
+
+                subscription = payment.subscription
+                if subscription:
+                    subscription.active = True
+                    subscription.last_payment_at = timezone.now()
+                    subscription.save()
+                    UserSubscription.objects.update_or_create(
+                        user=payment.user,
+                        defaults={'subscription': subscription, 'active': True}
+                    )
+                    payment.user.is_premium = True
+                    payment.user.save()
+
                 message = "Payment marked as completed"
             else:
-                # Failure case
-                payment.mark_failed()
+                PaymentProcessor.mark_payment_failed(payment, result_desc)
                 message = f"Payment failed: {result_desc}"
 
             log_user_activity(user=payment.user, action='MPESA_CALLBACK_PROCESSED', details={
                 'checkout_request_id': checkout_request_id,
                 'result_code': result_code,
-                'result_desc': result_desc
+                'result_desc': result_desc,
+                'phone_number': payment.phone_number
             }, request=request)
 
             return standardize_response(
                 success=True,
                 message=message,
                 data={'payment_id': str(payment.id), 'status': payment.status},
-                status_code=status.HTTP_200_OK
+                status_code=200
             )
 
         except Exception as e:
@@ -341,66 +338,69 @@ class MpesaCallbackView(APIView):
                 success=False,
                 message="Error processing M-Pesa callback",
                 errors={'detail': str(e)},
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR
+                status_code=500
             )
 
-class PaymentVerificationView(APIView):
-    #permission_classes = [permissions.IsAuthenticated]
+class PaymentVerificationView(BaseAPIView):
+    """
+    Verify payment status by reference.
+    """
+    permission_classes = [permissions.IsAuthenticated]
+    rate_limit_scope = 'payment_verification'
+    rate_limit_count = 20
+    rate_limit_window = 3600
 
     def get(self, request, reference):
         try:
             payment = Payment.objects.get(reference=reference, user=request.user)
             serializer = PaymentSerializer(payment)
-            return Response(serializer.data, status=status.HTTP_200_OK)
+            return standardize_response(
+                success=True,
+                message="Payment retrieved successfully",
+                data=serializer.data,
+                status_code=status.HTTP_200_OK
+            )
         except Payment.DoesNotExist:
-            return Response(
-                {"detail": "Payment not found"},
-                status=status.HTTP_404_NOT_FOUND
+            return standardize_response(
+                success=False,
+                message="Payment not found",
+                status_code=status.HTTP_404_NOT_FOUND
             )
 
 class UserSubscriptionViewSet(BaseModelViewSet):
     """
     User subscription management viewset.
-
-    GET /api/v1/payments/my-subscriptions/ - List user subscriptions
-    GET /api/v1/payments/my-subscriptions/{id}/ - Get subscription details
+    
+    GET /api/v1/payments/my-subscriptions/
+    GET /api/v1/payments/my-subscriptions/{id}/
     """
-
     serializer_class = UserSubscriptionSerializer
+    permission_classes = [permissions.IsAuthenticated]
     rate_limit_scope = 'user_subscriptions'
     rate_limit_count = 50
     rate_limit_window = 3600
-    #permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
-        """
-        Return user's subscriptions with updated status.
-        """
         user_subs = UserSubscription.objects.filter(user=self.request.user).order_by('-created_at')
-
-        # Update status for each subscription before returning
         for sub in user_subs:
             sub.update_status()
-
         return user_subs
 
     @action(detail=False, methods=['get'])
     def active(self, request):
         """
         Get user's active subscription.
-
+        
         GET /api/v1/payments/my-subscriptions/active/
         """
         try:
-            # Update all the user's subscriptions before filtering
             all_user_subs = UserSubscription.objects.filter(user=request.user)
             for sub in all_user_subs:
                 sub.update_status()
 
-            # Get active subscription after updating
             active_subscription = all_user_subs.filter(
-                is_active=True,
-                end_date__gt=timezone.now().date()
+                active=True,
+                subscription__end_date__gt=timezone.now()
             ).first()
 
             if active_subscription:
@@ -408,7 +408,8 @@ class UserSubscriptionViewSet(BaseModelViewSet):
                 return standardize_response(
                     success=True,
                     message="Active subscription retrieved successfully",
-                    data=subscription_data
+                    data=subscription_data,
+                    status_code=status.HTTP_200_OK
                 )
             else:
                 return standardize_response(

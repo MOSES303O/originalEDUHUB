@@ -1,57 +1,75 @@
-from rest_framework import generics, mixins, status,serializers,permissions
+from rest_framework import generics,status,serializers,permissions
 from rest_framework.response import Response
-from rest_framework.views import APIView
+from apps.core.views import BaseModelViewSet
+from rest_framework.permissions import AllowAny
 from rest_framework.generics import GenericAPIView
 #from utils.activity_logger import log_user_activity
 from django.db.models import Q, Avg, Count
 from apps.core.utils import standardize_response
 from apps.core.utils import log_user_activity
 from .models import (
-    Subject, Course, UserSelectedCourse,
+    Subject, Course,
     CourseReview, CourseApplication
 )
 #work on the stardardize_response function as it is being implemented twice in two apps differently
 #from apps.universities.serializers import UniversityListSerializer
 from .serializers import (
     SubjectSerializer, CourseListSerializer,
-    CourseDetailSerializer, UserSelectedCourseSerializer,
+    CourseDetailSerializer,
     CourseReviewSerializer, CourseApplicationSerializer,
     CourseMatchSerializer,CourseStatisticsQuerySerializer, CourseSearchFilterSerializer
 )
 from .utils import CourseMatchingEngine,StandardAPIResponse
 import logging
 logger = logging.getLogger(__name__)
-class SubjectListView(generics.ListCreateAPIView):
+class SubjectViewSet(BaseModelViewSet):
     """
-    GET /api/v1/subjects/
-    List all active subjects with optional filtering
+    Read-only endpoint to list all active subjects.
+    
+    GET /api/v1/subjects/ - List all subjects
     """
-    queryset = Subject.objects.filter(is_active=True)
     serializer_class = SubjectSerializer
-    filterset_fields = ['name', 'code', 'is_core', 'is_active']
-    search_fields = ['name', 'code']
-    ordering_fields = ['name', 'created_at']
-    ordering = ['name']
+    permission_classes = [AllowAny]  # Public access for subject listing
+    rate_limit_scope = 'subjects'
+    rate_limit_count = 100
+    rate_limit_window = 3600
+
+    def get_queryset(self):
+        return Subject.objects.filter(is_active=True).order_by('name')
+
+    def list(self, request, *args, **kwargs):
+        queryset = self.get_queryset()
+        serializer = self.get_serializer(queryset, many=True)
+        return standardize_response(
+            success=True,
+            message="Subjects retrieved successfully",
+            data=serializer.data
+        )
 
 class CourseListView(generics.ListCreateAPIView):
     """
     GET /api/v1/courses/
     List courses with filtering, searching, and pagination
+    Supports filtering by university_code, university name, category, minimum_grade, tuition fees, and duration
     """
     serializer_class = CourseListSerializer
-    search_fields = ['name', 'code', 'description', 'university__name']
+    search_fields = ['name', 'code', 'description', 'university_name', 'university_code']
     ordering_fields = ['name', 'tuition_fee_per_year', 'duration_years']
     ordering = ['name']
 
     def get_queryset(self):
         queryset = Course.objects.filter(is_active=True).select_related('university')
         
-        # 📌 Custom filtering for university name
+        university_code = self.request.query_params.get('university_code')
+        if university_code:
+            queryset = queryset.filter(university__code__iexact=university_code)
+            if not queryset.exists():
+                logger.warning(f"No courses found for university_code: {university_code}")
+
         university_name = self.request.query_params.get('university')
         if university_name:
             queryset = queryset.filter(university__name__iexact=university_name)
 
-        # Optional filters
         category = self.request.query_params.get('category')
         if category:
             queryset = queryset.filter(category=category)
@@ -81,12 +99,27 @@ class CourseListView(generics.ListCreateAPIView):
             except ValueError:
                 pass
 
-        # Aggregate ratings
         return queryset.annotate(
             avg_rating=Avg('reviews__rating', filter=Q(reviews__is_approved=True)),
             review_count=Count('reviews', filter=Q(reviews__is_approved=True))
         )
 
+    def list(self, request, *args, **kwargs):
+        queryset = self.filter_queryset(self.get_queryset())
+        if not queryset.exists() and request.query_params.get('university_code'):
+            return standardize_response(
+                success=False,
+                message="No courses found for the specified university",
+                data=[],
+                status_code=status.HTTP_404_NOT_FOUND
+            )
+        serializer = self.get_serializer(queryset, many=True)
+        return standardize_response(
+            success=True,
+            message="Courses retrieved successfully",
+            data=serializer.data,
+            status_code=status.HTTP_200_OK
+        )
 class CourseDetailView(generics.RetrieveAPIView):
     """
     GET /api/v1/courses/{id}/
@@ -100,146 +133,6 @@ class CourseDetailView(generics.RetrieveAPIView):
             'coursesubjectrequirement_set__subject',
             'coursesubjectrequirement_set__alternative_subjects'
         )
-class UserSelectedCourseView(
-    mixins.UpdateModelMixin,
-    mixins.DestroyModelMixin,
-    generics.ListCreateAPIView
-):
-    """
-    Manages user-selected courses.
-
-    GET    /api/v1/user/selected-courses/         - List selected courses
-    POST   /api/v1/user/selected-courses/         - Select a new course
-    PUT    /api/v1/user/selected-courses/{id}/    - Update a selection
-    DELETE /api/v1/user/selected-courses/{id}/    - Remove selection
-    POST   /api/v1/user/selected-courses/bulk_create/ - Bulk select courses
-    """
-    serializer_class = UserSelectedCourseSerializer
-    permission_classes = [permissions.IsAuthenticated]
-
-    def get_queryset(self):
-        return UserSelectedCourse.objects.filter(
-            user=self.request.user
-        ).select_related('course__university').order_by('priority', 'created_at')
-
-    def perform_create(self, serializer):
-        return serializer.save(user=self.request.user)
-
-    def create(self, request, *args, **kwargs):
-        try:
-            response = super().create(request, *args, **kwargs)
-            return standardize_response(
-                success=True,
-                message="Course added to selection successfully",
-                data=response.data,
-                status_code=status.HTTP_201_CREATED
-            )
-        except Exception as e:
-            return standardize_response(
-                success=False,
-                message="Failed to add course to selection",
-                errors={'detail': str(e)},
-                status_code=status.HTTP_400_BAD_REQUEST
-            )
-
-    def put(self, request, *args, **kwargs):
-        return self.update(request, *args, **kwargs)
-
-    def delete(self, request, *args, **kwargs):
-        return self.destroy(request, *args, **kwargs)
-
-
-class BulkUserSelectedCourseCreateView(APIView):
-    """
-    POST /api/v1/user/selected-courses/bulk_create/
-    Bulk create selected courses
-    """
-    permission_classes = [permissions.IsAuthenticated]
-    serializer_class = UserSelectedCourseSerializer
-
-    def post(self, request):
-        try:
-            courses_data = request.data.get('courses', [])
-            if not courses_data:
-                return standardize_response(
-                    success=False,
-                    message="No courses provided",
-                    status_code=status.HTTP_400_BAD_REQUEST
-                )
-
-            created = []
-            errors = []
-
-            for course_data in courses_data:
-                serializer = self.serializer_class(data=course_data)
-                if serializer.is_valid():
-                    serializer.save(user=request.user)
-                    created.append(serializer.data)
-                else:
-                    errors.append({
-                        'course_data': course_data,
-                        'errors': serializer.errors
-                    })
-
-            if created:
-                log_user_activity(
-                    user=request.user,
-                    action='SELECTED_COURSES_BULK_CREATED',
-                    details={'count': len(created)},
-                    request=request
-                )
-
-            response_data = {
-                'created': created,
-                'errors': errors,
-                'summary': {
-                    'total_provided': len(courses_data),
-                    'created_count': len(created),
-                    'error_count': len(errors)
-                }
-            }
-
-            return standardize_response(
-                success=True,
-                message=f"{len(created)} courses added to selection successfully",
-                data=response_data,
-                status_code=status.HTTP_201_CREATED
-            )
-
-        except Exception as e:
-            return standardize_response(
-                success=False,
-                message="Bulk creation failed",
-                errors={'detail': str(e)},
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR
-            )
-
-class UserSelectedCourseDetailView(generics.RetrieveUpdateDestroyAPIView):
-    """
-    GET /api/v1/user/selected-courses/{id}/
-    PUT /api/v1/user/selected-courses/{id}/
-    DELETE /api/v1/user/selected-courses/{id}/
-    Retrieve, update, or delete a selected course
-    """
-    serializer_class = UserSelectedCourseSerializer
-    #permission_classes = [IsAuthenticated]
-
-    def get_queryset(self):
-        return UserSelectedCourse.objects.filter(user=self.request.user)
-
-    def destroy(self, request, *args, **kwargs):
-        try:
-            response = super().destroy(request, *args, **kwargs)
-            return StandardAPIResponse.success(
-                message="Course removed from selection successfully"
-            )
-        except Exception as e:
-            logger.error(f"Error removing course from selection: {str(e)}")
-            return StandardAPIResponse.error(
-                message="Failed to remove course from selection"
-            )
-
-
 class CourseReviewListView(generics.ListCreateAPIView):
     """
     GET /api/v1/courses/{course_id}/reviews/

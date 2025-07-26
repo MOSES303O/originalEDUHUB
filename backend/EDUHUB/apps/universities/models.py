@@ -12,6 +12,7 @@ class University(models.Model):
     description = models.TextField(blank=True)
     website = models.URLField(blank=True)
     campus = models.CharField(blank=True)
+    accreditation = models.CharField(max_length=200,blank=True)
     logo = models.ImageField(upload_to='universities/logos/', blank=True, null=True)
     address = models.TextField(blank=True)
     city = models.CharField(max_length=100, blank=True)

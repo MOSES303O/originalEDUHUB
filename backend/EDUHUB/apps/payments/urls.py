@@ -20,7 +20,7 @@ urlpatterns = [
     # Individual APIViews
     path('subscriptions/', SubscriptionViewSet.as_view(), name='subscription'),
     path('subscription-status/', SubscriptionStatusView.as_view(), name='subscription-status'),
-    path('payment/initiate/', PaymentInitiationView.as_view(), name='payment-initiate'),
+    path('paymentS/initiate/', PaymentInitiationView.as_view(), name='payment-initiate'),
     path('mpesa/callback/', MpesaCallbackView.as_view(), name='mpesa-callback'),
     path('payment/verify/<str:reference>/', PaymentVerificationView.as_view(), name='payment-verify')
 ]

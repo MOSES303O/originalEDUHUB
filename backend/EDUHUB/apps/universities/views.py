@@ -31,10 +31,10 @@ class UniversityViewSet(viewsets.ReadOnlyModelViewSet):
     """
     queryset = University.objects.filter(is_active=True)
     permission_classes = [permissions.AllowAny]
-    filterset_fields = ['city', 'name']
+    filterset_fields = ['city','code', 'name']
     search_fields = ['name', 'code', 'city', 'description']
     ordering_fields = ['name', 'ranking', 'established_year']
-    lookup_field = 'slug'
+    lookup_field = 'code'
 
     def get_serializer_class(self):
         if self.action == 'list':
@@ -45,17 +45,20 @@ class UniversityViewSet(viewsets.ReadOnlyModelViewSet):
 
         # Manually handle filtering
         city = request.query_params.get('city')
+        code = request.query_params.get('code')
         name = request.query_params.get('name')
 
         if city:
             queryset = queryset.filter(city__icontains=city)
+        if code:
+            queryset = queryset.filter(code__icontains=code)
         if name:
             queryset = queryset.filter(name__icontains=name)
 
         serializer = self.get_serializer(queryset, many=True)
         return Response(serializer.data)
     @action(detail=True, methods=['get'])
-    def faculties(self, request, slug=None):
+    def faculties(self, request, code=None):
         """
         Return all faculties for a specific university.
         """
@@ -85,9 +88,9 @@ class FacultyViewSet(viewsets.ReadOnlyModelViewSet):
 
     def get_queryset(self):
         queryset = self.queryset
-        university_name = self.request.query_params.get('university')
-        if university_name:
-            queryset = queryset.filter(university__name__icontains=university_name)
+        university_code = self.request.query_params.get('university_code')
+        if university_code:
+            queryset = queryset.filter(university__code__icontains=university_code)
         return queryset
 
     @action(detail=True, methods=['get'])

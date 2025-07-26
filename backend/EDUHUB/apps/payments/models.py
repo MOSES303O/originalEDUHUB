@@ -138,6 +138,9 @@ class Payment(models.Model):
             self.transaction_id = transaction_id
         if receipt_number:
             self.mpesa_receipt_number = receipt_number
+        # Set is_premium for backward compatibility
+        self.user.is_premium = True
+        self.user.save()
         self.updated_at = timezone.now()
         self.save()
 

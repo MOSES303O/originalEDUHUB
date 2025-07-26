@@ -2,23 +2,18 @@ from rest_framework import serializers
 from django.contrib.auth import get_user_model
 from .models import (
     Subject, Course, CourseSubjectRequirement,
-    UserSelectedCourse, CourseReview, CourseApplication
+    CourseReview, CourseApplication
 )
-from apps.universities.models import University
+from apps.authentication.models import UserSelectedCourse
 from apps.universities.serializers import UniversityListSerializer
 User = get_user_model()
 class SubjectSerializer(serializers.ModelSerializer):
-    """
-    Serializer for Subject model
-    """
+    value = serializers.CharField(source='id')  # Map id to value for frontend
+    label = serializers.CharField(source='name')  # Map name to label for frontend
+    
     class Meta:
         model = Subject
-        fields = [
-            'id', 'name', 'code', 'description',
-            'is_core', 'is_active', 'created_at'
-        ]
-        read_only_fields = ['id', 'created_at']
-
+        fields = ['value', 'label', 'code']
 
 class CourseSubjectRequirementSerializer(serializers.ModelSerializer):
     """
@@ -85,7 +80,7 @@ class CourseDetailSerializer(serializers.ModelSerializer):
             'duration_years', 'minimum_grade', 'required_subjects',
             'category', 'tuition_fee_per_year', 'application_fee',
             'application_deadline', 'intake_months', 'career_prospects',
-            'accreditation', 'average_rating', 'total_reviews',
+            'average_rating', 'total_reviews',
             'is_selected', 'user_application', 'created_at'
         ]
 
@@ -115,41 +110,6 @@ class CourseDetailSerializer(serializers.ModelSerializer):
             except CourseApplication.DoesNotExist:
                 return None
         return None
-
-
-class UserSelectedCourseSerializer(serializers.ModelSerializer):
-    """
-    Serializer for UserSelectedCourse model
-    """
-    course = CourseListSerializer(read_only=True)
-    course_id = serializers.UUIDField(write_only=True)
-    
-    class Meta:
-        model = UserSelectedCourse
-        fields = [
-            'id', 'course', 'course_id', 'priority', 'notes',
-            'is_applied', 'application_date', 'created_at'
-        ]
-        read_only_fields = ['id', 'created_at', 'is_applied', 'application_date']
-
-    def validate_course_id(self, value):
-        """Validate that the course exists and is active"""
-        try:
-            course = Course.objects.get(id=value, is_active=True)
-            return value
-        except Course.DoesNotExist:
-            raise serializers.ValidationError("Course not found or inactive")
-
-    def validate(self, data):
-        """Validate that user hasn't already selected this course"""
-        user = self.context['request'].user
-        course_id = data.get('course_id')
-        
-        if self.instance is None:  # Creating new selection
-            if UserSelectedCourse.objects.filter(user=user, course_id=course_id).exists():
-                raise serializers.ValidationError("Course already selected")
-        
-        return data
 
 
 class CourseReviewSerializer(serializers.ModelSerializer):

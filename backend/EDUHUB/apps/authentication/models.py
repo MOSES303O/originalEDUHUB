@@ -11,25 +11,23 @@ from django.contrib.auth.base_user import BaseUserManager
 from django.db import models
 from django.utils import timezone
 from django.core.validators import RegexValidator
-from apps.core.utils import calculate_age, standardize_phone_number
+from apps.courses.models import Subject,Course
+import uuid
+from apps.core.utils import calculate_age, standardize_phone_number,validate_kenyan_phone
 
-
+# apps/authentication/models.py
 class UserManager(BaseUserManager):
-    """Custom user manager for email-based authentication."""
-    
-    def create_user(self, email, password=None, **extra_fields):
-        """Create and return a regular user."""
-        if not email:
-            raise ValueError('The Email field must be set')
-        
-        email = self.normalize_email(email)
-        user = self.model(email=email, **extra_fields)
+    def create_user(self, phone_number, password=None, email=None, **extra_fields):
+        if not phone_number:
+            raise ValueError("The Phone number must be set")
+        phone_number = standardize_phone_number(phone_number)
+        email = self.normalize_email(email) if email else None
+        user = self.model(phone_number=phone_number, email=email, **extra_fields)
         user.set_password(password)
         user.save(using=self._db)
         return user
-    
-    def create_superuser(self, email, password=None, **extra_fields):
-        """Create and return a superuser."""
+
+    def create_superuser(self, phone_number, password=None, email=None, **extra_fields):
         extra_fields.setdefault('is_staff', True)
         extra_fields.setdefault('is_superuser', True)
         extra_fields.setdefault('is_active', True)
@@ -39,120 +37,61 @@ class UserManager(BaseUserManager):
         if extra_fields.get('is_superuser') is not True:
             raise ValueError('Superuser must have is_superuser=True.')
         
-        return self.create_user(email, password, **extra_fields)
-
+        return self.create_user(phone_number, password, email, **extra_fields)
 
 class User(AbstractBaseUser, PermissionsMixin):
-    """
-    Custom User model with email-based authentication.
-    
-    Designed to work consistently with authentication, payments,
-    and other apps throughout the platform.
-    """
-    
     email = models.EmailField(
-        unique=True,
+        unique=False,
+        blank=True,
+        null=True,
         db_index=True,
-        help_text="User's email address (used for login)"
+        help_text="User's email address (optional)"
+    )
+    phone_number = models.CharField(
+        max_length=15,
+        unique=True,
+        validators=[validate_kenyan_phone],
+        help_text="Kenyan phone number for login and notifications"
     )
     first_name = models.CharField(
         max_length=30,
+        blank=True,  # Make optional
         help_text="User's first name"
     )
     last_name = models.CharField(
         max_length=30,
+        blank=True,  # Make optional
         help_text="User's last name"
     )
-    phone_number = models.CharField(
-        max_length=15,
-        blank=True,
-        null=True,
-        validators=[
-            RegexValidator(
-                regex=r'^\+254[17]\d{8}$',
-                message="Phone number must be in format: '+254712345678'"
-            )
-        ],
-        help_text="Kenyan phone number for M-Pesa and notifications"
-    )
-    
-    # Account status fields
-    is_active = models.BooleanField(
-        default=True,
-        help_text="Designates whether this user should be treated as active"
-    )
-    is_staff = models.BooleanField(
-        default=False,
-        help_text="Designates whether the user can log into admin site"
-    )
-    is_verified = models.BooleanField(
-        default=False,
-        help_text="Designates whether the user has verified their email"
-    )
-    is_premium = models.BooleanField(
-        default=False,
-        help_text="Designates whether the user has premium subscription"
-    )
-    
-    # Timestamps
-    date_joined = models.DateTimeField(
-        default=timezone.now,
-        help_text="Date when the user joined the platform"
-    )
-    last_login = models.DateTimeField(
-        blank=True,
-        null=True,
-        help_text="Last login timestamp"
-    )
+    is_active = models.BooleanField(default=True)
+    is_staff = models.BooleanField(default=False)
+    is_verified = models.BooleanField(default=False)
+    is_premium = models.BooleanField(default=False)
+    date_joined = models.DateTimeField(default=timezone.now)
+    last_login = models.DateTimeField(blank=True, null=True)
     
     objects = UserManager()
     
-    USERNAME_FIELD = 'email'
-    REQUIRED_FIELDS = ['first_name', 'last_name']
+    USERNAME_FIELD = 'phone_number'
+    REQUIRED_FIELDS = []  # Remove email from required fields
     
     class Meta:
         db_table = 'auth_user'
         verbose_name = 'User'
         verbose_name_plural = 'Users'
         indexes = [
-            models.Index(fields=['email']),
+            models.Index(fields=['phone_number']),
             models.Index(fields=['is_active', 'is_verified']),
             models.Index(fields=['date_joined']),
         ]
     
     def __str__(self):
-        return self.email
-    
-    def get_full_name(self):
-        """Return the user's full name."""
-        return f"{self.first_name} {self.last_name}".strip()
-    
-    def get_short_name(self):
-        """Return the user's first name."""
-        return self.first_name
-    
-    @property
-    def is_profile_complete(self):
-        """Check if user profile is complete."""
-        try:
-            profile = self.profile
-            return bool(
-                self.first_name and 
-                self.last_name and 
-                self.phone_number and
-                profile.date_of_birth and
-                profile.county
-            )
-        except UserProfile.DoesNotExist:
-            return False
+        return self.phone_number
     
     def clean(self):
-        """Clean and validate user data."""
         super().clean()
         if self.phone_number:
             self.phone_number = standardize_phone_number(self.phone_number)
-
-
 class UserProfile(models.Model):
     """
     Extended user profile information.
@@ -160,104 +99,12 @@ class UserProfile(models.Model):
     Contains additional user data for personalization,
     payments, and educational preferences.
     """
-    
-    GENDER_CHOICES = [
-        ('M', 'Male'),
-        ('F', 'Female'),
-        ('O', 'Other'),
-        ('', 'Prefer not to say'),
-    ]
-    
-    COUNTY_CHOICES = [
-        ('nairobi', 'Nairobi'),
-        ('mombasa', 'Mombasa'),
-        ('kisumu', 'Kisumu'),
-        ('nakuru', 'Nakuru'),
-        ('eldoret', 'Eldoret'),
-        ('thika', 'Thika'),
-        ('malindi', 'Malindi'),
-        ('kitale', 'Kitale'),
-        ('garissa', 'Garissa'),
-        ('kakamega', 'Kakamega'),
-        ('other', 'Other'),
-    ]
-    
-    STUDY_MODE_CHOICES = [
-        ('full_time', 'Full Time'),
-        ('part_time', 'Part Time'),
-        ('online', 'Online'),
-        ('hybrid', 'Hybrid'),
-    ]
-    
     user = models.OneToOneField(
         User,
         on_delete=models.CASCADE,
         related_name='profile'
     )
-    
-    # Personal information
-    date_of_birth = models.DateField(
-        blank=True,
-        null=True,
-        help_text="User's date of birth"
-    )
-    gender = models.CharField(
-        max_length=1,
-        choices=GENDER_CHOICES,
-        blank=True,
-        help_text="User's gender"
-    )
-    county = models.CharField(
-        max_length=20,
-        choices=COUNTY_CHOICES,
-        blank=True,
-        help_text="User's county of residence"
-    )
-    
-    # Educational preferences
-    preferred_study_mode = models.CharField(
-        max_length=20,
-        choices=STUDY_MODE_CHOICES,
-        blank=True,
-        help_text="Preferred mode of study"
-    )
-    preferred_location = models.CharField(
-        max_length=100,
-        blank=True,
-        help_text="Preferred study location"
-    )
-    career_interests = models.TextField(
-        blank=True,
-        help_text="User's career interests and goals"
-    )
-    
-    # Profile customization
-    avatar = models.ImageField(
-        upload_to='avatars/',
-        blank=True,
-        null=True,
-        help_text="User's profile picture"
-    )
-    bio = models.TextField(
-        max_length=500,
-        blank=True,
-        help_text="User's biography"
-    )
-    
-    # Notification preferences
-    email_notifications = models.BooleanField(
-        default=True,
-        help_text="Receive email notifications"
-    )
-    sms_notifications = models.BooleanField(
-        default=False,
-        help_text="Receive SMS notifications"
-    )
-    marketing_emails = models.BooleanField(
-        default=False,
-        help_text="Receive marketing emails"
-    )
-    
+    registration_ip = models.GenericIPAddressField(null=True, blank=True)
     # Timestamps
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -266,15 +113,6 @@ class UserProfile(models.Model):
         db_table = 'user_profile'
         verbose_name = 'User Profile'
         verbose_name_plural = 'User Profiles'
-    
-    def __str__(self):
-        return f"{self.user.get_full_name()}'s Profile"
-    
-    @property
-    def age(self):
-        """Calculate user's age."""
-        return calculate_age(self.date_of_birth)
-
 
 class UserSession(models.Model):
     """
@@ -447,7 +285,8 @@ class UserActivity(models.Model):
     request_id = models.CharField(
         max_length=100,
         blank=True,
-        help_text="Request ID for tracking"
+        help_text="Request ID for tracking",
+        default=uuid.uuid4
     )
     
     class Meta:
@@ -488,37 +327,20 @@ class UserSubject(models.Model):
         ('D-', 'D-'),
         ('E', 'E'),
     ]
-    
-    EXAM_TYPE_CHOICES = [
-        ('kcse', 'KCSE'),
-        ('igcse', 'IGCSE'),
-        ('ib', 'International Baccalaureate'),
-        ('sat', 'SAT'),
-        ('other', 'Other'),
-    ]
-    
     user = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
         related_name='subjects'
     )
-    subject_name = models.CharField(
-        max_length=100,
-        help_text="Name of the subject"
+    subject = models.ForeignKey(
+        Subject,
+        on_delete=models.CASCADE,
+        help_text="Reference to the subject"
     )
     grade = models.CharField(
         max_length=2,
         choices=GRADE_CHOICES,
         help_text="Grade achieved in the subject"
-    )
-    year = models.PositiveIntegerField(
-        help_text="Year the exam was taken"
-    )
-    exam_type = models.CharField(
-        max_length=20,
-        choices=EXAM_TYPE_CHOICES,
-        default='kcse',
-        help_text="Type of examination"
     )
     
     # Timestamps
@@ -529,15 +351,15 @@ class UserSubject(models.Model):
         db_table = 'user_subject'
         verbose_name = 'User Subject'
         verbose_name_plural = 'User Subjects'
-        unique_together = ['user', 'subject_name', 'year', 'exam_type']
+        unique_together = ['user', 'subject']  # Prevent duplicate subjects per user
         indexes = [
-            models.Index(fields=['user', 'year']),
-            models.Index(fields=['subject_name']),
+            models.Index(fields=['user']),
+            models.Index(fields=['subject']),
             models.Index(fields=['grade']),
         ]
     
     def __str__(self):
-        return f"{self.user.email} - {self.subject_name} ({self.grade})"
+        return f"{self.user.email} - {self.subject.name} ({self.grade})"
     
     @property
     def grade_points(self):
@@ -548,3 +370,20 @@ class UserSubject(models.Model):
             'D-': 2, 'E': 1
         }
         return grade_mapping.get(self.grade, 0)
+class UserSelectedCourse(models.Model):
+    """
+    Model to track courses selected by users
+    """
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='selected_courses')
+    course = models.ForeignKey(Course, on_delete=models.CASCADE)
+    is_applied = models.BooleanField(default=False)
+    application_date = models.DateTimeField(blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ['user', 'course']
+        ordering = ['created_at']
+
+    def __str__(self):
+        return f"{self.user.phone_number} - {self.course.name}"

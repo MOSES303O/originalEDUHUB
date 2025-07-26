@@ -1,11 +1,10 @@
+# apps/courses/models.py
 from django.db import models
-from django.contrib.auth import get_user_model
 from django.core.validators import MinValueValidator, MaxValueValidator
 from django.utils import timezone
 import uuid
 from apps.universities.models import University
 
-User = get_user_model()
 class Subject(models.Model):
     """
     Model representing academic subjects (e.g., English, Math, Physics).
@@ -20,6 +19,7 @@ class Subject(models.Model):
 
     class Meta:
         ordering = ['name']
+        verbose_name = 'Subject'
         indexes = [
             models.Index(fields=['is_core']),
             models.Index(fields=['is_active']),
@@ -27,7 +27,6 @@ class Subject(models.Model):
 
     def __str__(self):
         return f"{self.name} ({self.code})"
-
 
 class Course(models.Model):
     """
@@ -42,17 +41,8 @@ class Course(models.Model):
     
     # Entry requirements
     minimum_grade = models.CharField(max_length=5, choices=[
-        ('A', 'A'),
-        ('A-', 'A-'),
-        ('B+', 'B+'),
-        ('B', 'B'),
-        ('B-', 'B-'),
-        ('C+', 'C+'),
-        ('C', 'C'),
-        ('C-', 'C-'),
-        ('D+', 'D+'),
-        ('D', 'D'),
-        ('D-', 'D-'),
+        ('A', 'A'), ('A-', 'A-'), ('B+', 'B+'), ('B', 'B'), ('B-', 'B-'),
+        ('C+', 'C+'), ('C', 'C'), ('C-', 'C-'), ('D+', 'D+'), ('D', 'D'), ('D-', 'D-'),
     ])
     required_subjects = models.ManyToManyField(Subject, through='CourseSubjectRequirement')
     
@@ -79,8 +69,7 @@ class Course(models.Model):
     intake_months = models.JSONField(default=list)  # e.g., [1, 9] for January and September
     
     # Additional info
-    career_prospects = models.TextField(blank=True)
-    accreditation = models.CharField(max_length=200, blank=True)
+    career_prospects = models.TextField(blank=True)    
     is_active = models.BooleanField(default=True)
     
     # Metadata
@@ -114,7 +103,6 @@ class Course(models.Model):
         """Get total number of approved reviews"""
         return self.reviews.filter(is_approved=True).count()
 
-
 class CourseSubjectRequirement(models.Model):
     """
     Through model for Course-Subject relationship with specific requirements
@@ -122,17 +110,8 @@ class CourseSubjectRequirement(models.Model):
     course = models.ForeignKey(Course, on_delete=models.CASCADE)
     subject = models.ForeignKey(Subject, on_delete=models.CASCADE)
     minimum_grade = models.CharField(max_length=5, choices=[
-        ('A', 'A'),
-        ('A-', 'A-'),
-        ('B+', 'B+'),
-        ('B', 'B'),
-        ('B-', 'B-'),
-        ('C+', 'C+'),
-        ('C', 'C'),
-        ('C-', 'C-'),
-        ('D+', 'D+'),
-        ('D', 'D'),
-        ('D-', 'D-'),
+        ('A', 'A'), ('A-', 'A-'), ('B+', 'B+'), ('B', 'B'), ('B-', 'B-'),
+        ('C+', 'C+'), ('C', 'C'), ('C-', 'C-'), ('D+', 'D+'), ('D', 'D'), ('D-', 'D-'),
     ])
     is_mandatory = models.BooleanField(default=True)
     alternative_subjects = models.ManyToManyField(
@@ -147,35 +126,13 @@ class CourseSubjectRequirement(models.Model):
     def __str__(self):
         return f"{self.course.name} - {self.subject.name} ({self.minimum_grade})"
 
-
-class UserSelectedCourse(models.Model):
-    """
-    Model to track courses selected by users
-    """
-    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='selected_courses')
-    course = models.ForeignKey(Course, on_delete=models.CASCADE)
-    priority = models.PositiveIntegerField(default=1)  # 1 = highest priority
-    notes = models.TextField(blank=True)
-    is_applied = models.BooleanField(default=False)
-    application_date = models.DateTimeField(blank=True, null=True)
-    created_at = models.DateTimeField(auto_now_add=True)
-
-    class Meta:
-        unique_together = ['user', 'course']
-        ordering = ['priority', 'created_at']
-
-    def __str__(self):
-        return f"{self.user.email} - {self.course.name}"
-
-
 class CourseReview(models.Model):
     """
     Model for course reviews by users
     """
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     course = models.ForeignKey(Course, on_delete=models.CASCADE, related_name='reviews')
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    user = models.ForeignKey('authentication.User', on_delete=models.CASCADE)
     rating = models.PositiveIntegerField(
         validators=[MinValueValidator(1), MaxValueValidator(5)]
     )
@@ -193,13 +150,12 @@ class CourseReview(models.Model):
     def __str__(self):
         return f"{self.course.name} - {self.rating}/5 by {self.user.email}"
 
-
 class CourseApplication(models.Model):
     """
     Model to track course applications
     """
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='applications')
+    user = models.ForeignKey('authentication.User', on_delete=models.CASCADE, related_name='applications')
     course = models.ForeignKey(Course, on_delete=models.CASCADE, related_name='applications')
     
     # Application status
@@ -225,7 +181,6 @@ class CourseApplication(models.Model):
 
     def save(self, *args, **kwargs):
         if not self.application_number:
-            # Generate unique application number
             self.application_number = f"APP{timezone.now().year}{self.user.id.hex[:8].upper()}"
         super().save(*args, **kwargs)
 

@@ -3,7 +3,6 @@ from .models import (
     Subject,
     Course,
     CourseSubjectRequirement,
-    UserSelectedCourse,
     CourseReview,
     CourseApplication
 )
@@ -25,13 +24,6 @@ class CourseSubjectRequirementAdmin(admin.ModelAdmin):
     list_display = ('course', 'subject', 'minimum_grade', 'is_mandatory')
     list_filter = ('minimum_grade', 'is_mandatory')
     search_fields = ('course__name', 'subject__name')
-
-
-@admin.register(UserSelectedCourse)
-class UserSelectedCourseAdmin(admin.ModelAdmin):
-    list_display = ('user', 'course', 'priority', 'is_applied', 'application_date')
-    list_filter = ('is_applied',)
-    search_fields = ('user__email', 'course__name')
 
 
 @admin.register(CourseReview)

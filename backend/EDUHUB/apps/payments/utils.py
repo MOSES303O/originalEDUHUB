@@ -1,3 +1,4 @@
+# apps/payments/utils.py
 import requests
 import base64
 import json
@@ -6,15 +7,12 @@ import logging
 import re
 from datetime import datetime
 from decimal import Decimal
-from .models import Subscription, SubscriptionPlan, UserSubscription  # Ensure this is in your imports
-
 from django.conf import settings
 from django.utils import timezone
-
-from .models import Payment
+from .models import Payment, Subscription, SubscriptionPlan, UserSubscription
+from apps.core.utils import standardize_phone_number
 
 logger = logging.getLogger(__name__)
-
 
 class MpesaService:
     """
@@ -28,6 +26,7 @@ class MpesaService:
         self.passkey = settings.MPESA_PASSKEY
         self.environment = settings.MPESA_ENVIRONMENT or 'sandbox'
         self.access_token = None
+        self.callback_url = f"{settings.BASE_URL}/api/v1/payments/mpesa/callback/"
 
         self.base_url = (
             "https://api.safaricom.co.ke"
@@ -63,21 +62,6 @@ class MpesaService:
         except Exception as e:
             logger.error(f"[MPESA] Access token error: {e}")
             raise
-   
-    def get_ngrok_public_url():
-        """
-        Returns the active public Ngrok HTTPS URL from the Ngrok API.
-        """
-        try:
-            ngrok_api = os.getenv("NGROK_API", "http://127.0.0.1:4040/api/tunnels")
-            response = requests.get(ngrok_api)
-            data = response.json()
-            for tunnel in data.get("tunnels", []):
-                if tunnel["proto"] == "https":
-                    return tunnel["public_url"]
-        except Exception as e:
-            logging.warning(f"[NGROK] Could not fetch Ngrok public URL: {e}")
-        return None
 
     def generate_password(self):
         """
@@ -88,19 +72,13 @@ class MpesaService:
         encoded = base64.b64encode(raw.encode()).decode()
         return encoded, timestamp
 
-    def send_stk_push(self, phone_number, amount, account_reference, description, callback_url=None):
+    def send_stk_push(self, phone_number, amount, account_reference, description):
         """
         Sends STK Push to user phone via M-Pesa Daraja API.
         """
         try:
             access_token = self.get_mpesa_access_token()
             password, timestamp = self.generate_password()
-            if not callback_url:
-                ngrok_base = get_ngrok_public_url()
-                if ngrok_base:
-                    callback_url = f"{ngrok_base}/api/v1/payments/mpesa/callback/"
-                else:
-                    callback_url = settings.MPESA_CALLBACK_URL  # fallback
 
             payload = {
                 "BusinessShortCode": self.business_short_code,
@@ -111,7 +89,7 @@ class MpesaService:
                 "PartyA": phone_number,
                 "PartyB": self.business_short_code,
                 "PhoneNumber": phone_number,
-                "CallBackURL": callback_url,
+                "CallBackURL": self.callback_url,
                 "AccountReference": account_reference,
                 "TransactionDesc": description,
             }
@@ -127,19 +105,19 @@ class MpesaService:
 
             if response.status_code == 200 and data.get("ResponseCode") == "0":
                 return {
-                    "success": True,
+                    "status": "success",
                     "CheckoutRequestID": data.get("CheckoutRequestID"),
                     "CustomerMessage": data.get("CustomerMessage"),
                 }
 
             return {
-                "success": False,
+                "status": "error",
                 "error": data.get("errorMessage") or data.get("ResponseDescription", "STK Push failed"),
             }
 
         except Exception as e:
             logger.error(f"[MPESA] STK push error: {e}")
-            return {"success": False, "error": str(e)}
+            return {"status": "error", "error": str(e)}
 
     def query_transaction(self, checkout_request_id):
         """
@@ -169,27 +147,14 @@ class MpesaService:
 
         except Exception as e:
             logger.error(f"[MPESA] Query transaction error: {e}")
-            return {"success": False, "error": str(e)}
+            return {"status": "error", "error": str(e)}
 
     @staticmethod
     def validate_phone_number(phone_number):
         """
         Validates and standardizes Kenyan phone number.
         """
-        phone = re.sub(r"[^\d+]", "", phone_number)
-
-        if phone.startswith("0"):
-            phone = "254" + phone[1:]
-        elif phone.startswith("+254"):
-            phone = phone[1:]
-        elif not phone.startswith("254"):
-            raise ValueError("Invalid phone number format")
-
-        if not re.match(r"^254[17]\d{8}$", phone):
-            raise ValueError("Invalid Kenyan phone number")
-
-        return phone
-
+        return standardize_phone_number(phone_number)
 
 class PaymentProcessor:
     """
@@ -216,7 +181,7 @@ class PaymentProcessor:
 
     @staticmethod
     def mark_payment_completed(payment: Payment, receipt_number: str):
-        payment.status = 'COMPLETED'
+        payment.status = 'completed'
         payment.mpesa_receipt_number = receipt_number
         payment.completed_at = timezone.now()
         payment.save(update_fields=['status', 'mpesa_receipt_number', 'completed_at'])
@@ -224,87 +189,41 @@ class PaymentProcessor:
 
     @staticmethod
     def mark_payment_failed(payment: Payment, reason: str):
-        payment.status = 'FAILED'
+        payment.status = 'failed'
         payment.failure_reason = reason
         payment.save(update_fields=['status', 'failure_reason'])
-        return payment 
+        return payment
 
     @staticmethod
-    def create_subscription(user, plan: SubscriptionPlan, payment):
+    def create_subscription(user, plan: SubscriptionPlan, payment: Payment):
         """
         Creates a new subscription for the given user and plan.
         """
         now = timezone.now()
-
-        # Deactivate existing subscriptions of the same plan
-        Subscription.objects.filter(user=user, plan=plan, active=True).update(active=False)
-
-        # Create new subscription
         subscription = Subscription.objects.create(
             user=user,
             plan=plan,
-            payment=payment,
             start_date=now,
             end_date=now + timezone.timedelta(hours=plan.duration_hours),
-            active=True,
-            last_payment_at=now,
-            is_renewal_eligible=True,
+            active=False
         )
-
-        # Link to UserSubscription
         UserSubscription.objects.update_or_create(
             user=user,
             defaults={
                 'subscription': subscription,
-                'active': True,
+                'active': False,
             }
         )
-
         return subscription
 
     @staticmethod
-    def attempt_renewal(user, plan: SubscriptionPlan, payment):
-        """
-        Attempts to renew an expired subscription within the grace period.
-        """
-        now = timezone.now()
-        try:
-            sub = Subscription.objects.get(user=user, plan=plan)
-        except Subscription.DoesNotExist:
-            return None, "No subscription found to renew."
-
-        expired = sub.end_date < now
-        within_grace = sub.end_date + timezone.timedelta(hours=plan.renewal_grace_period_hours) >= now
-
-        if not expired:
-            return None, "Subscription is still active; no renewal needed."
-        if not within_grace:
-            return None, "Renewal grace period has expired."
-
-        sub.start_date = now
-        sub.end_date = now + timezone.timedelta(hours=plan.duration_hours)
-        sub.last_payment_at = now
-        sub.active = True
-        sub.payment = payment
-        sub.save()
-
-        UserSubscription.objects.update_or_create(
-            user=user,
-            defaults={
-                'subscription': sub,
-                'active': True,
-            }
-        )
-
-        return sub, None
-    @staticmethod
     def get_or_create_premium_plan():
         plan, _ = SubscriptionPlan.objects.get_or_create(
-            name="Premium",
+            name="Basic Plan",
             defaults={
-                'price': Decimal('210'),
-                'duration_hours': 6,
-                'renewal_price': Decimal('50'),
+                'price': Decimal('1000'),
+                'duration_hours': 720,
+                'renewal_price': Decimal('900'),
                 'renewal_grace_period_hours': 24
             }
         )

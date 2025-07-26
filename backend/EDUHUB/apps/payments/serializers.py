@@ -10,7 +10,7 @@ from .models import (
     SubscriptionPlan, PaymentCallback
 )
 from apps.core.utils import validate_kenyan_phone
-from apps.courses.models import UserSelectedCourse  # adjust import if needed
+from apps.authentication.models import UserSelectedCourse  # adjust import if needed
 from apps.courses.serializers import CourseListSerializer  # assumes you have one
 
 User = get_user_model()

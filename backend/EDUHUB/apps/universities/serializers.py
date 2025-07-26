@@ -23,6 +23,7 @@ class DepartmentSerializer(serializers.ModelSerializer):
 class FacultySerializer(serializers.ModelSerializer):
     """
     Serializer for university faculties with nested departments.
+    work in coursecount
     """
     departments = DepartmentSerializer(many=True, read_only=True)
 
@@ -37,7 +38,7 @@ class UniversityListSerializer(serializers.ModelSerializer):
     """
     class Meta:
         model = University
-        fields = ['id', 'name', 'slug', 'code', 'logo', 'city','campus', 'ranking']
+        fields = ['id', 'name', 'slug', 'code', 'logo', 'city','campus','accreditation', 'ranking']
 
 
 class UniversityDetailSerializer(serializers.ModelSerializer):
@@ -51,6 +52,6 @@ class UniversityDetailSerializer(serializers.ModelSerializer):
         model = University
         fields = [
             'id', 'name', 'slug', 'code', 'description', 'website', 
-            'logo', 'address', 'city', 'ranking','campus', 
+            'logo', 'address', 'city', 'ranking','campus','accreditation',
             'established_year', 'faculties', 'requirements'
         ]
