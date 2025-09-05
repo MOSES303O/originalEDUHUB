@@ -321,4 +321,4 @@ export default function Home() {
       {isAuthModalOpen && <AuthenticationModal onClose={() => setIsAuthModalOpen(false)}  canClose={false} />}
     </div>
   );
-}
+}  
