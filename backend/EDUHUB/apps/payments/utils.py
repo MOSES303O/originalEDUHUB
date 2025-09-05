@@ -1,4 +1,3 @@
-# apps/payments/utils.py
 import requests
 import base64
 import json
@@ -9,7 +8,7 @@ from datetime import datetime
 from decimal import Decimal
 from django.conf import settings
 from django.utils import timezone
-from .models import Payment, Subscription, SubscriptionPlan, UserSubscription
+from .models import Payment, Subscription, SubscriptionPlan
 from apps.core.utils import standardize_phone_number
 
 logger = logging.getLogger(__name__)
@@ -18,7 +17,6 @@ class MpesaService:
     """
     Handles M-Pesa Daraja API integration.
     """
-
     def __init__(self):
         self.consumer_key = settings.MPESA_CONSUMER_KEY
         self.consumer_secret = settings.MPESA_CONSUMER_SECRET
@@ -160,7 +158,6 @@ class PaymentProcessor:
     """
     Utility methods for payment processing.
     """
-
     @staticmethod
     def calculate_processing_fee(amount, fee_percentage):
         return (Decimal(str(amount)) * Decimal(str(fee_percentage)) / 100).quantize(Decimal('0.01'))
@@ -206,13 +203,6 @@ class PaymentProcessor:
             start_date=now,
             end_date=now + timezone.timedelta(hours=plan.duration_hours),
             active=False
-        )
-        UserSubscription.objects.update_or_create(
-            user=user,
-            defaults={
-                'subscription': subscription,
-                'active': False,
-            }
         )
         return subscription
 

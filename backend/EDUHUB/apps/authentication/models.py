@@ -53,16 +53,6 @@ class User(AbstractBaseUser, PermissionsMixin):
         validators=[validate_kenyan_phone],
         help_text="Kenyan phone number for login and notifications"
     )
-    first_name = models.CharField(
-        max_length=30,
-        blank=True,  # Make optional
-        help_text="User's first name"
-    )
-    last_name = models.CharField(
-        max_length=30,
-        blank=True,  # Make optional
-        help_text="User's last name"
-    )
     is_active = models.BooleanField(default=True)
     is_staff = models.BooleanField(default=False)
     is_verified = models.BooleanField(default=False)

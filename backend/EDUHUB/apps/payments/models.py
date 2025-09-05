@@ -48,14 +48,14 @@ class Subscription(models.Model):
         related_name='subscriptions'
     )
     plan = models.ForeignKey(SubscriptionPlan, on_delete=models.CASCADE)
-    start_date = models.DateTimeField()
+    start_date = models.DateTimeField(default=timezone.now)
     end_date = models.DateTimeField()
     active = models.BooleanField(default=True)
     last_payment_at = models.DateTimeField(null=True, blank=True)
     is_renewal_eligible = models.BooleanField(default=False)
 
     def __str__(self):
-        return f"{self.user.username} - {self.plan.name}"
+        return f"{self.user.phone_number} - {self.plan.name}"
 
     @property
     def is_active(self):
@@ -69,31 +69,6 @@ class Subscription(models.Model):
             grace_period_end = self.end_date + timedelta(hours=self.plan.renewal_grace_period_hours)
             self.is_renewal_eligible = now <= grace_period_end
             self.save()
-
-
-class UserSubscription(models.Model):
-    user = models.OneToOneField(
-        settings.AUTH_USER_MODEL,
-        on_delete=models.CASCADE,
-        related_name='user_subscription'
-    )
-    current_subscription = models.ForeignKey(
-        Subscription,
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True,
-        related_name='user_current_subscription'
-    )
-    renewal_attempted = models.BooleanField(default=False)
-    renewal_successful = models.BooleanField(default=False)
-    def subscription_name(self, obj):
-        if obj.current_subscription and obj.current_subscription.plan:
-         return obj.current_subscription.plan.name
-        return "-"
-
-    def __str__(self):
-        return f"{self.user.email}"
-
 class Payment(models.Model):
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL,
@@ -130,7 +105,7 @@ class Payment(models.Model):
     callback_metadata = models.JSONField(blank=True, null=True)
 
     def __str__(self):
-        return f"Payment by {self.user.username} - {self.amount} - {self.status}"
+        return f"Payment by {self.amount} - {self.status}"
 
     def mark_completed(self, transaction_id=None, receipt_number=None):
         self.status = 'completed'

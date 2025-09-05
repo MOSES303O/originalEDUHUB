@@ -17,11 +17,8 @@ router.register(r'subjects', UserSubjectViewSet, basename='user_subjects')
 urlpatterns = [
     # User subjects and grades
     path('', include(router.urls)),
-    
-    # User course selections
-    path('selected-courses/', UserSelectedCoursesView.as_view(), name='user_selected_courses'),
-    path('selected-courses/<int:pk>/', UserSelectedCoursesView.as_view(), name='user_selected_course_detail'),
-    
-    # User applications
-    path('applications/', UserApplicationsView.as_view(), name='user_applications'),
+    # Explicit paths for UserSelectedCoursesView
+    path('user/selected-courses/', UserSelectedCoursesView.as_view(), name='user-selected-courses'),
+    path('user/selected-courses/<uuid:pk>/', UserSelectedCoursesView.as_view(), name='user-selected-course-detail'),
+    path('user/selected-courses/download/', UserSelectedCoursesView.as_view(), name='user-selected-courses-download'),
 ]

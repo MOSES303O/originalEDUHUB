@@ -2,7 +2,7 @@ import json
 from django.contrib import admin
 from django.utils.html import format_html
 from django.urls import reverse
-from .models import PaymentWebhook, Payment,SubscriptionPlan, Subscription, UserSubscription
+from .models import PaymentWebhook, Payment, SubscriptionPlan, Subscription
 
 # Global branding
 admin.site.site_header = "EDUHUB Payment Administration"
@@ -53,7 +53,7 @@ class PaymentAdmin(admin.ModelAdmin):
         'created_at',
     ]
     list_filter = ['status', 'payment_method', 'created_at', 'updated_at']
-    search_fields = ['user__email', 'user__first_name', 'user__last_name', 'mpesa_receipt_number']
+    search_fields = ['user__phone_number', 'user__email', 'mpesa_receipt_number']  # Updated
     readonly_fields = ['created_at', 'updated_at', 'mpesa_response_display', 'callback_data_display']
     date_hierarchy = 'created_at'
 
@@ -78,12 +78,12 @@ class PaymentAdmin(admin.ModelAdmin):
         if obj.user:
             try:
                 url = reverse('admin:authentication_user_change', args=[obj.user.pk])
-                return format_html('<a href="{}">{}</a>', url, obj.user.get_full_name() or obj.user.email)
+                return format_html('<a href="{}">{}</a>', url, obj.user.phone_number or obj.user.email or "No Identifier")
             except Exception:
                 return str(obj.user)
         return "No User"
     user_link.short_description = "User"
-    user_link.admin_order_field = "user__email"
+    user_link.admin_order_field = "user__phone_number"  # Updated
 
     def amount_display(self, obj):
         return f"KES {obj.amount:,.2f}"
@@ -132,44 +132,6 @@ class SubscriptionPlanAdmin(admin.ModelAdmin):
     list_display = ('id', 'name', 'price', 'duration_hours', 'renewal_price', 'renewal_grace_period_hours')
     search_fields = ('name',)
     list_filter = ('duration_hours', 'renewal_grace_period_hours')
-@admin.register(UserSubscription)
-class UserSubscriptionAdmin(admin.ModelAdmin):
-    list_display = [
-        'user_link', 'subscription_name', 'amount_paid_display', 'is_current_display'
-    ]
-    # Removed 'is_current_display' from list_filter (not a model field)
-    search_fields = ['subscription_type__name']
-    readonly_fields = ['current_subscription']
-
-    def user_link(self, obj):
-        if obj.user:
-            url = reverse('admin:authentication_user_change', args=[obj.user.pk])
-            return format_html('<a href="{}">{}</a>', url, obj.user.get_full_name() or obj.user.email)
-        return "No User"
-    user_link.short_description = "User"
-
-    def subscription_name(self, obj):
-        if obj.current_subscription and obj.current_subscription.plan:
-            return obj.current_subscription.plan.name
-        return "-"
-    subscription_name.short_description = "Subscription"
-
-    def amount_paid_display(self, obj):
-        if obj.current_subscription and obj.current_subscription.plan:
-            return f"KES {obj.current_subscription.plan.price:,.2f}"
-        return "-"
-    amount_paid_display.short_description = "Amount Paid"
-
-    def is_current_display(self, obj):
-        try:
-            return obj.is_current()  # Ensure this method exists on the model
-        except Exception:
-            return False
-    is_current_display.boolean = True
-    is_current_display.short_description = "Currently Active"
-
-    def get_queryset(self, request):
-        return super().get_queryset(request).select_related('user','current_subscription')
 
 @admin.register(Subscription)
 class SubscriptionAdmin(admin.ModelAdmin):
@@ -178,20 +140,22 @@ class SubscriptionAdmin(admin.ModelAdmin):
         'start_date', 'end_date'
     ]
     list_filter = ['plan', 'start_date', 'end_date']
-    search_fields = ['user__email', 'user__first_name', 'user__last_name', 'plan__name']
-    readonly_fields = ['start_date']  # These are actual model fields
+    search_fields = ['user__phone_number', 'user__email', 'plan__name']  # Updated
+    readonly_fields = ['start_date']
     date_hierarchy = 'start_date'
 
     fieldsets = (
         ('Subscription Details', {'fields': ('user', 'plan', 'active')}),
         ('Duration', {'fields': ('start_date', 'end_date')}),
-        # You can add metadata fields if you have them
     )
 
     def user_link(self, obj):
         if obj.user:
-            url = reverse('admin:authentication_user_change', args=[obj.user.pk])
-            return format_html('<a href="{}">{}</a>', url, obj.user.get_full_name() or obj.user.email)
+            try:
+                url = reverse('admin:authentication_user_change', args=[obj.user.pk])
+                return format_html('<a href="{}">{}</a>', url, obj.user.phone_number or obj.user.email or "No Identifier")
+            except Exception:
+                return str(obj.user)
         return "-"
     user_link.short_description = "User"
 
@@ -200,8 +164,8 @@ class SubscriptionAdmin(admin.ModelAdmin):
     plan_name.short_description = "Plan"
 
     def active_badge(self, obj):
-        color = "#28a745" if obj.is_active() else "#dc3545"
-        label = "✓ Active" if obj.is_active() else "✗ Inactive"
+        color = "#28a745" if obj.active else "#dc3545"
+        label = "Active" if obj.active else "Inactive"
         return format_html('<span style="color:{};">{}</span>', color, label)
     active_badge.short_description = "Status"
 

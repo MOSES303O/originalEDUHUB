@@ -36,9 +36,10 @@ THIRD_PARTY_APPS = [
 LOCAL_APPS = [
     'apps.authentication',
     'apps.courses',
+    'apps.kmtc',
     'apps.payments',
     'apps.core',
-    'apps.universities'
+    'apps.universities',
 ]
 # 'apps.universities'
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS

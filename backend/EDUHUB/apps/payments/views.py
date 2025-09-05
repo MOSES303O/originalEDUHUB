@@ -1,4 +1,3 @@
-# apps/payments/views.py
 from decimal import Decimal
 from rest_framework import permissions, status, generics
 from rest_framework.views import APIView
@@ -22,12 +21,11 @@ from apps.core.utils import (
     format_currency,
     sanitize_callback_data,
 )
-from .models import Payment, SubscriptionPlan, UserSubscription, Subscription
+from .models import Payment, SubscriptionPlan, Subscription
 from .serializers import (
     PaymentSerializer,
     SubscriptionSerializer,
     RenewalPaymentSerializer,
-    UserSubscriptionSerializer,
     SubscriptionStatusSerializer,
     PaymentInitiationSerializer,
 )
@@ -47,66 +45,50 @@ class SubscriptionViewSet(generics.ListAPIView):
     rate_limit_window = 3600
 
     def get_queryset(self):
-        subscriptions = SubscriptionPlan.objects.all()
-        for subscription in subscriptions:
-            subscription.update_status()
-        return subscriptions.filter(is_active=True)
+        return SubscriptionPlan.objects.filter(is_active=True)
 
 class SubscriptionStatusView(BaseAPIView):
-    """
-    Provides current user subscription status.
-    Requires authentication.
-    """
     permission_classes = [permissions.IsAuthenticated]
     rate_limit_scope = 'subscription_status'
     rate_limit_count = 50
     rate_limit_window = 3600
 
-    def get(self, request):
-        user = request.user
-        today = timezone.now().date()
-
+    @action(detail=False, methods=['get'])
+    def active(self, request):
         try:
-            user_sub = (
-                UserSubscription.objects.select_related('subscription')
-                .filter(user=user, active=True, subscription__end_date__gt=today)
-                .latest('subscription__start_date')
+            all_subscriptions = Subscription.objects.filter(user=request.user)
+            for sub in all_subscriptions:
+                sub.update_status()
+            active_subscription = all_subscriptions.filter(
+                active=True,
+                end_date__gt=timezone.now()
+            ).first()
+            if active_subscription:
+                subscription_data = SubscriptionSerializer(active_subscription).data
+                return standardize_response(
+                    success=True,
+                    message="Active subscription retrieved successfully",
+                    data=subscription_data,
+                    status_code=status.HTTP_200_OK
+                )
+            else:
+                return standardize_response(
+                    success=False,
+                    message="No active subscription found",
+                    status_code=status.HTTP_404_NOT_FOUND
+                )
+        except Exception as e:
+            return standardize_response(
+                success=False,
+                message="Failed to retrieve active subscription",
+                errors={'detail': str(e)},
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
-            subscription = user_sub.subscription
-            subscription.update_status()
 
-            data = {
-                "is_active": True,
-                "plan": subscription.plan.name,
-                "status": subscription.status,
-                "billing_cycle": subscription.plan.duration_hours,
-                "start_date": subscription.start_date,
-                "end_date": subscription.end_date,
-                "amount_paid": user_sub.amount_paid,
-                "currency": "KES",
-                "message": "Active subscription found."
-            }
-        except UserSubscription.DoesNotExist:
-            data = {
-                "is_active": False,
-                "plan": None,
-                "status": None,
-                "billing_cycle": None,
-                "start_date": None,
-                "end_date": None,
-                "amount_paid": None,
-                "currency": None,
-                "message": "No active subscription found."
-            }
-
-        serializer = SubscriptionStatusSerializer(data)
-        return standardize_response(
-            success=True,
-            message=data["message"],
-            data=serializer.data,
-            status_code=status.HTTP_200_OK
-        )
-
+class ActiveSubscriptionView(SubscriptionStatusView):
+    def get(self, request):
+        print("Received request for /api/v1/payments/my-subscriptions/active/")
+        return self.active(request)
 class PaymentViewSet(BaseModelViewSet):
     """
     Manage user payments: list, create, retrieve.
@@ -306,10 +288,6 @@ class MpesaCallbackView(APIView):
                     subscription.active = True
                     subscription.last_payment_at = timezone.now()
                     subscription.save()
-                    UserSubscription.objects.update_or_create(
-                        user=payment.user,
-                        defaults={'subscription': subscription, 'active': True}
-                    )
                     payment.user.is_premium = True
                     payment.user.save()
 
@@ -365,63 +343,4 @@ class PaymentVerificationView(BaseAPIView):
                 success=False,
                 message="Payment not found",
                 status_code=status.HTTP_404_NOT_FOUND
-            )
-
-class UserSubscriptionViewSet(BaseModelViewSet):
-    """
-    User subscription management viewset.
-    
-    GET /api/v1/payments/my-subscriptions/
-    GET /api/v1/payments/my-subscriptions/{id}/
-    """
-    serializer_class = UserSubscriptionSerializer
-    permission_classes = [permissions.IsAuthenticated]
-    rate_limit_scope = 'user_subscriptions'
-    rate_limit_count = 50
-    rate_limit_window = 3600
-
-    def get_queryset(self):
-        user_subs = UserSubscription.objects.filter(user=self.request.user).order_by('-created_at')
-        for sub in user_subs:
-            sub.update_status()
-        return user_subs
-
-    @action(detail=False, methods=['get'])
-    def active(self, request):
-        """
-        Get user's active subscription.
-        
-        GET /api/v1/payments/my-subscriptions/active/
-        """
-        try:
-            all_user_subs = UserSubscription.objects.filter(user=request.user)
-            for sub in all_user_subs:
-                sub.update_status()
-
-            active_subscription = all_user_subs.filter(
-                active=True,
-                subscription__end_date__gt=timezone.now()
-            ).first()
-
-            if active_subscription:
-                subscription_data = UserSubscriptionSerializer(active_subscription).data
-                return standardize_response(
-                    success=True,
-                    message="Active subscription retrieved successfully",
-                    data=subscription_data,
-                    status_code=status.HTTP_200_OK
-                )
-            else:
-                return standardize_response(
-                    success=False,
-                    message="No active subscription found",
-                    status_code=status.HTTP_404_NOT_FOUND
-                )
-
-        except Exception as e:
-            return standardize_response(
-                success=False,
-                message="Failed to retrieve active subscription",
-                errors={'detail': str(e)},
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR
             )

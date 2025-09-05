@@ -2,13 +2,19 @@
 Authentication views using standardized base classes.
 """
 
-from rest_framework import status, mixins, generics
-from rest_framework.permissions import AllowAny, IsAuthenticated
+from rest_framework import status,permissions
 from rest_framework.decorators import action
-from rest_framework.views import APIView
+from rest_framework.generics import GenericAPIView
+from reportlab.lib.pagesizes import letter
+from reportlab.pdfgen import canvas
+from io import BytesIO
+import csv
+from rest_framework.mixins import ListModelMixin, CreateModelMixin, UpdateModelMixin, DestroyModelMixin
 from rest_framework_simplejwt.authentication import JWTAuthentication
-from apps.core.utils import logger, standardize_response, get_client_ip, log_user_activity
+from apps.core.mixins import APIResponseMixin
+from apps.core.utils import logger, standardize_response, log_user_activity
 from django.utils import timezone
+from django.http import HttpResponse
 from .models import User, UserProfile, UserSession, UserSubject, UserSelectedCourse
 from .serializers import (
     UserProfileSerializer,
@@ -16,8 +22,6 @@ from .serializers import (
     UserSelectedCourseSerializer,
 )
 from apps.core.views import BaseAPIView, BaseModelViewSet
-from apps.payments.models import UserSubscription
-
 class UserProfileViewSet(BaseModelViewSet):
     """
     User profile management viewset.
@@ -52,8 +56,6 @@ class UserProfileViewSet(BaseModelViewSet):
             user_data = {
                 'id': user.id,
                 'phone_number': user.phone_number,
-                'first_name': user.first_name,
-                'last_name': user.last_name,
                 'email': user.email,
                 'is_active': user.is_active,
                 'date_joined': user.date_joined.isoformat(),
@@ -281,79 +283,161 @@ class UserSessionsView(BaseAPIView):
                 errors={'detail': str(e)},
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
-
-class UserSelectedCourseView(mixins.UpdateModelMixin, mixins.DestroyModelMixin, generics.ListCreateAPIView):
-    """
-    Manages user-selected courses.
-    
-    GET /api/v1/user/selected-courses/
-    POST /api/v1/user/selected-courses/
-    PUT /api/v1/user/selected-courses/{id}/
-    DELETE /api/v1/user/selected-courses/{id}/
-    """
+class UserSelectedCoursesView(APIResponseMixin, GenericAPIView, ListModelMixin, CreateModelMixin, UpdateModelMixin, DestroyModelMixin):
+    permission_classes = [permissions.IsAuthenticated]
     serializer_class = UserSelectedCourseSerializer
-    permission_classes = [IsAuthenticated]
-    authentication_classes = [JWTAuthentication]
-    
+    # throttle_classes = [CustomUserRateThrottle]  # Uncomment if defined
+
     def get_queryset(self):
         return UserSelectedCourse.objects.filter(user=self.request.user)
-    
+
+    def get_object(self):
+        pk = self.kwargs.get('pk')
+        try:
+            return UserSelectedCourse.objects.get(pk=pk, user=self.request.user)
+        except UserSelectedCourse.DoesNotExist:
+            return self.error_response(
+                message="Selected course not found",
+                status_code=status.HTTP_404_NOT_FOUND
+            )
+
     def perform_create(self, serializer):
+        print(f"Creating selected course for user: {self.request.user.phone_number}, course: {self.request.data.get('course')}")
         serializer.save(user=self.request.user)
         log_user_activity(
             user=self.request.user,
             action='COURSE_SELECTED',
-            details={'course_id': serializer.validated_data['course_id']},
-            request=self.request
+            ip_address=self.get_client_ip(self.request),
+            details={'course_id': str(self.request.data.get('course'))}
         )
-    
+
     def create(self, request, *args, **kwargs):
         try:
-            response = super().create(request, *args, **kwargs)
-            return standardize_response(
-                success=True,
-                message="Course added to selection successfully",
-                data=response.data,
+            serializer = self.get_serializer(data=request.data)
+            serializer.is_valid(raise_exception=True)
+            self.perform_create(serializer)
+            return self.success_response(
+                message="Course selected successfully",
+                data=serializer.data,
                 status_code=status.HTTP_201_CREATED
             )
         except Exception as e:
-            return standardize_response(
-                success=False,
-                message="Failed to add course to selection",
+            print(f"Error creating selected course: {str(e)}")
+            return self.error_response(
+                message="Failed to select course",
                 errors={'detail': str(e)},
                 status_code=status.HTTP_400_BAD_REQUEST
             )
-    
-    def update(self, request, *args, **kwargs):
+
+    def put(self, request, *args, **kwargs):
         try:
-            response = super().update(request, *args, **kwargs)
-            return standardize_response(
-                success=True,
+            response = self.update(request, *args, **kwargs)
+            log_user_activity(
+                user=request.user,
+                action='COURSE_UPDATED',
+                ip_address=self.get_client_ip(request),
+                details={'course_id': str(self.get_object().course.id)}
+            )
+            return self.success_response(
                 message="Course selection updated successfully",
                 data=response.data,
                 status_code=status.HTTP_200_OK
             )
         except Exception as e:
-            return standardize_response(
-                success=False,
+            return self.error_response(
                 message="Failed to update course selection",
                 errors={'detail': str(e)},
                 status_code=status.HTTP_400_BAD_REQUEST
             )
-    
-    def destroy(self, request, *args, **kwargs):
+
+    def delete(self, request, *args, **kwargs):
         try:
-            response = super().destroy(request, *args, **kwargs)
-            return standardize_response(
-                success=True,
+            course_id = self.get_object().course.id
+            response = self.destroy(request, *args, **kwargs)
+            log_user_activity(
+                user=request.user,
+                action='COURSE_REMOVED',
+                ip_address=self.get_client_ip(request),
+                details={'course_id': str(course_id)}
+            )
+            return self.success_response(
                 message="Course removed from selection successfully",
                 data=None,
                 status_code=status.HTTP_204_NO_CONTENT
             )
         except Exception as e:
-            return standardize_response(
-                success=False,
+            return self.error_response(
                 message="Failed to remove course from selection",
                 errors={'detail': str(e)},
                 status_code=status.HTTP_400_BAD_REQUEST
+            )
+
+    def get_client_ip(self, request):
+        x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
+        if x_forwarded_for:
+            return x_forwarded_for.split(',')[0]
+        return request.META.get('REMOTE_ADDR')
+
+    @action(detail=False, methods=['get'], url_path='download')
+    def download(self, request):
+        try:
+            format = request.query_params.get('format', 'pdf')
+            queryset = self.get_queryset()
+            if not queryset.exists():
+                return self.error_response(
+                    message="No selected courses to download",
+                    status_code=status.HTTP_404_NOT_FOUND
+                )
+
+            if format == 'pdf':
+                buffer = BytesIO()
+                p = canvas.Canvas(buffer, pagesize=letter)
+                p.setFont("Helvetica", 12)
+                p.drawString(100, 750, f"Selected Courses for {request.user.phone_number}")
+                y = 700
+                for course in queryset:
+                    p.drawString(100, y, f"Course: {course.course.name} ({course.course.id}), Selected: {course.created_at}")
+                    y -= 20
+                p.showPage()
+                p.save()
+                buffer.seek(0)
+                response = HttpResponse(buffer, content_type='application/pdf')
+                response['Content-Disposition'] = 'attachment; filename="selected_courses.pdf"'
+                log_user_activity(
+                    user=request.user,
+                    action='COURSE_DOWNLOADED',
+                    ip_address=self.get_client_ip(request),
+                    details={'format': 'pdf', 'count': queryset.count()}
+                )
+                return response
+            elif format == 'csv':
+                response = HttpResponse(content_type='text/csv')
+                response['Content-Disposition'] = 'attachment; filename="selected_courses.csv"'
+                writer = csv.writer(response)
+                writer.writerow(['Course ID', 'Course Name', 'University', 'Selected At'])
+                for course in queryset:
+                    writer.writerow([
+                        course.course.id,
+                        course.course.name,
+                        course.course.university_name or 'N/A',
+                        course.created_at
+                    ])
+                log_user_activity(
+                    user=request.user,
+                    action='COURSE_DOWNLOADED',
+                    ip_address=self.get_client_ip(request),
+                    details={'format': 'csv', 'count': queryset.count()}
+                )
+                return response
+            else:
+                return self.error_response(
+                    message="Invalid format. Use 'pdf' or 'csv'.",
+                    status_code=status.HTTP_400_BAD_REQUEST
+                )
+        except Exception as e:
+            print(f"Error generating download: {str(e)}")
+            return self.error_response(
+                message="Failed to generate download",
+                errors={'detail': str(e)},
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR
             )

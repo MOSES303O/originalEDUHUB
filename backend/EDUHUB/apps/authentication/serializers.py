@@ -44,8 +44,6 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
         ]
         extra_kwargs = {
             'phone_number': {'required': True},
-            'first_name': {'required': False, 'allow_blank': True},
-            'last_name': {'required': False, 'allow_blank': True},
             'email': {'required': False, 'allow_null': True, 'allow_blank': True}
         }
 
@@ -94,8 +92,6 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
             phone_number=validated_data['phone_number'],
             email=validated_data.get('email'),
             password=validated_data.get('password'),
-            first_name=validated_data.get('first_name', ''),
-            last_name=validated_data.get('last_name', '')
         )
         UserProfile.objects.create(user=user)
 
@@ -142,12 +138,11 @@ class UserLoginSerializer(serializers.Serializer):
 class UserProfileSerializer(serializers.ModelSerializer):
     phone_number = serializers.CharField(source='user.phone_number', read_only=True)
     email = serializers.EmailField(source='user.email', read_only=True)
-    full_name = serializers.CharField(source='user.get_full_name', read_only=True)
 
     class Meta:
         model = UserProfile
         fields = [
-            'email', 'full_name', 'phone_number',
+            'email', 'phone_number',
              'created_at', 'updated_at'
         ]
         read_only_fields = ['created_at', 'updated_at']
@@ -210,7 +205,7 @@ class UserDetailSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = [
-            'id', 'email', 'first_name', 'last_name',
+            'id', 'email',
             'phone_number', 'masked_phone', 'is_active', 'is_verified',
             'date_joined', 'last_login', 'profile', 'subjects'
         ]
@@ -224,12 +219,11 @@ class UserDetailSerializer(serializers.ModelSerializer):
 
 class UserSelectedCourseSerializer(serializers.ModelSerializer):
     course = CourseListSerializer(read_only=True)
-    course_id = serializers.UUIDField(write_only=True)
 
     class Meta:
         model = UserSelectedCourse
         fields = [
-            'id', 'course', 'course_id',
+            'id', 'course',
             'is_applied', 'application_date', 'created_at'
         ]
         read_only_fields = ['id', 'created_at', 'is_applied', 'application_date']
@@ -243,10 +237,9 @@ class UserSelectedCourseSerializer(serializers.ModelSerializer):
 
     def validate(self, data):
         user = self.context['request'].user
-        course_id = data.get('course_id')
         
         if self.instance is None:  # Creating new selection
-            if UserSelectedCourse.objects.filter(user=user, course_id=course_id).exists():
+            if UserSelectedCourse.objects.filter(user=user).exists():
                 raise serializers.ValidationError("Course already selected")
         
         return data

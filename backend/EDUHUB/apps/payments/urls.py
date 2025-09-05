@@ -6,21 +6,20 @@ from .views import (
     PaymentViewSet,
     PaymentInitiationView,
     MpesaCallbackView,
-    UserSubscriptionViewSet,
-    PaymentVerificationView
+    PaymentVerificationView,
+    ActiveSubscriptionView
 )
 
 router = DefaultRouter()
-router.register(r'payments', PaymentViewSet, basename='payment')
-router.register(r'my-subscriptions', UserSubscriptionViewSet, basename='user-subscription')
+router.register(r'payments', PaymentViewSet, basename='payment')  # Only PaymentViewSet in router
 
 urlpatterns = [
     path('', include(router.urls)),
-
     # Individual APIViews
     path('subscriptions/', SubscriptionViewSet.as_view(), name='subscription'),
     path('subscription-status/', SubscriptionStatusView.as_view(), name='subscription-status'),
-    path('paymentS/initiate/', PaymentInitiationView.as_view(), name='payment-initiate'),
+    path('my-subscriptions/active/', ActiveSubscriptionView.as_view(), name='subscription-status-active'),
+    path('payments/initiate/', PaymentInitiationView.as_view(), name='payment-initiate'),
     path('mpesa/callback/', MpesaCallbackView.as_view(), name='mpesa-callback'),
     path('payment/verify/<str:reference>/', PaymentVerificationView.as_view(), name='payment-verify')
 ]

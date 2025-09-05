@@ -20,6 +20,7 @@ api_v1_patterns = [
     path('universities/', include('apps.universities.urls')),
     path('payments/', include('apps.payments.urls')),
     path('user/', include('apps.authentication.user_urls')),
+    path('kmtc/', include('apps.kmtc.urls')),
 ]
 
 urlpatterns = [

@@ -1,7 +1,7 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 from django.contrib.auth import get_user_model
-from .models import UserSelectedCourse
+from .models import UserSelectedCourse,UserSubject
 
 User = get_user_model()
 
@@ -29,3 +29,8 @@ class UserSelectedCourseAdmin(admin.ModelAdmin):
     list_display = ('user', 'course','is_applied', 'application_date')
     list_filter = ('is_applied',)
     search_fields = ('user__email','user__phone_number', 'course__name')
+
+@admin.register(UserSubject)
+class UserSelectedSubjectAdmin(admin.ModelAdmin):
+    list_display = ('user', 'subject')
+    search_fields = ('grade', 'subject')

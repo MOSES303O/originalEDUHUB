@@ -6,7 +6,7 @@ from rest_framework import serializers
 from django.contrib.auth import get_user_model
 from django.utils import timezone
 from .models import (
-    Payment, Subscription, UserSubscription,
+    Payment, Subscription,
     SubscriptionPlan, PaymentCallback
 )
 from apps.core.utils import validate_kenyan_phone
@@ -116,77 +116,20 @@ class RenewalPaymentSerializer(serializers.Serializer):
 
 class SubscriptionSerializer(serializers.ModelSerializer):
     """Serializer for subscriptions"""
-    plan = SubscriptionPlanSerializer(read_only=True)
+    plan = serializers.CharField(source='plan.name', read_only=True)  # Simplify plan to avoid complex serialization
     payment = PaymentSerializer(read_only=True)
     is_expired = serializers.BooleanField(read_only=True)
     days_remaining = serializers.IntegerField(read_only=True)
-    courses_selected = serializers.SerializerMethodField()
-    applications_made = serializers.SerializerMethodField()
 
     class Meta:
         model = Subscription
-        #created_at got deleted
         fields = [
             'id', 'plan', 'payment', 'is_active', 'start_date',
-            'end_date', 'courses_selected', 'applications_made',
-            'is_expired', 'days_remaining'
+            'end_date', 'is_expired', 'days_remaining'
         ]
         read_only_fields = [
-            'id', 'plan', 'payment', 'start_date',
-            'end_date'
+            'id', 'plan', 'payment', 'start_date', 'end_date'
         ]
-
-    def get_courses_selected(self, obj):
-        user = obj.user
-        selected_courses = UserSelectedCourse.objects.filter(user=user).select_related('course')
-        courses = [usc.course for usc in selected_courses]
-        context = {'request': self.context.get('request')}
-        return CourseListSerializer(courses, many=True, context=context).data
-    
-    def get_applications_made(self, obj):
-        """Count actual course applications from CourseApplication model"""
-        user = obj.user
-        from courses.models import CourseApplication  # Explicit import to avoid circular issues
-        return CourseApplication.objects.filter(user=user).count()
-
-class UserSubscriptionSerializer(serializers.ModelSerializer):
-    """Serializer for user subscription instances"""
-    subscription_type = SubscriptionSerializer(source='current_subscription.plan', read_only=True)
-    is_current = serializers.SerializerMethodField()
-    days_remaining = serializers.SerializerMethodField()
-    start_date = serializers.SerializerMethodField()
-    end_date = serializers.SerializerMethodField()
-
-    class Meta:
-        model = UserSubscription
-        fields = [
-            'id', 'subscription_type', 'start_date', 'end_date',
-            'is_current', 'days_remaining', 'renewal_attempted', 'renewal_successful',
-        ]
-        read_only_fields = ['id']
-
-    def get_is_current(self, obj):
-        return obj.current_subscription.is_active() if obj.current_subscription else False
-
-    def get_days_remaining(self, obj):
-        if obj.current_subscription and obj.current_subscription.end_date:
-            today = timezone.now().date()
-            end = obj.current_subscription.end_date.date()
-            if end >= today:
-                return (end - today).days
-        return 0
-
-    def get_start_date(self, obj):
-        if obj.current_subscription:
-            return obj.current_subscription.start_date
-        return None
-
-    def get_end_date(self, obj):
-        if obj.current_subscription:
-            return obj.current_subscription.end_date
-        return None
-
-
 class SubscriptionStatusSerializer(serializers.Serializer):
     """Serializer for subscription status checks"""
     is_active = serializers.BooleanField(read_only=True)
