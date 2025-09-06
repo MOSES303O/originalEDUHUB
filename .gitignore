@@ -1,0 +1,69 @@
+# ------------------------
+# Python / Django
+# ------------------------
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.sqlite3
+*.db
+*.log
+*.pot
+*.pyc
+*.egg-info/
+db.sqlite3
+media/
+staticfiles/
+.DS_Store
+
+# Django specific
+.env
+*.env
+*.local
+/secrets.json
+
+# VSCode / IDE
+.vscode/
+.idea/
+*.swp
+
+# ------------------------
+# Node.js / Next.js
+# ------------------------
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+.next/
+out/
+dist/
+.cache/
+
+# Next.js build output
+.next/
+out/
+build/
+
+# Environment
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Logs
+logs
+*.log
+*.gz
+*.tgz
+
+# Lock files (if you don’t want them versioned)
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+
+# ------------------------
+# OS-specific
+# ------------------------
+Thumbs.db
+.DS_Store
