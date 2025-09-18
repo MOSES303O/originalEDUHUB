@@ -9,7 +9,8 @@ import { Table, TableBody, TableHead, TableHeader, TableRow } from "@/components
 import { Badge } from "@/components/ui/badge";
 import { fetchCourses } from "@/lib/api";
 import { CoursesSkeleton } from "@/components/courses-skeleton";
-import { useSelectedCourses, initializeSelectedCourses, type Course } from "@/lib/course-store";
+import { Course } from "@/types";
+import { useSelectedCourses, initializeSelectedCourses} from "@/lib/course-store";
 import { useToast } from "@/hooks/use-toast";
 import { AuthenticationModal } from "@/components/authentication-modal";
 import { FindCourseForm } from "@/components/find-course-form";
@@ -94,16 +95,8 @@ export default function CoursesPage() {
 
         setCoursesData(data);
       } catch (err: any) {
-        let errorMessage = "Failed to load courses. Please try again later.";
-        if (err.message?.includes("Failed to fetch selected courses")) {
-          try {
-            const parsedError = JSON.parse(err.message.replace("Failed to fetch selected courses: ", ""));
-            errorMessage = parsedError.message || errorMessage;
-          } catch (parseErr) {
-            console.error("Failed to parse error:", parseErr);
-          }
-        }
-        setError(errorMessage);
+        console.error("Load data error:", JSON.stringify(err, null, 2));
+        setError("Failed to load courses. Please try again later.");
       } finally {
         setLoading(false);
       }
@@ -116,7 +109,7 @@ export default function CoursesPage() {
     if (!authLoading && (!user || requirePayment)) {
       const timer = setTimeout(() => {
         setShowAuthModal(true);
-      }, 120000); // 2 minutes
+      }, 120000);
       return () => clearTimeout(timer);
     } else {
       setShowAuthModal(false);
@@ -127,9 +120,9 @@ export default function CoursesPage() {
     return coursesData.filter((course) => {
       const matchesSearch =
         searchTerm === "" ||
-        course.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        course.code.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        course.university_name.toLowerCase().includes(searchTerm.toLowerCase());
+        (course.name && course.name.toLowerCase().includes(searchTerm.toLowerCase())) ||
+        (course.code && course.code.toLowerCase().includes(searchTerm.toLowerCase())) ||
+        (course.university_name && course.university_name.toLowerCase().includes(searchTerm.toLowerCase()));
       return matchesSearch;
     });
   }, [coursesData, searchTerm]);

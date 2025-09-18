@@ -1,53 +1,58 @@
-"use client"
+"use client";
 
-import type React from "react"
-
-import { useState, useEffect } from "react"
-import { Button } from "@/components/ui/button"
-import { Label } from "@/components/ui/label"
-import { fetchSubjects } from "@/lib/api"
+import type React from "react";
+import { useState, useEffect } from "react";
+import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
+import { fetchSubjects } from "@/lib/api";
 
 interface SubjectSelectorProps {
-  onSubmit: (subjects: string[]) => void
-  initialSubjects?: string[]
-  onError?: (error: string) => void
+  onSubmit: (subjects: string[]) => void;
+  initialSubjects?: string[];
+  onError?: (error: string) => void;
+}
+
+interface Subject {
+  id: number;
+  value: string;
+  label: string;
 }
 
 export function SubjectSelector({ onSubmit, initialSubjects = [], onError }: SubjectSelectorProps) {
-  const [subjects, setSubjects] = useState<{ id: number; value: string; label: string }[]>([])
-  const [selectedSubjects, setSelectedSubjects] = useState<string[]>(initialSubjects)
-  const [isLoading, setIsLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
+  const [subjects, setSubjects] = useState<Subject[]>([]);
+  const [selectedSubjects, setSelectedSubjects] = useState<string[]>(initialSubjects);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     async function loadSubjects() {
       try {
-        setIsLoading(true)
-        const data = await fetchSubjects()
-
-        // If data is empty or not an array, use fallback data
-        if (!Array.isArray(data) || data.length === 0) {
-          const fallbackData = [
-            { id: 1, value: "mathematics", label: "Mathematics" },
-            { id: 2, value: "kiswahili", label: "Kiswahili" },
-            { id: 3, value: "english", label: "English" },
-            { id: 4, value: "biology", label: "Biology" },
-            { id: 5, value: "chemistry", label: "Chemistry" },
-            { id: 6, value: "physics", label: "Physics" },
-            { id: 7, value: "history", label: "History" },
-            { id: 8, value: "geography", label: "Geography" },
-            { id: 9, value: "business_studies", label: "Business Studies" },
-            { id: 10, value: "computer_studies", label: "Computer Studies" },
-          ]
-          setSubjects(fallbackData)
-        } else {
-          setSubjects(data)
-        }
+        setIsLoading(true);
+        const data = await fetchSubjects();
+        // Transform API data to match Subject type
+        const transformedData = Array.isArray(data) && data.length > 0
+          ? data.map((item) => ({
+              id: parseInt(item.id), // Convert string id to number
+              value: item.name, // Use name as value
+              label: item.name, // Use name as label
+            }))
+          : [
+              { id: 1, value: "mathematics", label: "Mathematics" },
+              { id: 2, value: "kiswahili", label: "Kiswahili" },
+              { id: 3, value: "english", label: "English" },
+              { id: 4, value: "biology", label: "Biology" },
+              { id: 5, value: "chemistry", label: "Chemistry" },
+              { id: 6, value: "physics", label: "Physics" },
+              { id: 7, value: "history", label: "History" },
+              { id: 8, value: "geography", label: "Geography" },
+              { id: 9, value: "business_studies", label: "Business Studies" },
+              { id: 10, value: "computer_studies", label: "Computer Studies" },
+            ];
+        setSubjects(transformedData);
       } catch (err) {
-        console.error("Error loading subjects:", err)
-        setError("Failed to load subjects. Please try again.")
-        if (onError) onError("Failed to load subjects. Please try again.")
-
+        console.error("Error loading subjects:", err);
+        setError("Failed to load subjects. Please try again.");
+        if (onError) onError("Failed to load subjects. Please try again.");
         // Use fallback data
         const fallbackData = [
           { id: 1, value: "mathematics", label: "Mathematics" },
@@ -60,35 +65,35 @@ export function SubjectSelector({ onSubmit, initialSubjects = [], onError }: Sub
           { id: 8, value: "geography", label: "Geography" },
           { id: 9, value: "business_studies", label: "Business Studies" },
           { id: 10, value: "computer_studies", label: "Computer Studies" },
-        ]
-        setSubjects(fallbackData)
+        ];
+        setSubjects(fallbackData);
       } finally {
-        setIsLoading(false)
+        setIsLoading(false);
       }
     }
 
-    loadSubjects()
-  }, [onError])
+    loadSubjects();
+  }, [onError]);
 
   const toggleSubject = (value: string) => {
     setSelectedSubjects((prev) => {
       if (prev.includes(value)) {
-        return prev.filter((s) => s !== value)
+        return prev.filter((s) => s !== value);
       } else {
-        return [...prev, value]
+        return [...prev, value];
       }
-    })
-  }
+    });
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
+    e.preventDefault();
     if (selectedSubjects.length < 3) {
-      setError("Please select at least 3 subjects")
-      if (onError) onError("Please select at least 3 subjects")
-      return
+      setError("Please select at least 3 subjects");
+      if (onError) onError("Please select at least 3 subjects");
+      return;
     }
-    onSubmit(selectedSubjects)
-  }
+    onSubmit(selectedSubjects);
+  };
 
   if (isLoading) {
     return (
@@ -98,7 +103,7 @@ export function SubjectSelector({ onSubmit, initialSubjects = [], onError }: Sub
           <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">Loading subjects...</p>
         </div>
       </div>
-    )
+    );
   }
 
   return (
@@ -137,5 +142,5 @@ export function SubjectSelector({ onSubmit, initialSubjects = [], onError }: Sub
         </Button>
       </div>
     </form>
-  )
+  );
 }

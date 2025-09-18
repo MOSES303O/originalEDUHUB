@@ -17201,3 +17201,978 @@ INFO 2025-09-05 12:52:30,244 middleware 13892 11824 User: None
 INFO 2025-09-05 12:52:30,299 middleware 13892 11824 Response: 404 - Duration: 0.06s
 WARNING 2025-09-05 12:52:30,300 log 13892 11824 Not Found: /favicon.ico
 WARNING 2025-09-05 12:52:30,302 basehttp 13892 11824 "GET /favicon.ico HTTP/1.1" 404 3730
+INFO 2025-09-08 01:46:43,120 autoreload 8880 10784 Watching for file changes with StatReloader
+INFO 2025-09-08 02:04:30,251 middleware 8880 208 Request: GET /api/v1/courses/courses/
+INFO 2025-09-08 02:04:30,572 middleware 8880 208 Response: 200 - Duration: 0.32s
+INFO 2025-09-08 02:04:30,591 basehttp 8880 208 "GET /api/v1/courses/courses/ HTTP/1.1" 200 1545
+INFO 2025-09-08 02:05:01,241 basehttp 8880 5240 "OPTIONS /api/v1/auth/login/ HTTP/1.1" 200 0
+INFO 2025-09-08 02:05:01,247 middleware 8880 5240 Request: POST /api/v1/auth/login/
+INFO 2025-09-08 02:05:05,499 middleware 8880 5240 Response: 400 - Duration: 4.25s
+WARNING 2025-09-08 02:05:05,501 log 8880 5240 Bad Request: /api/v1/auth/login/
+WARNING 2025-09-08 02:05:05,505 basehttp 8880 5240 "POST /api/v1/auth/login/ HTTP/1.1" 400 180
+INFO 2025-09-08 02:06:20,813 middleware 8880 12536 Request: GET /api/v1/payments/my-subscriptions/active/
+INFO 2025-09-08 02:06:21,158 middleware 8880 12536 User: None
+INFO 2025-09-08 02:06:21,660 middleware 8880 12536 Response: 200 - Duration: 0.85s
+INFO 2025-09-08 02:06:21,662 basehttp 8880 12536 "GET /api/v1/payments/my-subscriptions/active/ HTTP/1.1" 200 255
+INFO 2025-09-08 02:06:22,222 middleware 8880 12536 Request: GET /favicon.ico
+INFO 2025-09-08 02:06:22,230 middleware 8880 12536 User: None
+INFO 2025-09-08 02:06:22,509 middleware 8880 12536 Response: 404 - Duration: 0.29s
+WARNING 2025-09-08 02:06:22,512 log 8880 12536 Not Found: /favicon.ico
+WARNING 2025-09-08 02:06:22,514 basehttp 8880 12536 "GET /favicon.ico HTTP/1.1" 404 3730
+INFO 2025-09-08 02:06:27,289 middleware 8880 4608 Request: GET /admin/
+INFO 2025-09-08 02:06:27,354 middleware 8880 4608 User: None
+INFO 2025-09-08 02:06:28,832 middleware 8880 4608 Response: 200 - Duration: 1.54s
+INFO 2025-09-08 02:06:28,834 basehttp 8880 4608 "GET /admin/ HTTP/1.1" 200 21580
+INFO 2025-09-08 02:06:30,393 basehttp 8880 1852 "GET /static/admin/js/theme.js HTTP/1.1" 200 1653
+INFO 2025-09-08 02:06:30,393 basehttp 8880 13612 "GET /static/admin/css/dashboard.css HTTP/1.1" 200 441
+INFO 2025-09-08 02:06:30,394 basehttp 8880 13904 "GET /static/admin/css/dark_mode.css HTTP/1.1" 200 2808
+INFO 2025-09-08 02:06:30,395 basehttp 8880 13980 "GET /static/admin/css/nav_sidebar.css HTTP/1.1" 200 2810
+INFO 2025-09-08 02:06:30,396 basehttp 8880 10452 "GET /static/admin/css/responsive.css HTTP/1.1" 200 16565
+INFO 2025-09-08 02:06:30,396 basehttp 8880 4608 "GET /static/admin/css/base.css HTTP/1.1" 200 22120
+INFO 2025-09-08 02:06:30,741 basehttp 8880 10452 "GET /static/admin/img/icon-addlink.svg HTTP/1.1" 200 331
+INFO 2025-09-08 02:06:30,741 basehttp 8880 13980 "GET /static/admin/img/icon-changelink.svg HTTP/1.1" 200 380
+INFO 2025-09-08 02:06:30,746 basehttp 8880 4608 "GET /static/admin/js/nav_sidebar.js HTTP/1.1" 200 3063
+INFO 2025-09-08 02:06:36,011 middleware 8880 4608 Request: GET /admin/authentication/user/
+INFO 2025-09-08 02:06:36,034 middleware 8880 4608 User: None
+INFO 2025-09-08 02:06:36,312 middleware 8880 4920 Request: GET /admin/authentication/user/
+INFO 2025-09-08 02:06:36,335 middleware 8880 4920 User: None
+INFO 2025-09-08 02:06:36,591 middleware 8880 4920 Response: 200 - Duration: 0.28s
+INFO 2025-09-08 02:06:36,594 middleware 8880 4608 Response: 200 - Duration: 0.58s
+INFO 2025-09-08 02:06:36,597 basehttp 8880 4608 "GET /admin/authentication/user/ HTTP/1.1" 200 23913
+INFO 2025-09-08 02:06:36,597 basehttp 8880 4920 "GET /admin/authentication/user/ HTTP/1.1" 200 23913
+INFO 2025-09-08 02:06:36,626 basehttp 8880 4608 - Broken pipe from ('127.0.0.1', 10847)
+INFO 2025-09-08 02:06:36,689 middleware 8880 2736 Request: GET /admin/jsi18n/
+INFO 2025-09-08 02:06:36,697 middleware 8880 2736 User: None
+INFO 2025-09-08 02:06:36,701 basehttp 8880 4920 "GET /static/admin/css/changelists.css HTTP/1.1" 200 6878
+INFO 2025-09-08 02:06:36,860 basehttp 8880 11140 "GET /static/admin/js/jquery.init.js HTTP/1.1" 200 347
+INFO 2025-09-08 02:06:36,893 basehttp 8880 5988 "GET /static/admin/js/core.js HTTP/1.1" 200 6208
+INFO 2025-09-08 02:06:36,924 basehttp 8880 6512 "GET /static/admin/js/admin/RelatedObjectLookups.js HTTP/1.1" 200 9777
+INFO 2025-09-08 02:06:36,938 basehttp 8880 3012 "GET /static/admin/js/vendor/jquery/jquery.js HTTP/1.1" 200 285314
+INFO 2025-09-08 02:06:36,965 basehttp 8880 4920 "GET /static/admin/js/actions.js HTTP/1.1" 200 8076
+INFO 2025-09-08 02:06:36,982 basehttp 8880 5988 "GET /static/admin/js/prepopulate.js HTTP/1.1" 200 1531
+INFO 2025-09-08 02:06:36,992 basehttp 8880 11140 "GET /static/admin/js/urlify.js HTTP/1.1" 200 7887
+INFO 2025-09-08 02:06:37,106 basehttp 8880 4920 "GET /static/admin/img/icon-yes.svg HTTP/1.1" 200 436
+INFO 2025-09-08 02:06:37,108 basehttp 8880 11140 "GET /static/admin/img/search.svg HTTP/1.1" 200 458
+INFO 2025-09-08 02:06:37,171 middleware 8880 2736 Response: 200 - Duration: 0.48s
+INFO 2025-09-08 02:06:37,174 basehttp 8880 2736 "GET /admin/jsi18n/ HTTP/1.1" 200 3342
+INFO 2025-09-08 02:06:37,175 basehttp 8880 6512 "GET /static/admin/js/vendor/xregexp/xregexp.js HTTP/1.1" 200 325171
+INFO 2025-09-08 02:06:37,228 basehttp 8880 6512 "GET /static/admin/js/filters.js HTTP/1.1" 200 978
+INFO 2025-09-08 02:06:37,255 basehttp 8880 6512 "GET /static/admin/img/tooltag-add.svg HTTP/1.1" 200 331
+INFO 2025-09-08 02:06:37,282 basehttp 8880 2736 "GET /static/admin/img/sorting-icons.svg HTTP/1.1" 200 1097
+INFO 2025-09-08 02:06:37,289 basehttp 8880 6512 "GET /static/admin/img/icon-viewlink.svg HTTP/1.1" 200 581
+INFO 2025-09-08 02:06:39,739 middleware 8880 6512 Request: GET /admin/authentication/user/7/change/
+INFO 2025-09-08 02:06:39,746 middleware 8880 6512 User: None
+INFO 2025-09-08 02:06:40,149 middleware 8880 6512 Response: 200 - Duration: 0.41s
+INFO 2025-09-08 02:06:40,151 basehttp 8880 6512 "GET /admin/authentication/user/7/change/ HTTP/1.1" 200 38493
+INFO 2025-09-08 02:06:40,397 basehttp 8880 11140 "GET /static/admin/js/admin/DateTimeShortcuts.js HTTP/1.1" 200 19319
+INFO 2025-09-08 02:06:40,405 basehttp 8880 2736 "GET /static/admin/js/calendar.js HTTP/1.1" 200 9141
+INFO 2025-09-08 02:06:40,407 middleware 8880 5988 Request: GET /admin/jsi18n/
+INFO 2025-09-08 02:06:40,410 basehttp 8880 6512 "GET /static/admin/css/forms.css HTTP/1.1" 200 8525
+INFO 2025-09-08 02:06:40,414 basehttp 8880 3012 "GET /static/admin/js/SelectFilter2.js HTTP/1.1" 200 15709
+INFO 2025-09-08 02:06:40,422 basehttp 8880 11140 "GET /static/admin/js/prepopulate_init.js HTTP/1.1" 200 586
+INFO 2025-09-08 02:06:40,423 basehttp 8880 4920 "GET /static/admin/js/SelectBox.js HTTP/1.1" 200 4530
+INFO 2025-09-08 02:06:40,523 middleware 8880 5988 User: None
+INFO 2025-09-08 02:06:40,547 middleware 8880 5988 Response: 200 - Duration: 0.14s
+INFO 2025-09-08 02:06:40,553 basehttp 8880 5988 "GET /admin/jsi18n/ HTTP/1.1" 200 3342
+INFO 2025-09-08 02:06:40,596 basehttp 8880 5988 "GET /static/admin/js/change_form.js HTTP/1.1" 200 606
+INFO 2025-09-08 02:06:40,600 basehttp 8880 11140 "GET /static/admin/css/widgets.css HTTP/1.1" 200 11991
+INFO 2025-09-08 02:06:41,009 basehttp 8880 11140 "GET /static/admin/img/selector-icons.svg HTTP/1.1" 200 3291
+INFO 2025-09-08 02:06:41,014 basehttp 8880 5988 "GET /static/admin/img/icon-calendar.svg HTTP/1.1" 200 1086
+INFO 2025-09-08 02:06:41,022 basehttp 8880 4920 "GET /static/admin/img/icon-clock.svg HTTP/1.1" 200 677
+INFO 2025-09-08 02:06:48,415 middleware 8880 4016 Request: GET /admin/authentication/user/7/password/
+INFO 2025-09-08 02:06:48,424 middleware 8880 4016 User: None
+INFO 2025-09-08 02:06:48,643 middleware 8880 4016 Response: 200 - Duration: 0.23s
+INFO 2025-09-08 02:06:48,647 basehttp 8880 4016 "GET /admin/authentication/user/7/password/ HTTP/1.1" 200 20630
+INFO 2025-09-08 02:06:48,762 basehttp 8880 9348 "GET /static/admin/img/icon-alert.svg HTTP/1.1" 200 504
+INFO 2025-09-08 02:06:48,776 basehttp 8880 4016 "GET /static/admin/css/unusable_password_field.css HTTP/1.1" 200 663
+INFO 2025-09-08 02:06:48,782 basehttp 8880 11084 "GET /static/admin/js/unusable_password_field.js HTTP/1.1" 200 1480
+INFO 2025-09-08 02:07:16,224 middleware 8880 10504 Request: POST /admin/authentication/user/7/password/
+INFO 2025-09-08 02:07:16,279 middleware 8880 10504 User: None
+INFO 2025-09-08 02:07:20,514 middleware 8880 10504 Response: 302 - Duration: 4.29s
+INFO 2025-09-08 02:07:20,596 basehttp 8880 10504 "POST /admin/authentication/user/7/password/ HTTP/1.1" 302 0
+INFO 2025-09-08 02:07:20,608 middleware 8880 10504 Request: GET /admin/authentication/user/7/change/
+INFO 2025-09-08 02:07:20,617 middleware 8880 10504 User: None
+INFO 2025-09-08 02:07:20,750 middleware 8880 10504 Response: 200 - Duration: 0.14s
+INFO 2025-09-08 02:07:20,753 basehttp 8880 10504 "GET /admin/authentication/user/7/change/ HTTP/1.1" 200 38629
+INFO 2025-09-08 02:07:20,867 middleware 8880 10504 Request: GET /admin/jsi18n/
+INFO 2025-09-08 02:07:20,878 middleware 8880 10504 User: None
+INFO 2025-09-08 02:07:20,881 middleware 8880 10504 Response: 200 - Duration: 0.01s
+INFO 2025-09-08 02:07:20,883 basehttp 8880 10504 "GET /admin/jsi18n/ HTTP/1.1" 200 3342
+INFO 2025-09-08 02:17:04,361 middleware 8880 14332 Request: GET /admin/authentication/user/7/password/
+INFO 2025-09-08 02:17:04,716 middleware 8880 14332 User: None
+INFO 2025-09-08 02:17:04,777 middleware 8880 14332 Response: 200 - Duration: 0.42s
+INFO 2025-09-08 02:17:04,783 basehttp 8880 14332 "GET /admin/authentication/user/7/password/ HTTP/1.1" 200 20630
+INFO 2025-09-08 02:17:29,886 middleware 8880 14332 Request: POST /admin/authentication/user/7/password/
+INFO 2025-09-08 02:17:29,894 middleware 8880 14332 User: None
+INFO 2025-09-08 02:17:33,368 middleware 8880 14332 Response: 302 - Duration: 3.48s
+INFO 2025-09-08 02:17:33,462 basehttp 8880 14332 "POST /admin/authentication/user/7/password/ HTTP/1.1" 302 0
+INFO 2025-09-08 02:17:33,474 middleware 8880 14332 Request: GET /admin/authentication/user/7/change/
+INFO 2025-09-08 02:17:33,491 middleware 8880 14332 User: None
+INFO 2025-09-08 02:17:33,616 middleware 8880 14332 Response: 200 - Duration: 0.14s
+INFO 2025-09-08 02:17:33,620 basehttp 8880 14332 "GET /admin/authentication/user/7/change/ HTTP/1.1" 200 38629
+INFO 2025-09-08 02:17:33,724 middleware 8880 14332 Request: GET /admin/jsi18n/
+INFO 2025-09-08 02:17:33,841 middleware 8880 14332 User: None
+INFO 2025-09-08 02:17:33,870 middleware 8880 14332 Response: 200 - Duration: 0.15s
+INFO 2025-09-08 02:17:33,873 basehttp 8880 14332 "GET /admin/jsi18n/ HTTP/1.1" 200 3342
+INFO 2025-09-08 02:17:45,372 middleware 8880 14332 Request: POST /admin/authentication/user/7/change/
+INFO 2025-09-08 02:17:45,381 middleware 8880 14332 User: None
+INFO 2025-09-08 02:17:46,628 middleware 8880 14332 Response: 302 - Duration: 1.26s
+INFO 2025-09-08 02:17:46,631 basehttp 8880 14332 "POST /admin/authentication/user/7/change/ HTTP/1.1" 302 0
+INFO 2025-09-08 02:17:46,652 middleware 8880 14332 Request: GET /admin/authentication/user/
+INFO 2025-09-08 02:17:46,660 middleware 8880 14332 User: None
+INFO 2025-09-08 02:17:46,708 middleware 8880 14332 Response: 200 - Duration: 0.06s
+INFO 2025-09-08 02:17:46,711 basehttp 8880 14332 "GET /admin/authentication/user/ HTTP/1.1" 200 24123
+INFO 2025-09-08 02:17:46,831 middleware 8880 14332 Request: GET /admin/jsi18n/
+INFO 2025-09-08 02:17:46,838 middleware 8880 14332 User: None
+INFO 2025-09-08 02:17:46,842 middleware 8880 14332 Response: 200 - Duration: 0.01s
+INFO 2025-09-08 02:17:46,844 basehttp 8880 14332 "GET /admin/jsi18n/ HTTP/1.1" 200 3342
+INFO 2025-09-08 02:19:32,380 middleware 8880 4472 Request: POST /api/v1/auth/login/
+INFO 2025-09-08 02:19:41,358 utils 8880 4472 User activity logged: 254713760749 - USER_LOGIN - Success: True
+INFO 2025-09-08 02:19:41,398 middleware 8880 4472 Response: 200 - Duration: 9.02s
+INFO 2025-09-08 02:19:41,400 basehttp 8880 4472 "POST /api/v1/auth/login/ HTTP/1.1" 200 869
+INFO 2025-09-08 02:19:41,416 basehttp 8880 4472 "OPTIONS /api/v1/auth/profile/me/ HTTP/1.1" 200 0
+INFO 2025-09-08 02:19:41,421 middleware 8880 4472 Request: GET /api/v1/auth/profile/me/
+INFO 2025-09-08 02:19:41,457 middleware 8880 4472 Response: 200 - Duration: 0.04s
+INFO 2025-09-08 02:19:41,459 basehttp 8880 4472 "GET /api/v1/auth/profile/me/ HTTP/1.1" 200 439
+INFO 2025-09-08 02:19:41,467 basehttp 8880 4472 "OPTIONS /api/v1/payments/my-subscriptions/active/ HTTP/1.1" 200 0
+INFO 2025-09-08 02:19:41,490 middleware 8880 4472 Request: GET /api/v1/payments/my-subscriptions/active/
+INFO 2025-09-08 02:19:41,519 middleware 8880 4472 Response: 200 - Duration: 0.03s
+INFO 2025-09-08 02:19:41,521 basehttp 8880 4472 "GET /api/v1/payments/my-subscriptions/active/ HTTP/1.1" 200 255
+INFO 2025-09-08 02:19:41,745 basehttp 8880 4472 "OPTIONS /api/v1/courses/subjects/ HTTP/1.1" 200 0
+INFO 2025-09-08 02:19:41,746 basehttp 8880 9672 "OPTIONS /api/v1/courses/subjects/ HTTP/1.1" 200 0
+INFO 2025-09-08 02:19:41,780 middleware 8880 9672 Request: GET /api/v1/courses/subjects/
+INFO 2025-09-08 02:19:41,793 middleware 8880 9672 Response: 200 - Duration: 0.01s
+INFO 2025-09-08 02:19:41,795 basehttp 8880 9672 "GET /api/v1/courses/subjects/ HTTP/1.1" 200 1215
+INFO 2025-09-08 02:19:41,841 middleware 8880 9672 Request: GET /api/v1/courses/subjects/
+INFO 2025-09-08 02:19:41,852 middleware 8880 9672 Response: 200 - Duration: 0.01s
+INFO 2025-09-08 02:19:41,854 basehttp 8880 9672 "GET /api/v1/courses/subjects/ HTTP/1.1" 200 1215
+INFO 2025-09-08 02:19:42,994 basehttp 8880 4472 "OPTIONS /api/v1/user/selected-courses/ HTTP/1.1" 200 0
+INFO 2025-09-08 02:19:42,994 basehttp 8880 9672 "OPTIONS /api/v1/user/selected-courses/ HTTP/1.1" 200 0
+INFO 2025-09-08 02:19:43,049 middleware 8880 9672 Request: GET /api/v1/user/selected-courses/
+INFO 2025-09-08 02:19:43,093 middleware 8880 9672 Response: 404 - Duration: 0.04s
+WARNING 2025-09-08 02:19:43,111 log 8880 9672 Not Found: /api/v1/user/selected-courses/
+WARNING 2025-09-08 02:19:43,140 basehttp 8880 9672 "GET /api/v1/user/selected-courses/ HTTP/1.1" 404 9943
+INFO 2025-09-08 02:19:43,257 middleware 8880 4472 Request: GET /api/v1/user/selected-courses/
+INFO 2025-09-08 02:19:43,303 middleware 8880 4472 Response: 404 - Duration: 0.05s
+WARNING 2025-09-08 02:19:43,326 log 8880 4472 Not Found: /api/v1/user/selected-courses/
+WARNING 2025-09-08 02:19:43,329 basehttp 8880 4472 "GET /api/v1/user/selected-courses/ HTTP/1.1" 404 9943
+INFO 2025-09-08 03:45:16,281 middleware 8880 12448 Request: GET /api/v1/auth/profile/me/
+INFO 2025-09-08 03:45:17,609 middleware 8880 12448 Response: 401 - Duration: 1.33s
+WARNING 2025-09-08 03:45:17,676 log 8880 12448 Unauthorized: /api/v1/auth/profile/me/
+WARNING 2025-09-08 03:45:17,682 basehttp 8880 12448 "GET /api/v1/auth/profile/me/ HTTP/1.1" 401 172
+INFO 2025-09-08 03:45:17,763 middleware 8880 12448 Request: GET /api/v1/auth/profile/me/
+INFO 2025-09-08 03:45:17,783 middleware 8880 12448 Response: 401 - Duration: 0.02s
+WARNING 2025-09-08 03:45:17,790 log 8880 12448 Unauthorized: /api/v1/auth/profile/me/
+WARNING 2025-09-08 03:45:17,799 basehttp 8880 12448 "GET /api/v1/auth/profile/me/ HTTP/1.1" 401 172
+INFO 2025-09-08 03:45:23,120 middleware 8880 5616 Request: GET /api/v1/courses/courses/
+INFO 2025-09-08 03:45:24,046 middleware 8880 5616 Response: 200 - Duration: 0.93s
+INFO 2025-09-08 03:45:24,051 basehttp 8880 5616 "GET /api/v1/courses/courses/ HTTP/1.1" 200 1545
+INFO 2025-09-08 03:45:24,085 middleware 8880 5616 Request: GET /api/v1/courses/courses/
+INFO 2025-09-08 03:45:24,133 middleware 8880 5616 Response: 200 - Duration: 0.05s
+INFO 2025-09-08 03:45:24,136 basehttp 8880 5616 "GET /api/v1/courses/courses/ HTTP/1.1" 200 1545
+INFO 2025-09-09 01:30:22,212 autoreload 11456 12020 Watching for file changes with StatReloader
+INFO 2025-09-09 01:38:36,266 middleware 11456 10616 Request: GET /admin/authentication/user/
+INFO 2025-09-09 01:38:36,699 middleware 11456 10616 User: None
+INFO 2025-09-09 01:38:37,330 middleware 11456 10616 Response: 200 - Duration: 1.06s
+INFO 2025-09-09 01:38:37,332 basehttp 11456 10616 "GET /admin/authentication/user/ HTTP/1.1" 200 23913
+INFO 2025-09-09 01:38:38,057 basehttp 11456 7964 "GET /static/admin/js/theme.js HTTP/1.1" 200 1653
+INFO 2025-09-09 01:38:38,063 basehttp 11456 14284 "GET /static/admin/css/dark_mode.css HTTP/1.1" 200 2808
+INFO 2025-09-09 01:38:38,080 basehttp 11456 14284 "GET /static/admin/css/nav_sidebar.css HTTP/1.1" 200 2810
+INFO 2025-09-09 01:38:38,081 basehttp 11456 10616 "GET /static/admin/css/base.css HTTP/1.1" 200 22120
+INFO 2025-09-09 01:38:38,102 middleware 11456 14284 Request: GET /admin/jsi18n/
+INFO 2025-09-09 01:38:38,112 middleware 11456 14284 User: None
+INFO 2025-09-09 01:38:38,124 basehttp 11456 7964 "GET /static/admin/css/changelists.css HTTP/1.1" 200 6878
+INFO 2025-09-09 01:38:38,140 basehttp 11456 10616 "GET /static/admin/css/responsive.css HTTP/1.1" 200 16565
+INFO 2025-09-09 01:38:38,180 basehttp 11456 10616 "GET /static/admin/js/jquery.init.js HTTP/1.1" 200 347
+INFO 2025-09-09 01:38:38,223 basehttp 11456 7964 "GET /static/admin/js/vendor/jquery/jquery.js HTTP/1.1" 200 285314
+INFO 2025-09-09 01:38:38,234 basehttp 11456 10616 "GET /static/admin/js/core.js HTTP/1.1" 200 6208
+INFO 2025-09-09 01:38:38,336 basehttp 11456 10616 "GET /static/admin/js/admin/RelatedObjectLookups.js HTTP/1.1" 200 9777
+INFO 2025-09-09 01:38:38,345 middleware 11456 14284 Response: 200 - Duration: 0.24s
+INFO 2025-09-09 01:38:38,347 basehttp 11456 14284 "GET /admin/jsi18n/ HTTP/1.1" 200 3342
+INFO 2025-09-09 01:38:38,355 basehttp 11456 7964 "GET /static/admin/js/actions.js HTTP/1.1" 200 8076
+INFO 2025-09-09 01:38:38,381 basehttp 11456 7964 "GET /static/admin/js/prepopulate.js HTTP/1.1" 200 1531
+INFO 2025-09-09 01:38:38,397 basehttp 11456 10616 "GET /static/admin/js/urlify.js HTTP/1.1" 200 7887
+INFO 2025-09-09 01:38:38,431 basehttp 11456 7964 "GET /static/admin/js/vendor/xregexp/xregexp.js HTTP/1.1" 200 325171
+INFO 2025-09-09 01:38:38,446 basehttp 11456 13876 "GET /static/admin/img/icon-yes.svg HTTP/1.1" 200 436
+INFO 2025-09-09 01:38:38,447 basehttp 11456 14284 "GET /static/admin/img/search.svg HTTP/1.1" 200 458
+INFO 2025-09-09 01:38:38,510 basehttp 11456 13876 "GET /static/admin/js/filters.js HTTP/1.1" 200 978
+INFO 2025-09-09 01:38:38,519 basehttp 11456 14284 "GET /static/admin/js/nav_sidebar.js HTTP/1.1" 200 3063
+INFO 2025-09-09 01:38:38,571 basehttp 11456 14284 "GET /static/admin/img/tooltag-add.svg HTTP/1.1" 200 331
+INFO 2025-09-09 01:38:38,798 basehttp 11456 13876 "GET /static/admin/img/icon-viewlink.svg HTTP/1.1" 200 581
+INFO 2025-09-09 01:38:38,823 basehttp 11456 14284 "GET /static/admin/img/sorting-icons.svg HTTP/1.1" 200 1097
+INFO 2025-09-09 01:38:39,009 middleware 11456 14284 Request: GET /favicon.ico
+INFO 2025-09-09 01:38:39,018 middleware 11456 14284 User: None
+INFO 2025-09-09 01:38:39,066 middleware 11456 14284 Response: 404 - Duration: 0.06s
+WARNING 2025-09-09 01:38:39,068 log 11456 14284 Not Found: /favicon.ico
+WARNING 2025-09-09 01:38:39,070 basehttp 11456 14284 "GET /favicon.ico HTTP/1.1" 404 3730
+INFO 2025-09-09 02:10:47,602 middleware 11456 2624 Request: GET /api/v1/courses/courses/
+INFO 2025-09-09 02:10:48,076 middleware 11456 2624 Response: 200 - Duration: 0.47s
+INFO 2025-09-09 02:10:48,125 basehttp 11456 2624 "GET /api/v1/courses/courses/ HTTP/1.1" 200 1545
+INFO 2025-09-09 02:10:48,130 middleware 11456 2624 Request: GET /api/v1/courses/courses/
+INFO 2025-09-09 02:10:48,179 middleware 11456 2624 Response: 200 - Duration: 0.05s
+INFO 2025-09-09 02:10:48,184 basehttp 11456 2624 "GET /api/v1/courses/courses/ HTTP/1.1" 200 1545
+INFO 2025-09-09 02:11:08,463 basehttp 11456 11392 "OPTIONS /api/v1/auth/login/ HTTP/1.1" 200 0
+INFO 2025-09-09 02:11:08,503 middleware 11456 11392 Request: POST /api/v1/auth/login/
+INFO 2025-09-09 02:11:19,342 utils 11456 11392 User activity logged: 254713760749 - USER_LOGIN - Success: True
+INFO 2025-09-09 02:11:19,353 middleware 11456 11392 Response: 200 - Duration: 10.85s
+INFO 2025-09-09 02:11:19,360 basehttp 11456 11392 - Broken pipe from ('127.0.0.1', 8163)
+INFO 2025-09-09 02:12:10,678 middleware 11456 11216 Request: POST /api/v1/auth/login/
+INFO 2025-09-09 02:12:22,291 utils 11456 11216 User activity logged: 254713760749 - USER_LOGIN - Success: True
+INFO 2025-09-09 02:12:22,297 middleware 11456 11216 Response: 200 - Duration: 11.62s
+INFO 2025-09-09 02:12:22,300 basehttp 11456 11216 - Broken pipe from ('127.0.0.1', 8174)
+INFO 2025-09-09 02:12:45,187 middleware 11456 9008 Request: GET /api/v1/courses/courses/
+INFO 2025-09-09 02:12:45,331 middleware 11456 9008 Response: 200 - Duration: 0.14s
+INFO 2025-09-09 02:12:45,336 basehttp 11456 9008 "GET /api/v1/courses/courses/ HTTP/1.1" 200 1545
+INFO 2025-09-09 02:12:45,364 middleware 11456 9008 Request: GET /api/v1/courses/courses/
+INFO 2025-09-09 02:12:45,430 middleware 11456 9008 Response: 200 - Duration: 0.07s
+INFO 2025-09-09 02:12:45,497 basehttp 11456 9008 "GET /api/v1/courses/courses/ HTTP/1.1" 200 1545
+INFO 2025-09-09 02:12:59,965 middleware 11456 13456 Request: GET /api/v1/courses/courses/
+INFO 2025-09-09 02:13:00,051 middleware 11456 13456 Response: 200 - Duration: 0.09s
+INFO 2025-09-09 02:13:00,058 basehttp 11456 13456 "GET /api/v1/courses/courses/ HTTP/1.1" 200 1545
+INFO 2025-09-09 02:13:00,232 middleware 11456 13456 Request: GET /api/v1/courses/courses/
+INFO 2025-09-09 02:13:00,291 middleware 11456 13456 Response: 200 - Duration: 0.06s
+INFO 2025-09-09 02:13:00,294 basehttp 11456 13456 "GET /api/v1/courses/courses/ HTTP/1.1" 200 1545
+INFO 2025-09-09 02:13:11,294 middleware 11456 13896 Request: POST /api/v1/auth/login/
+INFO 2025-09-09 02:13:20,293 utils 11456 13896 User activity logged: 254713760749 - USER_LOGIN - Success: True
+INFO 2025-09-09 02:13:20,298 middleware 11456 13896 Response: 200 - Duration: 9.00s
+INFO 2025-09-09 02:13:20,300 basehttp 11456 13896 "POST /api/v1/auth/login/ HTTP/1.1" 200 869
+INFO 2025-09-09 02:13:20,331 basehttp 11456 13896 "OPTIONS /api/v1/auth/profile/me/ HTTP/1.1" 200 0
+INFO 2025-09-09 02:13:20,342 middleware 11456 13896 Request: GET /api/v1/auth/profile/me/
+INFO 2025-09-09 02:13:20,563 middleware 11456 13896 Response: 200 - Duration: 0.22s
+INFO 2025-09-09 02:13:20,565 basehttp 11456 13896 "GET /api/v1/auth/profile/me/ HTTP/1.1" 200 439
+INFO 2025-09-09 02:13:20,573 basehttp 11456 13896 "OPTIONS /api/v1/payments/my-subscriptions/active/ HTTP/1.1" 200 0
+INFO 2025-09-09 02:13:20,629 basehttp 11456 13896 "OPTIONS /api/v1/courses/courses/ HTTP/1.1" 200 0
+INFO 2025-09-09 02:13:20,648 middleware 11456 13896 Request: GET /api/v1/payments/my-subscriptions/active/
+INFO 2025-09-09 02:13:20,651 middleware 11456 8604 Request: GET /api/v1/courses/courses/
+INFO 2025-09-09 02:13:20,814 middleware 11456 13896 Response: 200 - Duration: 0.17s
+INFO 2025-09-09 02:13:20,836 middleware 11456 8604 Response: 200 - Duration: 0.19s
+INFO 2025-09-09 02:13:20,836 basehttp 11456 13896 "GET /api/v1/payments/my-subscriptions/active/ HTTP/1.1" 200 255
+INFO 2025-09-09 02:13:20,847 basehttp 11456 8604 "GET /api/v1/courses/courses/ HTTP/1.1" 200 1545
+INFO 2025-09-09 02:13:21,019 basehttp 11456 8604 "OPTIONS /api/v1/user/selected-courses/ HTTP/1.1" 200 0
+INFO 2025-09-09 02:13:21,053 middleware 11456 8604 Request: GET /api/v1/user/selected-courses/
+INFO 2025-09-09 02:13:21,116 middleware 11456 8604 Response: 404 - Duration: 0.06s
+WARNING 2025-09-09 02:13:21,119 log 11456 8604 Not Found: /api/v1/user/selected-courses/
+WARNING 2025-09-09 02:13:21,121 basehttp 11456 8604 "GET /api/v1/user/selected-courses/ HTTP/1.1" 404 9943
+INFO 2025-09-09 02:13:21,235 middleware 11456 8604 Request: GET /api/v1/courses/courses/
+INFO 2025-09-09 02:13:21,313 middleware 11456 8604 Response: 200 - Duration: 0.08s
+INFO 2025-09-09 02:13:21,467 basehttp 11456 8604 "GET /api/v1/courses/courses/ HTTP/1.1" 200 1545
+INFO 2025-09-09 02:13:42,063 middleware 11456 6856 Request: POST /api/v1/user/selected-courses/
+INFO 2025-09-09 02:13:42,111 middleware 11456 6856 Response: 404 - Duration: 0.05s
+WARNING 2025-09-09 02:13:42,113 log 11456 6856 Not Found: /api/v1/user/selected-courses/
+WARNING 2025-09-09 02:13:42,114 basehttp 11456 6856 "POST /api/v1/user/selected-courses/ HTTP/1.1" 404 9944
+INFO 2025-09-09 02:14:13,640 middleware 11456 2112 Request: GET /api/v1/auth/profile/me/
+INFO 2025-09-09 02:14:13,676 middleware 11456 2112 Response: 200 - Duration: 0.04s
+INFO 2025-09-09 02:14:13,684 basehttp 11456 2112 "GET /api/v1/auth/profile/me/ HTTP/1.1" 200 439
+INFO 2025-09-09 02:14:13,698 middleware 11456 2112 Request: GET /api/v1/courses/courses/
+INFO 2025-09-09 02:14:13,749 middleware 11456 2112 Response: 200 - Duration: 0.05s
+INFO 2025-09-09 02:14:13,758 basehttp 11456 2112 "GET /api/v1/courses/courses/ HTTP/1.1" 200 1545
+INFO 2025-09-09 02:14:13,780 middleware 11456 2112 Request: GET /api/v1/payments/my-subscriptions/active/
+INFO 2025-09-09 02:14:13,872 middleware 11456 1996 Request: GET /api/v1/user/selected-courses/
+INFO 2025-09-09 02:14:13,877 middleware 11456 2112 Response: 200 - Duration: 0.10s
+INFO 2025-09-09 02:14:13,895 middleware 11456 1996 Response: 404 - Duration: 0.02s
+INFO 2025-09-09 02:14:13,896 basehttp 11456 2112 "GET /api/v1/payments/my-subscriptions/active/ HTTP/1.1" 200 255
+WARNING 2025-09-09 02:14:13,897 log 11456 1996 Not Found: /api/v1/user/selected-courses/
+WARNING 2025-09-09 02:14:13,904 basehttp 11456 1996 "GET /api/v1/user/selected-courses/ HTTP/1.1" 404 9943
+INFO 2025-09-09 02:14:14,091 middleware 11456 1996 Request: GET /api/v1/user/selected-courses/
+INFO 2025-09-09 02:14:14,112 middleware 11456 1996 Response: 404 - Duration: 0.02s
+WARNING 2025-09-09 02:14:14,114 log 11456 1996 Not Found: /api/v1/user/selected-courses/
+WARNING 2025-09-09 02:14:14,115 basehttp 11456 1996 "GET /api/v1/user/selected-courses/ HTTP/1.1" 404 9943
+INFO 2025-09-09 02:14:14,184 middleware 11456 1996 Request: GET /api/v1/courses/courses/
+INFO 2025-09-09 02:14:14,248 middleware 11456 1996 Response: 200 - Duration: 0.06s
+INFO 2025-09-09 02:14:14,266 basehttp 11456 1996 "GET /api/v1/courses/courses/ HTTP/1.1" 200 1545
+INFO 2025-09-09 02:14:14,347 middleware 11456 1996 Request: GET /api/v1/courses/courses/
+INFO 2025-09-09 02:14:14,395 middleware 11456 1996 Response: 200 - Duration: 0.05s
+INFO 2025-09-09 02:14:14,397 basehttp 11456 1996 "GET /api/v1/courses/courses/ HTTP/1.1" 200 1545
+INFO 2025-09-09 14:23:33,668 basehttp 11456 4684 "OPTIONS /api/v1/auth/profile/me/ HTTP/1.1" 200 0
+INFO 2025-09-09 14:23:33,882 basehttp 11456 8476 "OPTIONS /api/v1/courses/courses/ HTTP/1.1" 200 0
+INFO 2025-09-09 14:23:35,740 middleware 11456 4684 Request: GET /api/v1/auth/profile/me/
+INFO 2025-09-09 14:23:35,676 middleware 11456 8476 Request: GET /api/v1/courses/courses/
+INFO 2025-09-09 14:23:36,976 middleware 11456 4684 Response: 401 - Duration: 1.24s
+INFO 2025-09-09 14:23:36,976 middleware 11456 8476 Response: 401 - Duration: 1.30s
+WARNING 2025-09-09 14:23:37,015 log 11456 4684 Unauthorized: /api/v1/auth/profile/me/
+WARNING 2025-09-09 14:23:37,018 log 11456 8476 Unauthorized: /api/v1/courses/courses/
+WARNING 2025-09-09 14:23:37,021 basehttp 11456 4684 "GET /api/v1/auth/profile/me/ HTTP/1.1" 401 172
+WARNING 2025-09-09 14:23:37,022 basehttp 11456 8476 "GET /api/v1/courses/courses/ HTTP/1.1" 401 172
+INFO 2025-09-09 14:23:37,259 basehttp 11456 4684 "OPTIONS /api/v1/auth/token/refresh/ HTTP/1.1" 200 0
+INFO 2025-09-09 14:23:37,318 middleware 11456 8476 Request: GET /api/v1/courses/courses/
+INFO 2025-09-09 14:23:37,678 middleware 11456 4684 Request: POST /api/v1/auth/token/refresh/
+INFO 2025-09-09 14:23:39,702 middleware 11456 4684 Response: 404 - Duration: 2.02s
+WARNING 2025-09-09 14:23:39,705 log 11456 4684 Not Found: /api/v1/auth/token/refresh/
+WARNING 2025-09-09 14:23:39,708 basehttp 11456 4684 "POST /api/v1/auth/token/refresh/ HTTP/1.1" 404 14978
+INFO 2025-09-09 14:23:41,010 middleware 11456 8476 Response: 200 - Duration: 3.69s
+INFO 2025-09-09 14:23:41,013 basehttp 11456 8476 "GET /api/v1/courses/courses/ HTTP/1.1" 200 1545
+INFO 2025-09-09 14:24:07,758 middleware 11456 1232 Request: GET /api/v1/courses/courses/
+INFO 2025-09-09 14:24:07,909 middleware 11456 1232 Response: 200 - Duration: 0.15s
+INFO 2025-09-09 14:24:07,912 basehttp 11456 1232 "GET /api/v1/courses/courses/ HTTP/1.1" 200 1545
+INFO 2025-09-09 14:24:07,975 middleware 11456 1232 Request: GET /api/v1/courses/courses/
+INFO 2025-09-09 14:24:08,023 middleware 11456 1232 Response: 200 - Duration: 0.05s
+INFO 2025-09-09 14:24:08,028 basehttp 11456 1232 "GET /api/v1/courses/courses/ HTTP/1.1" 200 1545
+INFO 2025-09-09 14:24:24,224 basehttp 11456 4436 "OPTIONS /api/v1/auth/login/ HTTP/1.1" 200 0
+INFO 2025-09-09 14:24:24,227 middleware 11456 4436 Request: POST /api/v1/auth/login/
+INFO 2025-09-09 14:24:34,563 utils 11456 4436 User activity logged: 254713760749 - USER_LOGIN - Success: True
+INFO 2025-09-09 14:24:34,632 middleware 11456 4436 Response: 200 - Duration: 10.40s
+INFO 2025-09-09 14:24:34,637 basehttp 11456 4436 - Broken pipe from ('127.0.0.1', 10216)
+INFO 2025-09-09 14:24:54,959 middleware 11456 16636 Request: POST /api/v1/auth/login/
+INFO 2025-09-09 14:25:04,965 utils 11456 16636 User activity logged: 254713760749 - USER_LOGIN - Success: True
+INFO 2025-09-09 14:25:04,995 middleware 11456 16636 Response: 200 - Duration: 10.04s
+INFO 2025-09-09 14:25:05,017 basehttp 11456 16636 - Broken pipe from ('127.0.0.1', 10228)
+INFO 2025-09-09 14:25:49,454 middleware 11456 5408 Request: POST /api/v1/auth/login/
+INFO 2025-09-09 14:25:58,631 utils 11456 5408 User activity logged: 254713760749 - USER_LOGIN - Success: True
+INFO 2025-09-09 14:25:58,642 middleware 11456 5408 Response: 200 - Duration: 9.19s
+INFO 2025-09-09 14:25:58,646 basehttp 11456 5408 "POST /api/v1/auth/login/ HTTP/1.1" 200 869
+INFO 2025-09-09 14:25:58,664 middleware 11456 5408 Request: GET /api/v1/auth/profile/me/
+INFO 2025-09-09 14:25:58,677 middleware 11456 5408 Response: 200 - Duration: 0.01s
+INFO 2025-09-09 14:25:58,747 basehttp 11456 5408 "GET /api/v1/auth/profile/me/ HTTP/1.1" 200 439
+INFO 2025-09-09 14:25:58,769 basehttp 11456 5408 "OPTIONS /api/v1/payments/my-subscriptions/active/ HTTP/1.1" 200 0
+INFO 2025-09-09 14:25:58,811 middleware 11456 5408 Request: GET /api/v1/payments/my-subscriptions/active/
+INFO 2025-09-09 14:25:58,876 middleware 11456 5408 Response: 200 - Duration: 0.06s
+INFO 2025-09-09 14:25:58,878 basehttp 11456 5408 "GET /api/v1/payments/my-subscriptions/active/ HTTP/1.1" 200 255
+INFO 2025-09-09 14:25:59,086 basehttp 11456 5408 "OPTIONS /api/v1/courses/subjects/ HTTP/1.1" 200 0
+INFO 2025-09-09 14:25:59,091 basehttp 11456 5408 "OPTIONS /api/v1/courses/subjects/ HTTP/1.1" 200 0
+INFO 2025-09-09 14:25:59,125 middleware 11456 5408 Request: GET /api/v1/courses/subjects/
+INFO 2025-09-09 14:25:59,432 middleware 11456 5408 Response: 200 - Duration: 0.31s
+INFO 2025-09-09 14:25:59,434 basehttp 11456 5408 "GET /api/v1/courses/subjects/ HTTP/1.1" 200 1215
+INFO 2025-09-09 14:25:59,464 middleware 11456 5408 Request: GET /api/v1/courses/subjects/
+INFO 2025-09-09 14:25:59,477 middleware 11456 5408 Response: 200 - Duration: 0.01s
+INFO 2025-09-09 14:25:59,480 basehttp 11456 5408 "GET /api/v1/courses/subjects/ HTTP/1.1" 200 1215
+INFO 2025-09-09 14:25:59,721 basehttp 11456 7604 "OPTIONS /api/v1/user/selected-courses/ HTTP/1.1" 200 0
+INFO 2025-09-09 14:25:59,722 basehttp 11456 5408 "OPTIONS /api/v1/user/selected-courses/ HTTP/1.1" 200 0
+INFO 2025-09-09 14:25:59,768 middleware 11456 7604 Request: GET /api/v1/user/selected-courses/
+INFO 2025-09-09 14:25:59,798 middleware 11456 7604 Response: 404 - Duration: 0.03s
+WARNING 2025-09-09 14:25:59,799 log 11456 7604 Not Found: /api/v1/user/selected-courses/
+WARNING 2025-09-09 14:25:59,801 basehttp 11456 7604 "GET /api/v1/user/selected-courses/ HTTP/1.1" 404 9943
+INFO 2025-09-09 14:25:59,847 middleware 11456 5408 Request: GET /api/v1/user/selected-courses/
+INFO 2025-09-09 14:25:59,866 middleware 11456 5408 Response: 404 - Duration: 0.02s
+WARNING 2025-09-09 14:25:59,868 log 11456 5408 Not Found: /api/v1/user/selected-courses/
+WARNING 2025-09-09 14:25:59,869 basehttp 11456 5408 "GET /api/v1/user/selected-courses/ HTTP/1.1" 404 9943
+INFO 2025-09-09 14:26:00,221 middleware 11456 5408 Request: GET /api/v1/courses/courses/
+INFO 2025-09-09 14:26:00,349 middleware 11456 5408 Response: 200 - Duration: 0.13s
+INFO 2025-09-09 14:26:00,364 basehttp 11456 5408 "GET /api/v1/courses/courses/ HTTP/1.1" 200 1545
+INFO 2025-09-09 14:26:00,383 middleware 11456 5408 Request: GET /api/v1/courses/courses/
+INFO 2025-09-09 14:26:00,428 middleware 11456 5408 Response: 200 - Duration: 0.05s
+INFO 2025-09-09 14:26:00,431 basehttp 11456 5408 "GET /api/v1/courses/courses/ HTTP/1.1" 200 1545
+INFO 2025-09-09 15:10:21,527 middleware 11456 8492 Request: GET /api/v1/auth/profile/me/
+INFO 2025-09-09 15:10:21,732 middleware 11456 8492 Response: 200 - Duration: 0.21s
+INFO 2025-09-09 15:10:21,749 middleware 11456 15656 Request: GET /api/v1/courses/courses/
+INFO 2025-09-09 15:10:21,788 basehttp 11456 8492 "GET /api/v1/auth/profile/me/ HTTP/1.1" 200 439
+INFO 2025-09-09 15:10:21,918 middleware 11456 8492 Request: GET /api/v1/payments/my-subscriptions/active/
+INFO 2025-09-09 15:10:21,923 middleware 11456 6256 Request: GET /api/v1/user/selected-courses/
+INFO 2025-09-09 15:10:22,066 middleware 11456 6256 Response: 404 - Duration: 0.14s
+WARNING 2025-09-09 15:10:22,097 log 11456 6256 Not Found: /api/v1/user/selected-courses/
+INFO 2025-09-09 15:10:22,100 middleware 11456 8492 Response: 200 - Duration: 0.18s
+WARNING 2025-09-09 15:10:22,104 basehttp 11456 6256 "GET /api/v1/user/selected-courses/ HTTP/1.1" 404 9943
+INFO 2025-09-09 15:10:22,110 middleware 11456 15656 Response: 200 - Duration: 0.36s
+INFO 2025-09-09 15:10:22,166 basehttp 11456 8492 "GET /api/v1/payments/my-subscriptions/active/ HTTP/1.1" 200 255
+INFO 2025-09-09 15:10:22,169 basehttp 11456 15656 "GET /api/v1/courses/courses/ HTTP/1.1" 200 1545
+INFO 2025-09-09 15:10:22,491 middleware 11456 6256 Request: GET /api/v1/user/selected-courses/
+INFO 2025-09-09 15:10:22,508 middleware 11456 6256 Response: 404 - Duration: 0.02s
+WARNING 2025-09-09 15:10:22,510 log 11456 6256 Not Found: /api/v1/user/selected-courses/
+WARNING 2025-09-09 15:10:22,511 basehttp 11456 6256 "GET /api/v1/user/selected-courses/ HTTP/1.1" 404 9943
+INFO 2025-09-09 15:10:22,573 middleware 11456 15656 Request: GET /api/v1/courses/courses/
+INFO 2025-09-09 15:10:22,622 middleware 11456 15656 Response: 200 - Duration: 0.05s
+INFO 2025-09-09 15:10:22,631 basehttp 11456 15656 "GET /api/v1/courses/courses/ HTTP/1.1" 200 1545
+INFO 2025-09-09 15:10:22,682 middleware 11456 15656 Request: GET /api/v1/courses/courses/
+INFO 2025-09-09 15:10:22,728 middleware 11456 15656 Response: 200 - Duration: 0.05s
+INFO 2025-09-09 15:10:22,731 basehttp 11456 15656 "GET /api/v1/courses/courses/ HTTP/1.1" 200 1545
+INFO 2025-09-09 15:10:42,227 middleware 11456 16040 Request: GET /api/v1/auth/profile/me/
+INFO 2025-09-09 15:10:42,261 middleware 11456 16040 Response: 200 - Duration: 0.03s
+INFO 2025-09-09 15:10:42,273 basehttp 11456 16040 "GET /api/v1/auth/profile/me/ HTTP/1.1" 200 439
+INFO 2025-09-09 15:10:42,304 middleware 11456 16040 Request: GET /api/v1/courses/courses/
+INFO 2025-09-09 15:10:42,387 middleware 11456 3480 Request: GET /api/v1/payments/my-subscriptions/active/
+INFO 2025-09-09 15:10:42,445 middleware 11456 16040 Response: 200 - Duration: 0.14s
+INFO 2025-09-09 15:10:42,456 middleware 11456 3480 Response: 200 - Duration: 0.07s
+INFO 2025-09-09 15:10:42,626 middleware 11456 16036 Request: GET /api/v1/user/selected-courses/
+INFO 2025-09-09 15:10:42,629 basehttp 11456 3480 "GET /api/v1/payments/my-subscriptions/active/ HTTP/1.1" 200 255
+INFO 2025-09-09 15:10:42,645 basehttp 11456 16040 "GET /api/v1/courses/courses/ HTTP/1.1" 200 1545
+INFO 2025-09-09 15:10:42,652 middleware 11456 16036 Response: 404 - Duration: 0.03s
+WARNING 2025-09-09 15:10:42,655 log 11456 16036 Not Found: /api/v1/user/selected-courses/
+WARNING 2025-09-09 15:10:42,657 basehttp 11456 16036 "GET /api/v1/user/selected-courses/ HTTP/1.1" 404 9943
+INFO 2025-09-09 15:10:42,842 middleware 11456 16036 Request: GET /api/v1/user/selected-courses/
+INFO 2025-09-09 15:10:42,860 middleware 11456 16036 Response: 404 - Duration: 0.02s
+WARNING 2025-09-09 15:10:42,866 log 11456 16036 Not Found: /api/v1/user/selected-courses/
+WARNING 2025-09-09 15:10:42,871 basehttp 11456 16036 "GET /api/v1/user/selected-courses/ HTTP/1.1" 404 9943
+INFO 2025-09-09 15:10:42,903 middleware 11456 3480 Request: GET /api/v1/courses/courses/
+INFO 2025-09-09 15:10:42,952 middleware 11456 3480 Response: 200 - Duration: 0.05s
+INFO 2025-09-09 15:10:42,969 basehttp 11456 3480 "GET /api/v1/courses/courses/ HTTP/1.1" 200 1545
+INFO 2025-09-09 15:10:43,087 middleware 11456 3480 Request: GET /api/v1/courses/courses/
+INFO 2025-09-09 15:10:43,140 middleware 11456 3480 Response: 200 - Duration: 0.05s
+INFO 2025-09-09 15:10:43,143 basehttp 11456 3480 "GET /api/v1/courses/courses/ HTTP/1.1" 200 1545
+INFO 2025-09-09 15:11:28,093 middleware 11456 2452 Request: POST /api/v1/user/selected-courses/
+INFO 2025-09-09 15:11:28,243 middleware 11456 2452 Response: 404 - Duration: 0.15s
+WARNING 2025-09-09 15:11:28,295 log 11456 2452 Not Found: /api/v1/user/selected-courses/
+WARNING 2025-09-09 15:11:28,320 basehttp 11456 2452 "POST /api/v1/user/selected-courses/ HTTP/1.1" 404 9944
+INFO 2025-09-09 15:11:53,383 middleware 11456 12992 Request: GET /api/v1/auth/profile/me/
+INFO 2025-09-09 15:11:53,397 middleware 11456 12992 Response: 200 - Duration: 0.01s
+INFO 2025-09-09 15:11:53,399 basehttp 11456 12992 "GET /api/v1/auth/profile/me/ HTTP/1.1" 200 439
+INFO 2025-09-09 15:11:53,409 middleware 11456 12992 Request: GET /api/v1/courses/courses/
+INFO 2025-09-09 15:11:53,452 middleware 11456 12992 Response: 200 - Duration: 0.04s
+INFO 2025-09-09 15:11:53,454 basehttp 11456 12992 "GET /api/v1/courses/courses/ HTTP/1.1" 200 1545
+INFO 2025-09-09 15:11:53,485 middleware 11456 12992 Request: GET /api/v1/payments/my-subscriptions/active/
+INFO 2025-09-09 15:11:53,505 middleware 11456 12992 Response: 200 - Duration: 0.02s
+INFO 2025-09-09 15:11:53,506 basehttp 11456 12992 "GET /api/v1/payments/my-subscriptions/active/ HTTP/1.1" 200 255
+INFO 2025-09-09 15:11:53,522 middleware 11456 12992 Request: GET /api/v1/user/selected-courses/
+INFO 2025-09-09 15:11:53,541 middleware 11456 12992 Response: 404 - Duration: 0.02s
+WARNING 2025-09-09 15:11:53,543 log 11456 12992 Not Found: /api/v1/user/selected-courses/
+WARNING 2025-09-09 15:11:53,548 basehttp 11456 12992 "GET /api/v1/user/selected-courses/ HTTP/1.1" 404 9943
+INFO 2025-09-09 15:11:53,656 middleware 11456 12992 Request: GET /api/v1/user/selected-courses/
+INFO 2025-09-09 15:11:53,709 middleware 11456 12992 Response: 404 - Duration: 0.05s
+WARNING 2025-09-09 15:11:53,721 log 11456 12992 Not Found: /api/v1/user/selected-courses/
+WARNING 2025-09-09 15:11:53,722 basehttp 11456 12992 "GET /api/v1/user/selected-courses/ HTTP/1.1" 404 9943
+INFO 2025-09-09 15:11:53,740 middleware 11456 12992 Request: GET /api/v1/courses/courses/
+INFO 2025-09-09 15:11:53,785 middleware 11456 12992 Response: 200 - Duration: 0.04s
+INFO 2025-09-09 15:11:53,788 basehttp 11456 12992 "GET /api/v1/courses/courses/ HTTP/1.1" 200 1545
+INFO 2025-09-09 15:11:53,869 middleware 11456 12992 Request: GET /api/v1/courses/courses/
+INFO 2025-09-09 15:11:53,922 middleware 11456 12992 Response: 200 - Duration: 0.05s
+INFO 2025-09-09 15:11:53,943 basehttp 11456 12992 "GET /api/v1/courses/courses/ HTTP/1.1" 200 1545
+INFO 2025-09-09 15:51:36,403 middleware 11456 11948 Request: GET /api/v1/auth/profile/me/
+INFO 2025-09-09 15:51:36,458 middleware 11456 11948 Response: 401 - Duration: 0.06s
+WARNING 2025-09-09 15:51:36,469 log 11456 11948 Unauthorized: /api/v1/auth/profile/me/
+WARNING 2025-09-09 15:51:36,489 basehttp 11456 11948 "GET /api/v1/auth/profile/me/ HTTP/1.1" 401 172
+INFO 2025-09-09 16:16:52,399 middleware 11456 11572 Request: GET /api/v1/courses/courses/
+INFO 2025-09-09 16:16:52,865 middleware 11456 11572 Response: 200 - Duration: 0.47s
+INFO 2025-09-09 16:16:52,871 basehttp 11456 11572 "GET /api/v1/courses/courses/ HTTP/1.1" 200 1545
+INFO 2025-09-09 16:16:52,921 middleware 11456 11572 Request: GET /api/v1/courses/courses/
+INFO 2025-09-09 16:16:52,955 middleware 11456 11572 Response: 200 - Duration: 0.03s
+INFO 2025-09-09 16:16:52,959 basehttp 11456 11572 "GET /api/v1/courses/courses/ HTTP/1.1" 200 1545
+INFO 2025-09-09 16:17:26,879 middleware 11456 11572 Request: GET /api/v1/courses/courses/
+INFO 2025-09-09 16:17:26,939 middleware 11456 11572 Response: 200 - Duration: 0.06s
+INFO 2025-09-09 16:17:26,943 basehttp 11456 11572 "GET /api/v1/courses/courses/ HTTP/1.1" 200 1545
+INFO 2025-09-09 16:17:26,958 middleware 11456 11572 Request: GET /api/v1/courses/courses/
+INFO 2025-09-09 16:17:27,037 middleware 11456 11572 Response: 200 - Duration: 0.08s
+INFO 2025-09-09 16:17:27,039 basehttp 11456 11572 "GET /api/v1/courses/courses/ HTTP/1.1" 200 1545
+INFO 2025-09-09 16:18:44,037 middleware 11456 11572 Request: POST /api/v1/auth/login/
+INFO 2025-09-09 16:18:52,934 utils 11456 11572 User activity logged: 254713760749 - USER_LOGIN - Success: True
+INFO 2025-09-09 16:18:52,940 middleware 11456 11572 Response: 200 - Duration: 8.90s
+INFO 2025-09-09 16:18:52,973 basehttp 11456 11572 "POST /api/v1/auth/login/ HTTP/1.1" 200 869
+INFO 2025-09-09 16:18:52,977 middleware 11456 11572 Request: GET /api/v1/auth/profile/me/
+INFO 2025-09-09 16:18:53,004 middleware 11456 11572 Response: 200 - Duration: 0.03s
+INFO 2025-09-09 16:18:53,008 basehttp 11456 11572 "GET /api/v1/auth/profile/me/ HTTP/1.1" 200 439
+INFO 2025-09-09 16:18:53,037 middleware 11456 11572 Request: GET /api/v1/payments/my-subscriptions/active/
+INFO 2025-09-09 16:18:53,176 middleware 11456 11572 Response: 200 - Duration: 0.14s
+INFO 2025-09-09 16:18:53,179 basehttp 11456 11572 "GET /api/v1/payments/my-subscriptions/active/ HTTP/1.1" 200 255
+INFO 2025-09-09 16:18:53,207 middleware 11456 11572 Request: GET /api/v1/courses/courses/
+INFO 2025-09-09 16:18:53,419 middleware 11456 12892 Request: GET /api/v1/user/selected-courses/
+INFO 2025-09-09 16:18:53,535 middleware 11456 12892 Response: 404 - Duration: 0.12s
+WARNING 2025-09-09 16:18:53,541 log 11456 12892 Not Found: /api/v1/user/selected-courses/
+INFO 2025-09-09 16:18:53,553 middleware 11456 11572 Response: 200 - Duration: 0.35s
+WARNING 2025-09-09 16:18:53,554 basehttp 11456 12892 "GET /api/v1/user/selected-courses/ HTTP/1.1" 404 9943
+INFO 2025-09-09 16:18:53,556 basehttp 11456 11572 "GET /api/v1/courses/courses/ HTTP/1.1" 200 1545
+INFO 2025-09-09 16:18:53,864 middleware 11456 12892 Request: GET /api/v1/courses/courses/
+INFO 2025-09-09 16:18:53,951 middleware 11456 12892 Response: 200 - Duration: 0.09s
+INFO 2025-09-09 16:18:53,969 basehttp 11456 12892 "GET /api/v1/courses/courses/ HTTP/1.1" 200 1545
+INFO 2025-09-09 16:19:29,548 middleware 11456 12892 Request: GET /api/v1/auth/profile/me/
+INFO 2025-09-09 16:19:29,564 middleware 11456 12892 Response: 200 - Duration: 0.02s
+INFO 2025-09-09 16:19:29,588 basehttp 11456 12892 "GET /api/v1/auth/profile/me/ HTTP/1.1" 200 439
+INFO 2025-09-09 16:19:29,707 middleware 11456 12892 Request: GET /api/v1/courses/courses/
+INFO 2025-09-09 16:19:29,755 middleware 11456 12892 Response: 200 - Duration: 0.05s
+INFO 2025-09-09 16:19:29,761 basehttp 11456 12892 "GET /api/v1/courses/courses/ HTTP/1.1" 200 1545
+INFO 2025-09-09 16:19:29,773 middleware 11456 12892 Request: GET /api/v1/payments/my-subscriptions/active/
+INFO 2025-09-09 16:19:29,789 middleware 11456 12892 Response: 200 - Duration: 0.02s
+INFO 2025-09-09 16:19:29,791 basehttp 11456 12892 "GET /api/v1/payments/my-subscriptions/active/ HTTP/1.1" 200 255
+INFO 2025-09-09 16:19:29,990 middleware 11456 12892 Request: GET /api/v1/user/selected-courses/
+INFO 2025-09-09 16:19:30,033 middleware 11456 12892 Response: 404 - Duration: 0.04s
+WARNING 2025-09-09 16:19:30,037 log 11456 12892 Not Found: /api/v1/user/selected-courses/
+WARNING 2025-09-09 16:19:30,039 basehttp 11456 12892 "GET /api/v1/user/selected-courses/ HTTP/1.1" 404 9943
+INFO 2025-09-09 16:19:30,186 middleware 11456 12892 Request: GET /api/v1/user/selected-courses/
+INFO 2025-09-09 16:19:30,207 middleware 11456 12892 Response: 404 - Duration: 0.02s
+WARNING 2025-09-09 16:19:30,208 log 11456 12892 Not Found: /api/v1/user/selected-courses/
+WARNING 2025-09-09 16:19:30,210 basehttp 11456 12892 "GET /api/v1/user/selected-courses/ HTTP/1.1" 404 9943
+INFO 2025-09-09 16:19:30,343 middleware 11456 12892 Request: GET /api/v1/courses/courses/
+INFO 2025-09-09 16:19:30,384 middleware 11456 12892 Response: 200 - Duration: 0.04s
+INFO 2025-09-09 16:19:30,386 basehttp 11456 12892 "GET /api/v1/courses/courses/ HTTP/1.1" 200 1545
+INFO 2025-09-09 16:19:30,435 middleware 11456 12892 Request: GET /api/v1/courses/courses/
+INFO 2025-09-09 16:19:30,539 middleware 11456 12892 Response: 200 - Duration: 0.10s
+INFO 2025-09-09 16:19:30,541 basehttp 11456 12892 "GET /api/v1/courses/courses/ HTTP/1.1" 200 1545
+INFO 2025-09-09 16:19:42,984 middleware 11456 12892 Request: GET /api/v1/user/selected-courses/
+INFO 2025-09-09 16:19:43,008 middleware 11456 12892 Response: 404 - Duration: 0.02s
+WARNING 2025-09-09 16:19:43,011 log 11456 12892 Not Found: /api/v1/user/selected-courses/
+WARNING 2025-09-09 16:19:43,012 basehttp 11456 12892 "GET /api/v1/user/selected-courses/ HTTP/1.1" 404 9943
+INFO 2025-09-09 16:19:43,022 middleware 11456 11572 Request: GET /api/v1/user/selected-courses/
+INFO 2025-09-09 16:19:43,045 middleware 11456 11572 Response: 404 - Duration: 0.02s
+WARNING 2025-09-09 16:19:43,046 log 11456 11572 Not Found: /api/v1/user/selected-courses/
+WARNING 2025-09-09 16:19:43,048 basehttp 11456 11572 "GET /api/v1/user/selected-courses/ HTTP/1.1" 404 9943
+INFO 2025-09-09 16:19:43,146 middleware 11456 11572 Request: GET /api/v1/courses/courses/
+INFO 2025-09-09 16:19:43,198 middleware 11456 11572 Response: 200 - Duration: 0.05s
+INFO 2025-09-09 16:19:43,205 basehttp 11456 11572 "GET /api/v1/courses/courses/ HTTP/1.1" 200 1545
+INFO 2025-09-09 16:19:43,291 middleware 11456 11572 Request: GET /api/v1/courses/courses/
+INFO 2025-09-09 16:19:43,342 middleware 11456 11572 Response: 200 - Duration: 0.05s
+INFO 2025-09-09 16:19:43,344 basehttp 11456 11572 "GET /api/v1/courses/courses/ HTTP/1.1" 200 1545
+INFO 2025-09-09 16:19:59,453 middleware 11456 11572 Request: GET /api/v1/user/selected-courses/
+INFO 2025-09-09 16:19:59,475 middleware 11456 11572 Response: 404 - Duration: 0.02s
+WARNING 2025-09-09 16:19:59,477 log 11456 11572 Not Found: /api/v1/user/selected-courses/
+WARNING 2025-09-09 16:19:59,478 basehttp 11456 11572 "GET /api/v1/user/selected-courses/ HTTP/1.1" 404 9943
+INFO 2025-09-09 16:19:59,496 middleware 11456 12892 Request: GET /api/v1/user/selected-courses/
+INFO 2025-09-09 16:19:59,520 middleware 11456 12892 Response: 404 - Duration: 0.02s
+WARNING 2025-09-09 16:19:59,521 log 11456 12892 Not Found: /api/v1/user/selected-courses/
+WARNING 2025-09-09 16:19:59,522 basehttp 11456 12892 "GET /api/v1/user/selected-courses/ HTTP/1.1" 404 9943
+INFO 2025-09-09 16:19:59,789 middleware 11456 12892 Request: GET /api/v1/courses/courses/
+INFO 2025-09-09 16:19:59,835 middleware 11456 12892 Response: 200 - Duration: 0.05s
+INFO 2025-09-09 16:19:59,839 basehttp 11456 12892 "GET /api/v1/courses/courses/ HTTP/1.1" 200 1545
+INFO 2025-09-09 16:19:59,868 middleware 11456 12892 Request: GET /api/v1/courses/courses/
+INFO 2025-09-09 16:19:59,917 middleware 11456 12892 Response: 200 - Duration: 0.05s
+INFO 2025-09-09 16:19:59,959 basehttp 11456 12892 "GET /api/v1/courses/courses/ HTTP/1.1" 200 1545
+INFO 2025-09-09 16:20:16,808 middleware 11456 12892 Request: GET /api/v1/user/selected-courses/
+INFO 2025-09-09 16:20:16,849 middleware 11456 12892 Response: 404 - Duration: 0.04s
+WARNING 2025-09-09 16:20:16,853 log 11456 12892 Not Found: /api/v1/user/selected-courses/
+WARNING 2025-09-09 16:20:16,855 basehttp 11456 12892 "GET /api/v1/user/selected-courses/ HTTP/1.1" 404 9943
+INFO 2025-09-09 16:20:16,904 middleware 11456 11572 Request: GET /api/v1/user/selected-courses/
+INFO 2025-09-09 16:20:16,924 middleware 11456 11572 Response: 404 - Duration: 0.02s
+WARNING 2025-09-09 16:20:16,926 log 11456 11572 Not Found: /api/v1/user/selected-courses/
+WARNING 2025-09-09 16:20:16,927 basehttp 11456 11572 "GET /api/v1/user/selected-courses/ HTTP/1.1" 404 9943
+INFO 2025-09-09 16:20:17,198 middleware 11456 11572 Request: GET /api/v1/courses/courses/
+INFO 2025-09-09 16:20:17,244 middleware 11456 11572 Response: 200 - Duration: 0.05s
+INFO 2025-09-09 16:20:17,248 basehttp 11456 11572 "GET /api/v1/courses/courses/ HTTP/1.1" 200 1545
+INFO 2025-09-09 16:20:17,274 middleware 11456 11572 Request: GET /api/v1/courses/courses/
+INFO 2025-09-09 16:20:17,324 middleware 11456 11572 Response: 200 - Duration: 0.05s
+INFO 2025-09-09 16:20:17,326 basehttp 11456 11572 "GET /api/v1/courses/courses/ HTTP/1.1" 200 1545
+INFO 2025-09-09 16:56:18,208 basehttp 11456 16768 "OPTIONS /api/v1/courses/courses/ HTTP/1.1" 200 0
+INFO 2025-09-09 16:56:18,210 basehttp 11456 13340 "OPTIONS /api/v1/auth/profile/me/ HTTP/1.1" 200 0
+INFO 2025-09-09 16:56:18,221 middleware 11456 16768 Request: GET /api/v1/courses/courses/
+INFO 2025-09-09 16:56:18,223 middleware 11456 13340 Request: GET /api/v1/auth/profile/me/
+INFO 2025-09-09 16:56:18,593 middleware 11456 13340 Response: 200 - Duration: 0.37s
+INFO 2025-09-09 16:56:18,595 basehttp 11456 13340 "GET /api/v1/auth/profile/me/ HTTP/1.1" 200 439
+INFO 2025-09-09 16:56:18,605 basehttp 11456 13340 "OPTIONS /api/v1/payments/my-subscriptions/active/ HTTP/1.1" 200 0
+INFO 2025-09-09 16:56:18,608 middleware 11456 13340 Request: GET /api/v1/payments/my-subscriptions/active/
+INFO 2025-09-09 16:56:18,663 middleware 11456 16768 Response: 200 - Duration: 0.44s
+INFO 2025-09-09 16:56:18,665 basehttp 11456 16768 "GET /api/v1/courses/courses/ HTTP/1.1" 200 1545
+INFO 2025-09-09 16:56:18,727 basehttp 11456 16768 "OPTIONS /api/v1/user/selected-courses/ HTTP/1.1" 200 0
+INFO 2025-09-09 16:56:18,730 middleware 11456 16768 Request: GET /api/v1/user/selected-courses/
+INFO 2025-09-09 16:56:18,740 middleware 11456 13340 Response: 200 - Duration: 0.13s
+INFO 2025-09-09 16:56:18,741 basehttp 11456 13340 "GET /api/v1/payments/my-subscriptions/active/ HTTP/1.1" 200 255
+INFO 2025-09-09 16:56:18,910 middleware 11456 16768 Response: 404 - Duration: 0.18s
+WARNING 2025-09-09 16:56:18,912 log 11456 16768 Not Found: /api/v1/user/selected-courses/
+WARNING 2025-09-09 16:56:19,095 basehttp 11456 16768 "GET /api/v1/user/selected-courses/ HTTP/1.1" 404 9943
+INFO 2025-09-09 16:56:19,264 middleware 11456 13340 Request: GET /api/v1/user/selected-courses/
+INFO 2025-09-09 16:56:19,311 middleware 11456 13340 Response: 404 - Duration: 0.05s
+WARNING 2025-09-09 16:56:19,312 log 11456 13340 Not Found: /api/v1/user/selected-courses/
+WARNING 2025-09-09 16:56:19,394 basehttp 11456 13340 "GET /api/v1/user/selected-courses/ HTTP/1.1" 404 9943
+INFO 2025-09-09 16:56:19,429 middleware 11456 16768 Request: GET /api/v1/courses/courses/
+INFO 2025-09-09 16:56:19,489 middleware 11456 16768 Response: 200 - Duration: 0.06s
+INFO 2025-09-09 16:56:19,491 basehttp 11456 16768 "GET /api/v1/courses/courses/ HTTP/1.1" 200 1545
+INFO 2025-09-09 16:56:20,135 middleware 11456 13340 Request: GET /api/v1/courses/courses/
+INFO 2025-09-09 16:56:20,177 middleware 11456 13340 Response: 200 - Duration: 0.04s
+INFO 2025-09-09 16:56:20,179 basehttp 11456 13340 "GET /api/v1/courses/courses/ HTTP/1.1" 200 1545
+INFO 2025-09-10 01:06:53,167 autoreload 8660 11284 Watching for file changes with StatReloader
+INFO 2025-09-10 01:09:55,427 middleware 8660 5020 Request: GET /admin/authentication/user/
+INFO 2025-09-10 01:09:55,658 middleware 8660 5020 User: None
+INFO 2025-09-10 01:09:56,544 middleware 8660 5020 Response: 200 - Duration: 1.12s
+INFO 2025-09-10 01:09:56,614 basehttp 8660 5020 "GET /admin/authentication/user/ HTTP/1.1" 200 23913
+INFO 2025-09-10 01:09:57,424 basehttp 8660 8476 "GET /static/admin/css/dark_mode.css HTTP/1.1" 200 2808
+INFO 2025-09-10 01:09:57,437 basehttp 8660 5020 "GET /static/admin/css/base.css HTTP/1.1" 200 22120
+INFO 2025-09-10 01:09:57,449 basehttp 8660 8476 "GET /static/admin/css/nav_sidebar.css HTTP/1.1" 200 2810
+INFO 2025-09-10 01:09:57,460 basehttp 8660 5020 "GET /static/admin/css/changelists.css HTTP/1.1" 200 6878
+INFO 2025-09-10 01:09:57,532 middleware 8660 5020 Request: GET /admin/jsi18n/
+INFO 2025-09-10 01:09:57,538 middleware 8660 5020 User: None
+INFO 2025-09-10 01:09:57,551 basehttp 8660 8476 "GET /static/admin/css/responsive.css HTTP/1.1" 200 16565
+INFO 2025-09-10 01:09:57,604 basehttp 8660 8476 "GET /static/admin/js/vendor/jquery/jquery.js HTTP/1.1" 200 285314
+INFO 2025-09-10 01:09:57,611 basehttp 8660 7632 "GET /static/admin/js/theme.js HTTP/1.1" 200 1653
+INFO 2025-09-10 01:09:57,647 middleware 8660 5020 Response: 200 - Duration: 0.11s
+INFO 2025-09-10 01:09:57,648 basehttp 8660 5020 "GET /admin/jsi18n/ HTTP/1.1" 200 3342
+INFO 2025-09-10 01:09:57,667 basehttp 8660 7632 "GET /static/admin/js/jquery.init.js HTTP/1.1" 200 347
+INFO 2025-09-10 01:09:57,686 basehttp 8660 8476 "GET /static/admin/js/core.js HTTP/1.1" 200 6208
+INFO 2025-09-10 01:09:57,697 basehttp 8660 5020 "GET /static/admin/js/admin/RelatedObjectLookups.js HTTP/1.1" 200 9777
+INFO 2025-09-10 01:09:57,725 basehttp 8660 7632 "GET /static/admin/js/actions.js HTTP/1.1" 200 8076
+INFO 2025-09-10 01:09:57,786 basehttp 8660 8476 "GET /static/admin/js/urlify.js HTTP/1.1" 200 7887
+INFO 2025-09-10 01:09:57,797 basehttp 8660 6968 "GET /static/admin/img/search.svg HTTP/1.1" 200 458
+INFO 2025-09-10 01:09:57,797 basehttp 8660 7632 "GET /static/admin/js/prepopulate.js HTTP/1.1" 200 1531
+INFO 2025-09-10 01:09:57,799 basehttp 8660 12164 "GET /static/admin/img/icon-yes.svg HTTP/1.1" 200 436
+INFO 2025-09-10 01:09:57,816 basehttp 8660 5020 "GET /static/admin/js/vendor/xregexp/xregexp.js HTTP/1.1" 200 325171
+INFO 2025-09-10 01:09:57,855 basehttp 8660 5020 "GET /static/admin/js/nav_sidebar.js HTTP/1.1" 200 3063
+INFO 2025-09-10 01:09:57,863 basehttp 8660 12164 "GET /static/admin/js/filters.js HTTP/1.1" 200 978
+INFO 2025-09-10 01:09:58,030 basehttp 8660 12164 "GET /static/admin/img/tooltag-add.svg HTTP/1.1" 200 331
+INFO 2025-09-10 01:09:58,344 basehttp 8660 5020 "GET /static/admin/img/icon-viewlink.svg HTTP/1.1" 200 581
+INFO 2025-09-10 01:09:58,367 basehttp 8660 12164 "GET /static/admin/img/sorting-icons.svg HTTP/1.1" 200 1097
+INFO 2025-09-10 01:09:58,540 middleware 8660 12164 Request: GET /favicon.ico
+INFO 2025-09-10 01:09:58,548 middleware 8660 12164 User: None
+INFO 2025-09-10 01:09:58,595 middleware 8660 12164 Response: 404 - Duration: 0.06s
+WARNING 2025-09-10 01:09:58,597 log 8660 12164 Not Found: /favicon.ico
+WARNING 2025-09-10 01:09:58,599 basehttp 8660 12164 "GET /favicon.ico HTTP/1.1" 404 3730
+INFO 2025-09-10 01:10:58,334 basehttp 8660 13428 "OPTIONS /api/v1/auth/profile/me/ HTTP/1.1" 200 0
+INFO 2025-09-10 01:10:58,336 middleware 8660 13428 Request: GET /api/v1/auth/profile/me/
+INFO 2025-09-10 01:10:58,599 basehttp 8660 13868 "OPTIONS /api/v1/courses/courses/ HTTP/1.1" 200 0
+INFO 2025-09-10 01:10:58,602 middleware 8660 13868 Request: GET /api/v1/courses/courses/
+INFO 2025-09-10 01:10:58,961 middleware 8660 13428 Response: 401 - Duration: 0.62s
+INFO 2025-09-10 01:10:58,961 middleware 8660 13868 Response: 401 - Duration: 0.36s
+WARNING 2025-09-10 01:10:58,962 log 8660 13428 Unauthorized: /api/v1/auth/profile/me/
+WARNING 2025-09-10 01:10:58,963 log 8660 13868 Unauthorized: /api/v1/courses/courses/
+WARNING 2025-09-10 01:10:58,965 basehttp 8660 13868 "GET /api/v1/courses/courses/ HTTP/1.1" 401 172
+WARNING 2025-09-10 01:10:58,966 basehttp 8660 13428 "GET /api/v1/auth/profile/me/ HTTP/1.1" 401 172
+INFO 2025-09-10 01:10:58,969 middleware 8660 13428 Request: GET /api/v1/auth/profile/me/
+INFO 2025-09-10 01:10:58,972 middleware 8660 13428 Response: 401 - Duration: 0.00s
+WARNING 2025-09-10 01:10:58,973 log 8660 13428 Unauthorized: /api/v1/auth/profile/me/
+WARNING 2025-09-10 01:10:58,974 basehttp 8660 13428 "GET /api/v1/auth/profile/me/ HTTP/1.1" 401 172
+INFO 2025-09-10 01:10:58,993 basehttp 8660 13428 "OPTIONS /api/v1/auth/token/refresh/ HTTP/1.1" 200 0
+INFO 2025-09-10 01:10:58,995 middleware 8660 13428 Request: POST /api/v1/auth/token/refresh/
+INFO 2025-09-10 01:10:59,038 middleware 8660 13428 Response: 404 - Duration: 0.04s
+WARNING 2025-09-10 01:10:59,047 log 8660 13428 Not Found: /api/v1/auth/token/refresh/
+WARNING 2025-09-10 01:10:59,054 basehttp 8660 13428 "POST /api/v1/auth/token/refresh/ HTTP/1.1" 404 14978
+INFO 2025-09-10 01:10:59,562 middleware 8660 13428 Request: GET /api/v1/courses/courses/
+INFO 2025-09-10 01:10:59,790 middleware 8660 13428 Response: 200 - Duration: 0.23s
+INFO 2025-09-10 01:10:59,792 basehttp 8660 13428 "GET /api/v1/courses/courses/ HTTP/1.1" 200 1545
+INFO 2025-09-10 01:11:57,818 basehttp 8660 12052 "OPTIONS /api/v1/auth/login/ HTTP/1.1" 200 0
+INFO 2025-09-10 01:11:57,820 middleware 8660 12052 Request: POST /api/v1/auth/login/
+INFO 2025-09-10 01:12:01,563 utils 8660 12052 User activity logged: 254713760749 - USER_LOGIN - Success: True
+INFO 2025-09-10 01:12:01,603 middleware 8660 12052 Response: 200 - Duration: 3.78s
+INFO 2025-09-10 01:12:01,612 basehttp 8660 12052 "POST /api/v1/auth/login/ HTTP/1.1" 200 869
+INFO 2025-09-10 01:12:01,624 middleware 8660 12052 Request: GET /api/v1/auth/profile/me/
+INFO 2025-09-10 01:12:01,635 middleware 8660 12052 Response: 200 - Duration: 0.01s
+INFO 2025-09-10 01:12:01,638 basehttp 8660 12052 "GET /api/v1/auth/profile/me/ HTTP/1.1" 200 439
+INFO 2025-09-10 01:12:01,650 basehttp 8660 12052 "OPTIONS /api/v1/payments/my-subscriptions/active/ HTTP/1.1" 200 0
+INFO 2025-09-10 01:12:01,709 middleware 8660 12052 Request: GET /api/v1/payments/my-subscriptions/active/
+INFO 2025-09-10 01:12:01,724 middleware 8660 12052 Response: 200 - Duration: 0.01s
+INFO 2025-09-10 01:12:01,726 basehttp 8660 12052 "GET /api/v1/payments/my-subscriptions/active/ HTTP/1.1" 200 255
+INFO 2025-09-10 01:12:01,960 basehttp 8660 252 "OPTIONS /api/v1/courses/subjects/ HTTP/1.1" 200 0
+INFO 2025-09-10 01:12:01,961 basehttp 8660 12052 "OPTIONS /api/v1/courses/subjects/ HTTP/1.1" 200 0
+INFO 2025-09-10 01:12:02,052 middleware 8660 252 Request: GET /api/v1/courses/subjects/
+INFO 2025-09-10 01:12:02,069 middleware 8660 252 Response: 200 - Duration: 0.02s
+INFO 2025-09-10 01:12:02,072 basehttp 8660 252 "GET /api/v1/courses/subjects/ HTTP/1.1" 200 1215
+INFO 2025-09-10 01:12:02,096 middleware 8660 252 Request: GET /api/v1/courses/subjects/
+INFO 2025-09-10 01:12:02,108 middleware 8660 252 Response: 200 - Duration: 0.01s
+INFO 2025-09-10 01:12:02,110 basehttp 8660 252 "GET /api/v1/courses/subjects/ HTTP/1.1" 200 1215
+INFO 2025-09-10 01:12:04,000 basehttp 8660 252 "OPTIONS /api/v1/user/selected-courses/ HTTP/1.1" 200 0
+INFO 2025-09-10 01:12:04,001 basehttp 8660 12052 "OPTIONS /api/v1/user/selected-courses/ HTTP/1.1" 200 0
+INFO 2025-09-10 01:12:04,012 middleware 8660 12052 Request: GET /api/v1/user/selected-courses/
+INFO 2025-09-10 01:12:04,041 middleware 8660 12052 Response: 404 - Duration: 0.03s
+WARNING 2025-09-10 01:12:04,045 log 8660 12052 Not Found: /api/v1/user/selected-courses/
+WARNING 2025-09-10 01:12:04,049 basehttp 8660 12052 "GET /api/v1/user/selected-courses/ HTTP/1.1" 404 9943
+INFO 2025-09-10 01:12:04,060 middleware 8660 252 Request: GET /api/v1/user/selected-courses/
+INFO 2025-09-10 01:12:04,076 middleware 8660 252 Response: 404 - Duration: 0.02s
+WARNING 2025-09-10 01:12:04,078 log 8660 252 Not Found: /api/v1/user/selected-courses/
+WARNING 2025-09-10 01:12:04,079 basehttp 8660 252 "GET /api/v1/user/selected-courses/ HTTP/1.1" 404 9943
+INFO 2025-09-10 01:12:04,325 middleware 8660 252 Request: GET /api/v1/courses/courses/
+INFO 2025-09-10 01:12:04,362 middleware 8660 252 Response: 200 - Duration: 0.04s
+INFO 2025-09-10 01:12:04,363 basehttp 8660 252 "GET /api/v1/courses/courses/ HTTP/1.1" 200 1545
+INFO 2025-09-10 01:12:04,374 middleware 8660 252 Request: GET /api/v1/courses/courses/
+INFO 2025-09-10 01:12:04,423 middleware 8660 252 Response: 200 - Duration: 0.05s
+INFO 2025-09-10 01:12:04,426 basehttp 8660 252 "GET /api/v1/courses/courses/ HTTP/1.1" 200 1545
+INFO 2025-09-10 01:12:45,680 middleware 8660 11752 Request: GET /api/v1/auth/profile/me/
+INFO 2025-09-10 01:12:45,757 middleware 8660 11752 Response: 200 - Duration: 0.08s
+INFO 2025-09-10 01:12:45,762 basehttp 8660 11752 "GET /api/v1/auth/profile/me/ HTTP/1.1" 200 439
+INFO 2025-09-10 01:12:45,767 middleware 8660 11752 Request: GET /api/v1/courses/courses/
+INFO 2025-09-10 01:12:45,822 middleware 8660 11752 Response: 200 - Duration: 0.05s
+INFO 2025-09-10 01:12:45,823 basehttp 8660 11752 "GET /api/v1/courses/courses/ HTTP/1.1" 200 1545
+INFO 2025-09-10 01:12:45,829 middleware 8660 11752 Request: GET /api/v1/payments/my-subscriptions/active/
+INFO 2025-09-10 01:12:45,855 middleware 8660 11752 Response: 200 - Duration: 0.03s
+INFO 2025-09-10 01:12:45,885 basehttp 8660 11752 "GET /api/v1/payments/my-subscriptions/active/ HTTP/1.1" 200 255
+INFO 2025-09-10 01:12:45,905 middleware 8660 10800 Request: GET /api/v1/user/selected-courses/
+INFO 2025-09-10 01:12:45,924 middleware 8660 10800 Response: 404 - Duration: 0.02s
+WARNING 2025-09-10 01:12:45,926 log 8660 10800 Not Found: /api/v1/user/selected-courses/
+WARNING 2025-09-10 01:12:45,934 basehttp 8660 10800 "GET /api/v1/user/selected-courses/ HTTP/1.1" 404 9943
+INFO 2025-09-10 01:12:46,211 middleware 8660 10800 Request: GET /api/v1/user/selected-courses/
+INFO 2025-09-10 01:12:46,284 middleware 8660 11752 Request: GET /api/v1/courses/courses/
+INFO 2025-09-10 01:12:46,304 middleware 8660 10800 Response: 404 - Duration: 0.09s
+WARNING 2025-09-10 01:12:46,308 log 8660 10800 Not Found: /api/v1/user/selected-courses/
+WARNING 2025-09-10 01:12:46,326 basehttp 8660 10800 "GET /api/v1/user/selected-courses/ HTTP/1.1" 404 9943
+INFO 2025-09-10 01:12:46,357 middleware 8660 11752 Response: 200 - Duration: 0.07s
+INFO 2025-09-10 01:12:46,359 basehttp 8660 11752 "GET /api/v1/courses/courses/ HTTP/1.1" 200 1545
+INFO 2025-09-10 01:12:46,403 middleware 8660 11752 Request: GET /api/v1/courses/courses/
+INFO 2025-09-10 01:12:46,454 middleware 8660 11752 Response: 200 - Duration: 0.05s
+INFO 2025-09-10 01:12:46,457 basehttp 8660 11752 "GET /api/v1/courses/courses/ HTTP/1.1" 200 1545
+INFO 2025-09-10 01:13:36,846 middleware 8660 6948 Request: POST /api/v1/user/selected-courses/
+INFO 2025-09-10 01:13:36,854 middleware 8660 6948 Response: 404 - Duration: 0.01s
+WARNING 2025-09-10 01:13:36,856 log 8660 6948 Not Found: /api/v1/user/selected-courses/
+WARNING 2025-09-10 01:13:36,857 basehttp 8660 6948 "POST /api/v1/user/selected-courses/ HTTP/1.1" 404 9944
+INFO 2025-09-10 01:14:04,523 middleware 8660 11548 Request: GET /api/v1/auth/profile/me/
+INFO 2025-09-10 01:14:04,530 middleware 8660 11548 Response: 200 - Duration: 0.01s
+INFO 2025-09-10 01:14:04,533 basehttp 8660 11548 "GET /api/v1/auth/profile/me/ HTTP/1.1" 200 439
+INFO 2025-09-10 01:14:04,540 middleware 8660 11548 Request: GET /api/v1/courses/courses/
+INFO 2025-09-10 01:14:04,582 middleware 8660 11548 Response: 200 - Duration: 0.04s
+INFO 2025-09-10 01:14:04,587 basehttp 8660 11548 "GET /api/v1/courses/courses/ HTTP/1.1" 200 1545
+INFO 2025-09-10 01:14:04,592 middleware 8660 11548 Request: GET /api/v1/payments/my-subscriptions/active/
+INFO 2025-09-10 01:14:04,609 middleware 8660 11548 Response: 200 - Duration: 0.02s
+INFO 2025-09-10 01:14:04,611 basehttp 8660 11548 "GET /api/v1/payments/my-subscriptions/active/ HTTP/1.1" 200 255
+INFO 2025-09-10 01:14:04,614 middleware 8660 11548 Request: GET /api/v1/user/selected-courses/
+INFO 2025-09-10 01:14:04,637 middleware 8660 11548 Response: 404 - Duration: 0.02s
+WARNING 2025-09-10 01:14:04,640 log 8660 11548 Not Found: /api/v1/user/selected-courses/
+WARNING 2025-09-10 01:14:04,642 basehttp 8660 11548 "GET /api/v1/user/selected-courses/ HTTP/1.1" 404 9943
+INFO 2025-09-10 01:14:04,730 middleware 8660 11548 Request: GET /api/v1/user/selected-courses/
+INFO 2025-09-10 01:14:04,746 middleware 8660 11548 Response: 404 - Duration: 0.02s
+WARNING 2025-09-10 01:14:04,748 log 8660 11548 Not Found: /api/v1/user/selected-courses/
+WARNING 2025-09-10 01:14:04,749 basehttp 8660 11548 "GET /api/v1/user/selected-courses/ HTTP/1.1" 404 9943
+INFO 2025-09-10 01:14:04,798 middleware 8660 11548 Request: GET /api/v1/courses/courses/
+INFO 2025-09-10 01:14:04,847 middleware 8660 11548 Response: 200 - Duration: 0.05s
+INFO 2025-09-10 01:14:04,852 basehttp 8660 11548 "GET /api/v1/courses/courses/ HTTP/1.1" 200 1545
+INFO 2025-09-10 01:14:04,925 middleware 8660 7528 Request: GET /api/v1/courses/courses/
+INFO 2025-09-10 01:14:05,013 middleware 8660 7528 Response: 200 - Duration: 0.09s
+INFO 2025-09-10 01:14:05,015 basehttp 8660 7528 "GET /api/v1/courses/courses/ HTTP/1.1" 200 1545
+INFO 2025-09-10 01:34:33,724 middleware 8660 10832 Request: GET /api/v1/user/selected-courses/
+INFO 2025-09-10 01:34:33,789 middleware 8660 10832 Response: 404 - Duration: 0.07s
+WARNING 2025-09-10 01:34:33,791 log 8660 10832 Not Found: /api/v1/user/selected-courses/
+WARNING 2025-09-10 01:34:33,792 basehttp 8660 10832 "GET /api/v1/user/selected-courses/ HTTP/1.1" 404 9943
+INFO 2025-09-10 01:34:33,996 middleware 8660 10832 Request: GET /api/v1/courses/courses/
+INFO 2025-09-10 01:34:34,095 middleware 8660 10832 Response: 200 - Duration: 0.10s
+INFO 2025-09-10 01:34:34,100 basehttp 8660 10832 "GET /api/v1/courses/courses/ HTTP/1.1" 200 1545
+INFO 2025-09-10 02:12:07,915 middleware 8660 6868 Request: GET /api/v1/auth/profile/me/
+INFO 2025-09-10 02:12:07,965 middleware 8660 6868 Response: 401 - Duration: 0.05s
+WARNING 2025-09-10 02:12:07,967 log 8660 6868 Unauthorized: /api/v1/auth/profile/me/
+INFO 2025-09-10 02:12:08,368 middleware 8660 10400 Request: GET /api/v1/courses/courses/
+INFO 2025-09-10 02:12:08,371 middleware 8660 10400 Response: 401 - Duration: 0.00s
+WARNING 2025-09-10 02:12:08,373 basehttp 8660 6868 "GET /api/v1/auth/profile/me/ HTTP/1.1" 401 172
+WARNING 2025-09-10 02:12:08,374 log 8660 10400 Unauthorized: /api/v1/courses/courses/
+WARNING 2025-09-10 02:12:08,382 basehttp 8660 10400 "GET /api/v1/courses/courses/ HTTP/1.1" 401 172
+INFO 2025-09-10 02:12:08,466 middleware 8660 10400 Request: GET /api/v1/courses/courses/
+INFO 2025-09-10 02:12:09,202 middleware 8660 10400 Response: 200 - Duration: 0.74s
+INFO 2025-09-10 02:12:09,206 basehttp 8660 10400 "GET /api/v1/courses/courses/ HTTP/1.1" 200 1545
+INFO 2025-09-10 02:12:28,943 middleware 8660 9888 Request: POST /api/v1/auth/login/
+INFO 2025-09-10 02:12:32,245 utils 8660 9888 User activity logged: 254713760749 - USER_LOGIN - Success: True
+INFO 2025-09-10 02:12:32,248 middleware 8660 9888 Response: 200 - Duration: 3.31s
+INFO 2025-09-10 02:12:32,250 basehttp 8660 9888 "POST /api/v1/auth/login/ HTTP/1.1" 200 869
+INFO 2025-09-10 02:12:32,258 middleware 8660 9888 Request: GET /api/v1/auth/profile/me/
+INFO 2025-09-10 02:12:32,285 middleware 8660 9888 Response: 200 - Duration: 0.03s
+INFO 2025-09-10 02:12:32,289 basehttp 8660 9888 "GET /api/v1/auth/profile/me/ HTTP/1.1" 200 439
+INFO 2025-09-10 02:12:32,295 middleware 8660 9888 Request: GET /api/v1/payments/my-subscriptions/active/
+INFO 2025-09-10 02:12:32,314 middleware 8660 9888 Response: 200 - Duration: 0.02s
+INFO 2025-09-10 02:12:32,315 basehttp 8660 9888 "GET /api/v1/payments/my-subscriptions/active/ HTTP/1.1" 200 255
+INFO 2025-09-10 02:12:32,459 middleware 8660 9888 Request: GET /api/v1/courses/subjects/
+INFO 2025-09-10 02:12:32,474 middleware 8660 9888 Response: 200 - Duration: 0.01s
+INFO 2025-09-10 02:12:32,476 basehttp 8660 9888 "GET /api/v1/courses/subjects/ HTTP/1.1" 200 1215
+INFO 2025-09-10 02:12:32,500 middleware 8660 9888 Request: GET /api/v1/courses/subjects/
+INFO 2025-09-10 02:12:32,564 middleware 8660 9888 Response: 200 - Duration: 0.06s
+INFO 2025-09-10 02:12:32,566 basehttp 8660 9888 "GET /api/v1/courses/subjects/ HTTP/1.1" 200 1215
+INFO 2025-09-10 02:12:32,898 middleware 8660 9888 Request: GET /api/v1/user/selected-courses/
+INFO 2025-09-10 02:12:32,956 middleware 8660 9888 Response: 404 - Duration: 0.06s
+WARNING 2025-09-10 02:12:32,961 log 8660 9888 Not Found: /api/v1/user/selected-courses/
+WARNING 2025-09-10 02:12:32,963 basehttp 8660 9888 "GET /api/v1/user/selected-courses/ HTTP/1.1" 404 9943
+INFO 2025-09-10 02:12:32,967 middleware 8660 13956 Request: GET /api/v1/user/selected-courses/
+INFO 2025-09-10 02:12:32,990 middleware 8660 13956 Response: 404 - Duration: 0.02s
+WARNING 2025-09-10 02:12:32,992 log 8660 13956 Not Found: /api/v1/user/selected-courses/
+WARNING 2025-09-10 02:12:32,993 basehttp 8660 13956 "GET /api/v1/user/selected-courses/ HTTP/1.1" 404 9943
+INFO 2025-09-10 02:12:33,029 middleware 8660 13956 Request: GET /api/v1/courses/courses/
+INFO 2025-09-10 02:12:33,090 middleware 8660 13956 Response: 200 - Duration: 0.06s
+INFO 2025-09-10 02:12:33,092 basehttp 8660 13956 "GET /api/v1/courses/courses/ HTTP/1.1" 200 1545
+INFO 2025-09-10 02:12:33,193 middleware 8660 13956 Request: GET /api/v1/courses/courses/
+INFO 2025-09-10 02:12:33,258 middleware 8660 13956 Response: 200 - Duration: 0.07s
+INFO 2025-09-10 02:12:33,280 basehttp 8660 13956 "GET /api/v1/courses/courses/ HTTP/1.1" 200 1545
+INFO 2025-09-10 02:27:27,566 middleware 8660 12456 Request: GET /api/v1/payments/my-subscriptions/active/
+INFO 2025-09-10 02:27:27,842 middleware 8660 12456 User: None
+INFO 2025-09-10 02:27:28,006 middleware 8660 12456 Response: 200 - Duration: 0.44s
+INFO 2025-09-10 02:27:28,009 basehttp 8660 12456 "GET /api/v1/payments/my-subscriptions/active/ HTTP/1.1" 200 255
+INFO 2025-09-10 02:27:32,791 middleware 8660 7556 Request: GET /favicon.ico
+INFO 2025-09-10 02:27:32,816 middleware 8660 7556 User: None
+INFO 2025-09-10 02:27:32,902 middleware 8660 7556 Response: 404 - Duration: 0.11s
+WARNING 2025-09-10 02:27:32,914 log 8660 7556 Not Found: /favicon.ico
+WARNING 2025-09-10 02:27:32,915 basehttp 8660 7556 "GET /favicon.ico HTTP/1.1" 404 3730
+INFO 2025-09-10 02:28:52,776 middleware 8660 11520 Request: GET /api/v1/user/selected-courses/
+INFO 2025-09-10 02:28:52,791 middleware 8660 11520 User: None
+INFO 2025-09-10 02:28:52,838 middleware 8660 11520 Response: 404 - Duration: 0.06s
+WARNING 2025-09-10 02:28:52,841 log 8660 11520 Not Found: /api/v1/user/selected-courses/
+WARNING 2025-09-10 02:28:52,846 basehttp 8660 11520 "GET /api/v1/user/selected-courses/ HTTP/1.1" 404 9943
+INFO 2025-09-10 02:30:06,929 middleware 8660 5336 Request: GET /api/v1/ user/ user/selected-courses/
+INFO 2025-09-10 02:30:06,938 middleware 8660 5336 User: None
+INFO 2025-09-10 02:30:07,050 middleware 8660 5336 Response: 404 - Duration: 0.12s
+WARNING 2025-09-10 02:30:07,051 log 8660 5336 Not Found: /api/v1/ user/ user/selected-courses/
+WARNING 2025-09-10 02:30:07,054 basehttp 8660 5336 "GET /api/v1/%20user/%20user/selected-courses/ HTTP/1.1" 404 5144
+INFO 2025-09-10 02:31:33,872 middleware 8660 4044 Request: GET /api/v1/ user/ user/
+INFO 2025-09-10 02:31:34,140 middleware 8660 4044 User: None
+INFO 2025-09-10 02:31:34,188 middleware 8660 4044 Response: 404 - Duration: 0.32s
+WARNING 2025-09-10 02:31:34,189 log 8660 4044 Not Found: /api/v1/ user/ user/
+WARNING 2025-09-10 02:31:34,190 basehttp 8660 4044 "GET /api/v1/%20user/%20user/ HTTP/1.1" 404 5093
+INFO 2025-09-10 02:31:53,554 middleware 8660 6124 Request: GET /api/docs/
+INFO 2025-09-10 02:31:53,559 middleware 8660 6124 User: None
+INFO 2025-09-10 02:32:01,645 middleware 8660 6124 Response: 200 - Duration: 8.09s
+INFO 2025-09-10 02:32:01,790 basehttp 8660 6124 "GET /api/docs/ HTTP/1.1" 200 4647
+INFO 2025-09-10 02:32:04,190 middleware 8660 6124 Request: GET /api/schema/
+INFO 2025-09-10 02:32:04,197 middleware 8660 6124 User: None
+INFO 2025-09-10 02:32:12,882 middleware 8660 6124 Response: 200 - Duration: 8.69s
+INFO 2025-09-10 02:32:12,884 basehttp 8660 6124 "GET /api/schema/ HTTP/1.1" 200 169591
+INFO 2025-09-10 02:38:36,618 middleware 8660 13600 Request: GET /api/v1/kmtc/
+INFO 2025-09-10 02:38:36,629 middleware 8660 13600 User: None
+INFO 2025-09-10 02:38:36,670 middleware 8660 13600 Response: 200 - Duration: 0.05s
+INFO 2025-09-10 02:38:36,680 basehttp 8660 13600 "GET /api/v1/kmtc/ HTTP/1.1" 200 178
+INFO 2025-09-10 02:53:25,341 autoreload 8660 11284 C:\Users\psi\Desktop\originalEDUHUB\backend\EDUHUB\apps\authentication\user_views.py changed, reloading.
+INFO 2025-09-10 02:53:46,016 autoreload 9612 5768 Watching for file changes with StatReloader
+INFO 2025-09-10 02:58:52,013 autoreload 9612 5768 C:\Users\psi\Desktop\originalEDUHUB\backend\EDUHUB\apps\authentication\serializers.py changed, reloading.
+INFO 2025-09-10 02:58:58,521 autoreload 15308 8444 Watching for file changes with StatReloader
+INFO 2025-09-10 03:04:00,395 autoreload 15308 8444 C:\Users\psi\Desktop\originalEDUHUB\backend\EDUHUB\apps\authentication\user_urls.py changed, reloading.
+INFO 2025-09-10 03:04:11,344 autoreload 9044 10524 Watching for file changes with StatReloader
+INFO 2025-09-10 03:10:29,051 autoreload 15220 14844 Watching for file changes with StatReloader
+INFO 2025-09-10 03:12:59,371 middleware 15220 4472 Request: GET /api/docs/
+INFO 2025-09-10 03:12:59,479 middleware 15220 4472 User: None
+INFO 2025-09-10 03:12:59,723 middleware 15220 4472 Response: 200 - Duration: 0.35s
+INFO 2025-09-10 03:12:59,725 basehttp 15220 4472 "GET /api/docs/ HTTP/1.1" 200 4647
+INFO 2025-09-10 03:13:00,827 middleware 15220 4472 Request: GET /api/schema/
+INFO 2025-09-10 03:13:00,835 middleware 15220 4472 User: None
+INFO 2025-09-10 03:13:01,964 middleware 15220 4472 Response: 200 - Duration: 1.14s
+INFO 2025-09-10 03:13:01,969 basehttp 15220 4472 "GET /api/schema/ HTTP/1.1" 200 169382
+INFO 2025-09-10 03:22:07,096 autoreload 15220 14844 C:\Users\psi\Desktop\originalEDUHUB\backend\EDUHUB\apps\authentication\user_views.py changed, reloading.
+INFO 2025-09-10 03:22:13,534 autoreload 14832 5668 Watching for file changes with StatReloader
+INFO 2025-09-10 03:23:53,083 autoreload 14832 5668 C:\Users\psi\Desktop\originalEDUHUB\backend\EDUHUB\apps\authentication\user_views.py changed, reloading.
+INFO 2025-09-10 03:23:58,165 autoreload 12088 8948 Watching for file changes with StatReloader
+INFO 2025-09-10 03:24:10,803 autoreload 12088 8948 C:\Users\psi\Desktop\originalEDUHUB\backend\EDUHUB\apps\authentication\user_views.py changed, reloading.
+INFO 2025-09-10 03:24:15,989 autoreload 252 1660 Watching for file changes with StatReloader
+INFO 2025-09-10 03:24:19,279 autoreload 252 1660 C:\Users\psi\Desktop\originalEDUHUB\backend\EDUHUB\apps\authentication\user_views.py changed, reloading.
+INFO 2025-09-10 03:24:23,769 autoreload 236 4044 Watching for file changes with StatReloader
+INFO 2025-09-10 03:24:29,536 autoreload 236 4044 C:\Users\psi\Desktop\originalEDUHUB\backend\EDUHUB\apps\authentication\user_views.py changed, reloading.
+INFO 2025-09-10 03:24:35,246 autoreload 15228 8004 Watching for file changes with StatReloader
+INFO 2025-09-10 03:51:03,914 basehttp 15228 14656 "OPTIONS /api/v1/auth/profile/me/ HTTP/1.1" 200 0
+INFO 2025-09-10 03:51:03,998 basehttp 15228 12876 "OPTIONS /api/v1/courses/courses/ HTTP/1.1" 200 0
+INFO 2025-09-10 03:51:04,822 middleware 15228 14656 Request: GET /api/v1/auth/profile/me/
+INFO 2025-09-10 03:51:04,822 middleware 15228 12876 Request: GET /api/v1/courses/courses/
+INFO 2025-09-10 03:51:06,446 middleware 15228 14656 Response: 401 - Duration: 1.62s
+INFO 2025-09-10 03:51:06,446 middleware 15228 12876 Response: 401 - Duration: 1.62s
+WARNING 2025-09-10 03:51:06,462 log 15228 14656 Unauthorized: /api/v1/auth/profile/me/
+WARNING 2025-09-10 03:51:06,463 log 15228 12876 Unauthorized: /api/v1/courses/courses/
+WARNING 2025-09-10 03:51:06,466 basehttp 15228 14656 "GET /api/v1/auth/profile/me/ HTTP/1.1" 401 172
+WARNING 2025-09-10 03:51:06,466 basehttp 15228 12876 "GET /api/v1/courses/courses/ HTTP/1.1" 401 172
+INFO 2025-09-10 03:51:06,592 middleware 15228 12876 Request: GET /api/v1/courses/courses/
+INFO 2025-09-10 03:51:07,959 middleware 15228 12876 Response: 200 - Duration: 1.37s
+INFO 2025-09-10 03:51:07,961 basehttp 15228 12876 "GET /api/v1/courses/courses/ HTTP/1.1" 200 1545
+INFO 2025-09-10 03:51:42,344 basehttp 15228 10088 "OPTIONS /api/v1/auth/login/ HTTP/1.1" 200 0
+INFO 2025-09-10 03:51:42,347 middleware 15228 10088 Request: POST /api/v1/auth/login/
+INFO 2025-09-10 03:51:46,464 utils 15228 10088 User activity logged: 254713760749 - USER_LOGIN - Success: True
+INFO 2025-09-10 03:51:46,697 middleware 15228 10088 Response: 200 - Duration: 4.35s
+INFO 2025-09-10 03:51:46,699 basehttp 15228 10088 "POST /api/v1/auth/login/ HTTP/1.1" 200 869
+INFO 2025-09-10 03:51:46,707 middleware 15228 10088 Request: GET /api/v1/auth/profile/me/
+INFO 2025-09-10 03:51:46,737 middleware 15228 10088 Response: 200 - Duration: 0.03s
+INFO 2025-09-10 03:51:46,738 basehttp 15228 10088 "GET /api/v1/auth/profile/me/ HTTP/1.1" 200 439
+INFO 2025-09-10 03:51:46,766 basehttp 15228 10088 "OPTIONS /api/v1/payments/my-subscriptions/active/ HTTP/1.1" 200 0
+INFO 2025-09-10 03:51:46,769 middleware 15228 10088 Request: GET /api/v1/payments/my-subscriptions/active/
+INFO 2025-09-10 03:51:46,821 middleware 15228 10088 Response: 200 - Duration: 0.05s
+INFO 2025-09-10 03:51:46,823 basehttp 15228 10088 "GET /api/v1/payments/my-subscriptions/active/ HTTP/1.1" 200 255
+INFO 2025-09-10 03:51:47,039 basehttp 15228 10088 "OPTIONS /api/v1/courses/subjects/ HTTP/1.1" 200 0
+INFO 2025-09-10 03:51:47,045 basehttp 15228 10088 "OPTIONS /api/v1/courses/subjects/ HTTP/1.1" 200 0
+INFO 2025-09-10 03:51:47,084 middleware 15228 10088 Request: GET /api/v1/courses/subjects/
+INFO 2025-09-10 03:51:47,098 middleware 15228 10088 Response: 200 - Duration: 0.01s
+INFO 2025-09-10 03:51:47,100 basehttp 15228 10088 "GET /api/v1/courses/subjects/ HTTP/1.1" 200 1215
+INFO 2025-09-10 03:51:47,136 middleware 15228 10088 Request: GET /api/v1/courses/subjects/
+INFO 2025-09-10 03:51:47,146 middleware 15228 10088 Response: 200 - Duration: 0.01s
+INFO 2025-09-10 03:51:47,147 basehttp 15228 10088 "GET /api/v1/courses/subjects/ HTTP/1.1" 200 1215
+INFO 2025-09-10 03:51:47,573 basehttp 15228 10088 "OPTIONS /api/v1/user/selected-courses/ HTTP/1.1" 200 0
+INFO 2025-09-10 03:51:47,573 basehttp 15228 12948 "OPTIONS /api/v1/user/selected-courses/ HTTP/1.1" 200 0
+INFO 2025-09-10 03:51:47,591 middleware 15228 12948 Request: GET /api/v1/user/selected-courses/
+INFO 2025-09-10 03:51:48,029 middleware 15228 12948 Response: 404 - Duration: 0.44s
+WARNING 2025-09-10 03:51:48,030 log 15228 12948 Not Found: /api/v1/user/selected-courses/
+WARNING 2025-09-10 03:51:48,031 basehttp 15228 12948 "GET /api/v1/user/selected-courses/ HTTP/1.1" 404 9538
+INFO 2025-09-10 03:51:48,035 middleware 15228 10088 Request: GET /api/v1/user/selected-courses/
+INFO 2025-09-10 03:51:48,048 middleware 15228 10088 Response: 404 - Duration: 0.01s
+WARNING 2025-09-10 03:51:48,050 log 15228 10088 Not Found: /api/v1/user/selected-courses/
+WARNING 2025-09-10 03:51:48,051 basehttp 15228 10088 "GET /api/v1/user/selected-courses/ HTTP/1.1" 404 9538
+INFO 2025-09-10 03:51:48,154 middleware 15228 10088 Request: GET /api/v1/courses/courses/
+INFO 2025-09-10 03:51:48,214 middleware 15228 10088 Response: 200 - Duration: 0.06s
+INFO 2025-09-10 03:51:48,216 basehttp 15228 10088 "GET /api/v1/courses/courses/ HTTP/1.1" 200 1545
+INFO 2025-09-10 03:51:48,236 middleware 15228 10088 Request: GET /api/v1/courses/courses/
+INFO 2025-09-10 03:51:48,333 middleware 15228 10088 Response: 200 - Duration: 0.10s
+INFO 2025-09-10 03:51:48,335 basehttp 15228 10088 "GET /api/v1/courses/courses/ HTTP/1.1" 200 1545
+INFO 2025-09-10 03:57:40,083 autoreload 15228 8004 C:\Users\psi\Desktop\originalEDUHUB\backend\EDUHUB\apps\core\mixins.py changed, reloading.
+INFO 2025-09-10 03:57:53,876 autoreload 14976 4216 Watching for file changes with StatReloader
+INFO 2025-09-10 03:58:56,158 autoreload 14976 4216 C:\Users\psi\Desktop\originalEDUHUB\backend\EDUHUB\apps\core\mixins.py changed, reloading.
+INFO 2025-09-10 03:59:00,759 autoreload 9984 11156 Watching for file changes with StatReloader
+INFO 2025-09-10 03:59:04,051 autoreload 9984 11156 C:\Users\psi\Desktop\originalEDUHUB\backend\EDUHUB\apps\core\mixins.py changed, reloading.
+INFO 2025-09-10 03:59:08,790 autoreload 9220 14480 Watching for file changes with StatReloader
+INFO 2025-09-10 03:59:12,839 autoreload 9220 14480 C:\Users\psi\Desktop\originalEDUHUB\backend\EDUHUB\apps\core\mixins.py changed, reloading.
+INFO 2025-09-10 03:59:17,631 autoreload 14508 12140 Watching for file changes with StatReloader
+INFO 2025-09-10 03:59:24,185 autoreload 14508 12140 C:\Users\psi\Desktop\originalEDUHUB\backend\EDUHUB\apps\core\mixins.py changed, reloading.
+INFO 2025-09-10 03:59:29,567 autoreload 8348 10308 Watching for file changes with StatReloader
+INFO 2025-09-10 03:59:32,932 autoreload 8348 10308 C:\Users\psi\Desktop\originalEDUHUB\backend\EDUHUB\apps\core\mixins.py changed, reloading.
+INFO 2025-09-10 03:59:38,568 autoreload 10772 15144 Watching for file changes with StatReloader
+INFO 2025-09-10 04:06:15,694 autoreload 14208 15108 Watching for file changes with StatReloader
+INFO 2025-09-10 04:08:55,919 middleware 14208 14204 Request: GET /api/v1/auth/profile/me/
+INFO 2025-09-10 04:08:55,920 middleware 14208 5424 Request: GET /api/v1/courses/courses/
+INFO 2025-09-10 04:08:56,724 middleware 14208 14204 Response: 200 - Duration: 0.81s
+INFO 2025-09-10 04:08:56,725 middleware 14208 5424 Response: 200 - Duration: 0.81s
+INFO 2025-09-10 04:08:56,732 basehttp 14208 14204 "GET /api/v1/auth/profile/me/ HTTP/1.1" 200 439
+INFO 2025-09-10 04:08:56,733 basehttp 14208 5424 "GET /api/v1/courses/courses/ HTTP/1.1" 200 1545
+INFO 2025-09-10 04:08:56,807 middleware 14208 5424 Request: GET /api/v1/payments/my-subscriptions/active/
+INFO 2025-09-10 04:08:56,808 middleware 14208 14204 Request: GET /api/v1/user/selected-courses/
+INFO 2025-09-10 04:08:56,882 middleware 14208 14204 Response: 404 - Duration: 0.07s
+WARNING 2025-09-10 04:08:56,885 log 14208 14204 Not Found: /api/v1/user/selected-courses/
+WARNING 2025-09-10 04:08:56,892 basehttp 14208 14204 "GET /api/v1/user/selected-courses/ HTTP/1.1" 404 9538
+INFO 2025-09-10 04:08:56,901 middleware 14208 5424 Response: 200 - Duration: 0.09s
+INFO 2025-09-10 04:08:56,906 basehttp 14208 5424 "GET /api/v1/payments/my-subscriptions/active/ HTTP/1.1" 200 255
+INFO 2025-09-10 04:08:57,032 middleware 14208 5424 Request: GET /api/v1/courses/courses/
+INFO 2025-09-10 04:08:57,089 middleware 14208 5424 Response: 200 - Duration: 0.06s
+INFO 2025-09-10 04:08:57,092 basehttp 14208 5424 "GET /api/v1/courses/courses/ HTTP/1.1" 200 1545
+INFO 2025-09-10 04:08:57,279 middleware 14208 5424 Request: GET /api/v1/user/selected-courses/
+INFO 2025-09-10 04:08:57,296 middleware 14208 5424 Response: 404 - Duration: 0.02s
+WARNING 2025-09-10 04:08:57,297 log 14208 5424 Not Found: /api/v1/user/selected-courses/
+WARNING 2025-09-10 04:08:57,299 basehttp 14208 5424 "GET /api/v1/user/selected-courses/ HTTP/1.1" 404 9538
+INFO 2025-09-10 04:08:57,406 middleware 14208 5424 Request: GET /api/v1/courses/courses/
+INFO 2025-09-10 04:08:57,452 middleware 14208 5424 Response: 200 - Duration: 0.05s
+INFO 2025-09-10 04:08:57,454 basehttp 14208 5424 "GET /api/v1/courses/courses/ HTTP/1.1" 200 1545
+INFO 2025-09-16 01:30:33,115 basehttp 14208 6276 "OPTIONS /api/v1/user/selected-courses/ HTTP/1.1" 200 0
+INFO 2025-09-16 01:30:33,119 basehttp 14208 4800 "OPTIONS /api/v1/user/selected-courses/ HTTP/1.1" 200 0
+INFO 2025-09-16 01:30:33,119 basehttp 14208 7792 "OPTIONS /api/v1/courses/courses/ HTTP/1.1" 200 0
+INFO 2025-09-16 01:30:33,307 basehttp 14208 11780 "OPTIONS /api/v1/courses/courses/ HTTP/1.1" 200 0
+INFO 2025-09-16 01:30:33,972 middleware 14208 7792 Request: GET /api/v1/courses/courses/
+INFO 2025-09-16 01:30:34,258 middleware 14208 7792 Response: 401 - Duration: 0.29s
+WARNING 2025-09-16 01:30:34,260 log 14208 7792 Unauthorized: /api/v1/courses/courses/
+WARNING 2025-09-16 01:30:34,261 basehttp 14208 7792 "GET /api/v1/courses/courses/ HTTP/1.1" 401 172
+INFO 2025-09-16 01:30:34,294 basehttp 14208 11780 "OPTIONS /api/v1/auth/token/refresh/ HTTP/1.1" 200 0
+INFO 2025-09-16 01:30:34,336 middleware 14208 11780 Request: POST /api/v1/auth/token/refresh/
+INFO 2025-09-16 01:30:34,336 middleware 14208 7792 Request: GET /api/v1/courses/courses/
+INFO 2025-09-16 01:30:34,341 middleware 14208 7792 Response: 401 - Duration: 0.00s
+WARNING 2025-09-16 01:30:34,342 log 14208 7792 Unauthorized: /api/v1/courses/courses/
+WARNING 2025-09-16 01:30:34,343 basehttp 14208 7792 "GET /api/v1/courses/courses/ HTTP/1.1" 401 172
+INFO 2025-09-16 01:30:34,348 middleware 14208 7792 Request: POST /api/v1/auth/token/refresh/
+INFO 2025-09-16 01:30:36,221 middleware 14208 11780 Response: 404 - Duration: 1.89s
+INFO 2025-09-16 01:30:36,226 middleware 14208 7792 Response: 404 - Duration: 1.88s
+WARNING 2025-09-16 01:30:36,226 log 14208 11780 Not Found: /api/v1/auth/token/refresh/
+WARNING 2025-09-16 01:30:36,227 log 14208 7792 Not Found: /api/v1/auth/token/refresh/
+WARNING 2025-09-16 01:30:36,231 basehttp 14208 11780 "POST /api/v1/auth/token/refresh/ HTTP/1.1" 404 14978
+WARNING 2025-09-16 01:30:36,233 basehttp 14208 7792 "POST /api/v1/auth/token/refresh/ HTTP/1.1" 404 14978
+INFO 2025-09-16 01:31:29,904 middleware 14208 12268 Request: GET /api/v1/courses/subjects/
+INFO 2025-09-16 01:31:30,659 middleware 14208 12268 Response: 200 - Duration: 0.75s
+INFO 2025-09-16 01:31:30,661 basehttp 14208 12268 "GET /api/v1/courses/subjects/ HTTP/1.1" 200 1215
+INFO 2025-09-16 01:31:30,665 middleware 14208 12268 Request: GET /api/v1/courses/subjects/
+INFO 2025-09-16 01:31:30,673 middleware 14208 12268 Response: 200 - Duration: 0.01s
+INFO 2025-09-16 01:31:30,674 basehttp 14208 12268 "GET /api/v1/courses/subjects/ HTTP/1.1" 200 1215
+INFO 2025-09-16 01:32:05,846 basehttp 14208 9984 "OPTIONS /api/v1/auth/login/ HTTP/1.1" 200 0
+INFO 2025-09-16 01:32:05,896 middleware 14208 9984 Request: POST /api/v1/auth/login/
+INFO 2025-09-16 01:32:14,710 utils 14208 9984 User activity logged: 254713760749 - USER_LOGIN - Success: True
+INFO 2025-09-16 01:32:14,981 middleware 14208 9984 Response: 200 - Duration: 9.08s
+INFO 2025-09-16 01:32:14,984 basehttp 14208 9984 "POST /api/v1/auth/login/ HTTP/1.1" 200 869
+INFO 2025-09-16 01:32:14,995 basehttp 14208 9984 "OPTIONS /api/v1/auth/profile/me/ HTTP/1.1" 200 0
+INFO 2025-09-16 01:32:14,998 middleware 14208 9984 Request: GET /api/v1/auth/profile/me/
+INFO 2025-09-16 01:32:15,012 middleware 14208 9984 Response: 200 - Duration: 0.01s
+INFO 2025-09-16 01:32:15,014 basehttp 14208 9984 "GET /api/v1/auth/profile/me/ HTTP/1.1" 200 439
+INFO 2025-09-16 01:32:15,040 basehttp 14208 9984 "OPTIONS /api/v1/payments/my-subscriptions/active/ HTTP/1.1" 200 0
+INFO 2025-09-16 01:32:15,050 middleware 14208 9984 Request: GET /api/v1/payments/my-subscriptions/active/
+INFO 2025-09-16 01:32:15,715 middleware 14208 9984 Response: 200 - Duration: 0.66s
+INFO 2025-09-16 01:32:15,718 basehttp 14208 9984 "GET /api/v1/payments/my-subscriptions/active/ HTTP/1.1" 200 255
+INFO 2025-09-16 01:32:15,941 basehttp 14208 9984 "OPTIONS /api/v1/courses/subjects/ HTTP/1.1" 200 0
+INFO 2025-09-16 01:32:15,948 basehttp 14208 9984 "OPTIONS /api/v1/courses/subjects/ HTTP/1.1" 200 0
+INFO 2025-09-16 01:32:15,964 middleware 14208 9984 Request: GET /api/v1/courses/subjects/
+INFO 2025-09-16 01:32:15,973 middleware 14208 9984 Response: 200 - Duration: 0.01s
+INFO 2025-09-16 01:32:15,974 basehttp 14208 9984 "GET /api/v1/courses/subjects/ HTTP/1.1" 200 1215
+INFO 2025-09-16 01:32:15,977 middleware 14208 9984 Request: GET /api/v1/courses/subjects/
+INFO 2025-09-16 01:32:15,989 middleware 14208 9984 Response: 200 - Duration: 0.01s
+INFO 2025-09-16 01:32:15,991 basehttp 14208 9984 "GET /api/v1/courses/subjects/ HTTP/1.1" 200 1215
+INFO 2025-09-16 01:32:18,329 middleware 14208 12040 Request: GET /api/v1/user/selected-courses/
+INFO 2025-09-16 01:32:18,339 middleware 14208 12040 Response: 404 - Duration: 0.01s
+WARNING 2025-09-16 01:32:18,341 log 14208 12040 Not Found: /api/v1/user/selected-courses/
+WARNING 2025-09-16 01:32:18,342 basehttp 14208 12040 "GET /api/v1/user/selected-courses/ HTTP/1.1" 404 9538
+INFO 2025-09-16 01:32:18,348 middleware 14208 12040 Request: GET /api/v1/user/selected-courses/
+INFO 2025-09-16 01:32:18,369 middleware 14208 12040 Response: 404 - Duration: 0.02s
+WARNING 2025-09-16 01:32:18,370 log 14208 12040 Not Found: /api/v1/user/selected-courses/
+WARNING 2025-09-16 01:32:18,371 basehttp 14208 12040 "GET /api/v1/user/selected-courses/ HTTP/1.1" 404 9538
+INFO 2025-09-16 01:32:18,440 middleware 14208 12040 Request: GET /api/v1/courses/courses/
+INFO 2025-09-16 01:32:18,556 middleware 14208 12040 Response: 200 - Duration: 0.12s
+INFO 2025-09-16 01:32:18,558 basehttp 14208 12040 "GET /api/v1/courses/courses/ HTTP/1.1" 200 1545
+INFO 2025-09-16 01:32:18,561 middleware 14208 12040 Request: GET /api/v1/courses/courses/
+INFO 2025-09-16 01:32:18,595 middleware 14208 12040 Response: 200 - Duration: 0.03s
+INFO 2025-09-16 01:32:18,598 basehttp 14208 12040 "GET /api/v1/courses/courses/ HTTP/1.1" 200 1545
+INFO 2025-09-16 02:49:00,362 autoreload 14208 15108 C:\Users\psi\Desktop\originalEDUHUB\backend\EDUHUB\apps\authentication\user_views.py changed, reloading.
+INFO 2025-09-16 02:52:30,950 autoreload 18828 19136 Watching for file changes with StatReloader
+INFO 2025-09-16 14:43:37,352 autoreload 14012 9020 Watching for file changes with StatReloader
+INFO 2025-09-16 14:48:09,655 middleware 14012 3336 Request: GET /api/v1/ user/ user/
+INFO 2025-09-16 14:48:10,528 middleware 14012 3336 User: None
+INFO 2025-09-16 14:48:10,708 middleware 14012 3336 Response: 404 - Duration: 1.05s
+WARNING 2025-09-16 14:48:10,724 log 14012 3336 Not Found: /api/v1/ user/ user/
+WARNING 2025-09-16 14:48:10,727 basehttp 14012 3336 "GET /api/v1/%20user/%20user/ HTTP/1.1" 404 5093
+INFO 2025-09-16 14:48:12,076 middleware 14012 3336 Request: GET /favicon.ico
+INFO 2025-09-16 14:48:12,080 middleware 14012 3336 User: None
+INFO 2025-09-16 14:48:12,087 middleware 14012 3336 Response: 404 - Duration: 0.01s
+WARNING 2025-09-16 14:48:12,088 log 14012 3336 Not Found: /favicon.ico
+WARNING 2025-09-16 14:48:12,089 basehttp 14012 3336 "GET /favicon.ico HTTP/1.1" 404 3730
+INFO 2025-09-16 15:16:16,429 basehttp 14012 14252 "OPTIONS /api/v1/auth/profile/me/ HTTP/1.1" 200 0
+INFO 2025-09-16 15:16:16,489 middleware 14012 14252 Request: GET /api/v1/auth/profile/me/
+INFO 2025-09-16 15:16:19,703 middleware 14012 14252 Response: 401 - Duration: 3.21s
+WARNING 2025-09-16 15:16:19,705 log 14012 14252 Unauthorized: /api/v1/auth/profile/me/
+WARNING 2025-09-16 15:16:19,706 basehttp 14012 14252 "GET /api/v1/auth/profile/me/ HTTP/1.1" 401 172
+INFO 2025-09-16 15:16:20,712 middleware 14012 14252 Request: GET /api/v1/courses/courses/
+INFO 2025-09-16 15:16:21,673 middleware 14012 14252 Response: 200 - Duration: 0.96s
+INFO 2025-09-16 15:16:21,675 basehttp 14012 14252 "GET /api/v1/courses/courses/ HTTP/1.1" 200 1545
+INFO 2025-09-16 15:16:21,749 middleware 14012 14252 Request: GET /api/v1/courses/courses/
+INFO 2025-09-16 15:16:21,778 middleware 14012 14252 Response: 200 - Duration: 0.03s
+INFO 2025-09-16 15:16:21,782 basehttp 14012 14252 "GET /api/v1/courses/courses/ HTTP/1.1" 200 1545
+INFO 2025-09-18 11:51:41,921 autoreload 9588 13340 Watching for file changes with StatReloader

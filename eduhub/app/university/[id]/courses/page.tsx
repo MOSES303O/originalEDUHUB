@@ -1,4 +1,3 @@
-// frontend/app/university/[id]/courses/page.tsx
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
@@ -159,7 +158,7 @@ export default function UniversityCoursesPage() {
       const matchesSearch =
         debouncedSearchTerm === "" ||
         course.name.toLowerCase().includes(debouncedSearchTerm.toLowerCase()) ||
-        course.code.toLowerCase().includes(debouncedSearchTerm.toLowerCase()) ||
+        (course.code && course.code.toLowerCase().includes(debouncedSearchTerm.toLowerCase())) ||
         (course.department && course.department.toLowerCase().includes(debouncedSearchTerm.toLowerCase())) ||
         (course.description && course.description.toLowerCase().includes(debouncedSearchTerm.toLowerCase()));
       const matchesDepartment = departmentFilter === "all" || course.department === departmentFilter;
@@ -311,13 +310,14 @@ export default function UniversityCoursesPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-              {filteredCourses.map((course) => (
-                 <CourseRow
-                key={course.id}
-                course={course}
-                showUniversity={true}
-                />
-              ))}
+                {filteredCourses.map((course) => (
+                  <CourseRow
+                    key={course.id}
+                    course={course}
+                    showUniversity={true}
+                    onAuthRequired={() => setShowAuthModal(true)}
+                  />
+                ))}
               </TableBody>
             </Table>
           </div>
@@ -334,4 +334,3 @@ export default function UniversityCoursesPage() {
     </div>
   );
 }
-

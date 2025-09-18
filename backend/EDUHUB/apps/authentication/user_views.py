@@ -839,23 +839,18 @@ class UserSubjectViewSet(APIResponseMixin, viewsets.ModelViewSet):
         return ip
 
 # In apps/authentication/user_views.py, update UserSelectedCoursesView
-class UserSelectedCoursesView(APIResponseMixin, GenericAPIView, ListModelMixin, CreateModelMixin, UpdateModelMixin, DestroyModelMixin):
+class UserSelectedCoursesView(APIResponseMixin, GenericAPIView, ListModelMixin, CreateModelMixin):
     permission_classes = [permissions.IsAuthenticated]
     serializer_class = UserSelectedCourseSerializer
-    # throttle_classes = [CustomUserRateThrottle]  # Uncomment if defined
 
     def get_queryset(self):
-        return UserSelectedCourse.objects.filter(user=self.request.user)
-
-    def get_object(self):
-        pk = self.kwargs.get('pk')
         try:
-            return UserSelectedCourse.objects.get(pk=pk, user=self.request.user)
-        except UserSelectedCourse.DoesNotExist:
-            return self.error_response(
-                message="Selected course not found",
-                status_code=status.HTTP_404_NOT_FOUND
-            )
+            queryset = UserSelectedCourse.objects.filter(user=self.request.user)
+            print(f"Queryset for user {self.request.user.phone_number}: {list(queryset.values('id', 'course__id', 'course__name'))}")
+            return queryset
+        except Exception as e:
+            print(f"Error in get_queryset: {str(e)}")
+            return UserSelectedCourse.objects.none()
 
     def perform_create(self, serializer):
         print(f"Creating selected course for user: {self.request.user.phone_number}, course: {self.request.data.get('course')}")
@@ -867,11 +862,31 @@ class UserSelectedCoursesView(APIResponseMixin, GenericAPIView, ListModelMixin, 
             details={'course_id': str(self.request.data.get('course'))}
         )
 
-    def create(self, request, *args, **kwargs):
+    def get(self, request, *args, **kwargs):
+        try:
+            queryset = self.get_queryset()
+            serializer = self.get_serializer(queryset, many=True)
+            response_data = serializer.data or []
+            print(f"Listed selected courses for user: {request.user.phone_number}, response: {response_data}")
+            return self.success_response(
+                message="Selected courses retrieved successfully",
+                data=response_data,
+                status_code=status.HTTP_200_OK
+            )
+        except Exception as e:
+            print(f"Error listing selected courses: {str(e)}")
+            return self.success_response(
+                message="Selected courses retrieved successfully",
+                data=[],
+                status_code=status.HTTP_200_OK
+            )
+
+    def post(self, request, *args, **kwargs):
         try:
             serializer = self.get_serializer(data=request.data)
             serializer.is_valid(raise_exception=True)
             self.perform_create(serializer)
+            print(f"Course selected for user: {request.user.phone_number}, response: {serializer.data}")
             return self.success_response(
                 message="Course selected successfully",
                 data=serializer.data,
@@ -884,46 +899,27 @@ class UserSelectedCoursesView(APIResponseMixin, GenericAPIView, ListModelMixin, 
                 errors={'detail': str(e)},
                 status_code=status.HTTP_400_BAD_REQUEST
             )
-
-    def put(self, request, *args, **kwargs):
-        try:
-            response = self.update(request, *args, **kwargs)
-            log_user_activity(
-                user=request.user,
-                action='COURSE_UPDATED',
-                ip_address=self.get_client_ip(request),
-                details={'course_id': str(self.get_object().course.id)}
-            )
-            return self.success_response(
-                message="Course selection updated successfully",
-                data=response.data,
-                status_code=status.HTTP_200_OK
-            )
-        except Exception as e:
-            return self.error_response(
-                message="Failed to update course selection",
-                errors={'detail': str(e)},
-                status_code=status.HTTP_400_BAD_REQUEST
-            )
-
     def delete(self, request, *args, **kwargs):
         try:
-            course_id = self.get_object().course.id
-            response = self.destroy(request, *args, **kwargs)
+            instance = self.get_object()
+            course_id = str(instance.course.id)
+            print(f"Deselecting course {course_id} for user: {request.user.phone_number}")
+            self.perform_destroy(instance)
             log_user_activity(
-                user=request.user,
-                action='COURSE_REMOVED',
-                ip_address=self.get_client_ip(request),
-                details={'course_id': str(course_id)}
+                user=self.request.user,
+                action='COURSE_DESELECTED',
+                ip_address=self.get_client_ip(self.request),
+                details={'course_id': course_id}
             )
             return self.success_response(
-                message="Course removed from selection successfully",
+                message="Course deselected successfully",
                 data=None,
                 status_code=status.HTTP_204_NO_CONTENT
             )
         except Exception as e:
+            print(f"Error deselecting course: {str(e)}")
             return self.error_response(
-                message="Failed to remove course from selection",
+                message="Failed to deselect course",
                 errors={'detail': str(e)},
                 status_code=status.HTTP_400_BAD_REQUEST
             )
@@ -933,70 +929,7 @@ class UserSelectedCoursesView(APIResponseMixin, GenericAPIView, ListModelMixin, 
         if x_forwarded_for:
             return x_forwarded_for.split(',')[0]
         return request.META.get('REMOTE_ADDR')
-
-    @action(detail=False, methods=['get'], url_path='download')
-    def download(self, request):
-        try:
-            format = request.query_params.get('format', 'pdf')
-            queryset = self.get_queryset()
-            if not queryset.exists():
-                return self.error_response(
-                    message="No selected courses to download",
-                    status_code=status.HTTP_404_NOT_FOUND
-                )
-
-            if format == 'pdf':
-                buffer = BytesIO()
-                p = canvas.Canvas(buffer, pagesize=letter)
-                p.setFont("Helvetica", 12)
-                p.drawString(100, 750, f"Selected Courses for {request.user.phone_number}")
-                y = 700
-                for course in queryset:
-                    p.drawString(100, y, f"Course: {course.course.name} ({course.course.id}), Selected: {course.created_at}")
-                    y -= 20
-                p.showPage()
-                p.save()
-                buffer.seek(0)
-                response = HttpResponse(buffer, content_type='application/pdf')
-                response['Content-Disposition'] = 'attachment; filename="selected_courses.pdf"'
-                log_user_activity(
-                    user=request.user,
-                    action='COURSE_DOWNLOADED',
-                    ip_address=self.get_client_ip(request),
-                    details={'format': 'pdf', 'count': queryset.count()}
-                )
-                return response
-            elif format == 'csv':
-                response = HttpResponse(content_type='text/csv')
-                response['Content-Disposition'] = 'attachment; filename="selected_courses.csv"'
-                writer = csv.writer(response)
-                writer.writerow(['Course ID', 'Course Name', 'University', 'Selected At'])
-                for course in queryset:
-                    writer.writerow([
-                        course.course.id,
-                        course.course.name,
-                        course.course.university_name or 'N/A',
-                        course.created_at
-                    ])
-                log_user_activity(
-                    user=request.user,
-                    action='COURSE_DOWNLOADED',
-                    ip_address=self.get_client_ip(request),
-                    details={'format': 'csv', 'count': queryset.count()}
-                )
-                return response
-            else:
-                return self.error_response(
-                    message="Invalid format. Use 'pdf' or 'csv'.",
-                    status_code=status.HTTP_400_BAD_REQUEST
-                )
-        except Exception as e:
-            print(f"Error generating download: {str(e)}")
-            return self.error_response(
-                message="Failed to generate download",
-                errors={'detail': str(e)},
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR
-            )
+   
 class UserApplicationsView(APIResponseMixin, APIView):
     """
     View applications submitted by the user

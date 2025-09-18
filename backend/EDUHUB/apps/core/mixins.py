@@ -10,7 +10,7 @@ class APIResponseMixin:
         return standardize_response(
             success=True,
             message=message,
-            data=data,
+            data=data if data is not None else [],
             status_code=status_code
         )
 

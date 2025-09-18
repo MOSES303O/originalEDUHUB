@@ -1,15 +1,16 @@
 "use client";
 
-import React, { useState, useEffect, useMemo } from "react";
+import React, { Suspense, useState, useEffect, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Heart, Search } from "lucide-react";
 import Link from "next/link";
 import { useSearchParams, useRouter } from "next/navigation";
 import { Table, TableBody, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { fetchKMTCCampuses } from "@/lib/api"; // Import new API handler
+import { fetchKMTCCampuses, fetchSelectedCourses } from "@/lib/api";
+import { generateCoursesPDF } from "@/lib/pdf-generator";
 import { CoursesSkeleton } from "@/components/courses-skeleton";
-import { useSelectedCourses, initializeSelectedCourses, type Course } from "@/lib/course-store";
+import { useSelectedCourses, initializeSelectedCourses } from "@/lib/course-store";
 import { useToast } from "@/hooks/use-toast";
 import { AuthenticationModal } from "@/components/authentication-modal";
 import { FindCourseForm } from "@/components/find-course-form";
@@ -17,14 +18,14 @@ import { useAuth } from "@/lib/auth-context";
 import { Header } from "@/components/header";
 import { Footer } from "@/components/footer";
 import { Input } from "@/components/ui/input";
-import { KMTCRow } from "@/components/kmtc-row"; // Import KMTCRow
-import { KMTCCampus } from "@/types";
+import { KMTCRow } from "@/components/kmtc-row";
+import type { KMTCCampus, Course } from "@/types";
 
 const gradeMap: Record<string, number> = {
   A: 12, "A-": 11, "B+": 10, B: 9, "B-": 8, "C+": 7, C: 6, "C-": 5, "D+": 4, D: 3, "D-": 2, E: 1,
 };
 
-export default function KMTCCoursesPage() {
+function KMTCCoursesPageContent() {
   const [campuses, setCampuses] = useState<KMTCCampus[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -41,7 +42,6 @@ export default function KMTCCoursesPage() {
   const userGrade = searchParams.get("grade") || "";
   const subjectParams = useMemo(() => searchParams.getAll("subjects"), [searchParams]);
 
-  // Handle Get Started button click
   const handleGetStarted = () => {
     console.log("[KMTCCoursesPage] Get Started clicked, user:", user, "requirePayment:", requirePayment);
     if (!user) {
@@ -68,6 +68,29 @@ export default function KMTCCoursesPage() {
     }
   };
 
+  const handleGeneratePDF = async () => {
+    try {
+      const courses = await fetchSelectedCourses();
+      const kmtcCourses = courses.filter((course) =>
+        course.university_name?.toLowerCase().includes("kmtc")
+      );
+      generateCoursesPDF(kmtcCourses, user?.phone_number || "Student");
+      toast({
+        title: "PDF Generated",
+        description: "Your KMTC courses PDF has been downloaded.",
+        duration: 3000,
+      });
+    } catch (err) {
+      console.error("[KMTCCoursesPage] Error generating PDF:", err);
+      toast({
+        title: "Error",
+        description: "Failed to generate PDF. Please try again.",
+        variant: "destructive",
+        duration: 3000,
+      });
+    }
+  };
+
   useEffect(() => {
     async function loadData() {
       try {
@@ -89,8 +112,7 @@ export default function KMTCCoursesPage() {
           .filter((subject) => subject);
 
         console.log("[KMTCCoursesPage] Fetching KMTC campuses with params:", JSON.stringify({ subjects }, null, 2));
-        const data = await fetchKMTCCampuses(); // Use new API handler
-
+        const data = await fetchKMTCCampuses();
         setCampuses(data);
       } catch (err: any) {
         console.error("[KMTCCoursesPage] Error loading data:", JSON.stringify({
@@ -113,7 +135,7 @@ export default function KMTCCoursesPage() {
       console.log("[KMTCCoursesPage] User not authenticated or payment required, showing auth modal after delay");
       const timer = setTimeout(() => {
         setShowAuthModal(true);
-      }, 120000); // 2 minutes
+      }, 120000);
       return () => clearTimeout(timer);
     } else {
       console.log("[KMTCCoursesPage] User authenticated and paid, no auth modal needed");
@@ -153,7 +175,7 @@ export default function KMTCCoursesPage() {
                     Browse through our comprehensive list of KMTC campuses
                   </p>
                 </div>
-                <div className="mt-4 md:mt-0">
+                <div className="mt-4 md:mt-0 flex gap-2">
                   <Button
                     variant="outline"
                     className="flex items-center gap-2"
@@ -175,6 +197,12 @@ export default function KMTCCoursesPage() {
                   >
                     <Heart className="h-4 w-4" />
                     Selected Courses ({selectedCourses.length})
+                  </Button>
+                  <Button
+                    className="bg-emerald-600 hover:bg-emerald-700"
+                    onClick={handleGeneratePDF}
+                  >
+                    Download PDF
                   </Button>
                 </div>
               </div>
@@ -250,5 +278,27 @@ export default function KMTCCoursesPage() {
         />
       )}
     </div>
+  );
+}
+
+export default function KMTCCoursesPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex min-h-screen flex-col">
+          <Header currentPage="kmtc-courses" />
+          <main className="flex-1">
+            <section className="w-full py-12 md:py-24 lg:py-32">
+              <div className="container px-4 md:px-6">
+                <CoursesSkeleton />
+              </div>
+            </section>
+          </main>
+          <Footer />
+        </div>
+      }
+    >
+      <KMTCCoursesPageContent />
+    </Suspense>
   );
 }

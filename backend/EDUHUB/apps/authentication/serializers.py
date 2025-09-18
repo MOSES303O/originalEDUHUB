@@ -228,18 +228,14 @@ class UserSelectedCourseSerializer(serializers.ModelSerializer):
         ]
         read_only_fields = ['id', 'created_at', 'is_applied', 'application_date']
 
-    def validate_course_id(self, value):
-        try:
-            course = Course.objects.get(id=value, is_active=True)
-            return value
-        except Course.DoesNotExist:
+    def validate_course(self, value):
+        if not Course.objects.filter(id=value.id, is_active=True).exists():
             raise serializers.ValidationError("Course not found or inactive")
+        return value
 
     def validate(self, data):
         user = self.context['request'].user
-        
-        if self.instance is None:  # Creating new selection
-            if UserSelectedCourse.objects.filter(user=user).exists():
+        if self.instance is None:
+            if UserSelectedCourse.objects.filter(user=user, course=data.get('course')).exists():
                 raise serializers.ValidationError("Course already selected")
-        
         return data

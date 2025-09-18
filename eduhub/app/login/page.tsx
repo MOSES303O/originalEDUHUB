@@ -105,7 +105,7 @@ export default function LoginPage() {
     try {
       // Step 1: Attempt login
       console.log("Attempting login with phone:", formattedPhone);
-      const loginResponse = await login(formattedPhone, "moses123");
+      const loginResponse = await login(formattedPhone, "&mo1se2s3@");
       console.log("Login response:", JSON.stringify(loginResponse, null, 2));
       const token = loginResponse.tokens?.access;
       if (!token) {

@@ -1,19 +1,16 @@
-// frontend/lib/generateCoursesPDF.ts
 "use client";
 
 import { jsPDF } from "jspdf";
 import autoTable from "jspdf-autotable";
 import type { Course } from "@/types";
 
-// Function to generate a PDF from selected courses
 export const generateCoursesPDF = (courses: Course[], userName = "Student") => {
-  // Create a new PDF document
   const doc = new jsPDF();
 
   // Add title
   doc.setFontSize(20);
   doc.setTextColor(39, 174, 96); // Green color
-  doc.text("EduPathway - Selected Courses", 14, 22);
+  doc.text("EduHub - Selected Courses", 14, 22);
 
   // Add subtitle with date
   doc.setFontSize(12);
@@ -33,11 +30,13 @@ export const generateCoursesPDF = (courses: Course[], userName = "Student") => {
   // Create table header and data
   const tableColumn = ["Course Code", "Title", "University", "Points", "Description"];
   const tableRows = courses.map((course) => [
-    course.code,
-    course.name,
-    course.university_name,
-    course.minimum_grade,
-    course.description.substring(0, 60) + (course.description.length > 60 ? "..." : ""),
+    course.code || "N/A",
+    course.name || "Untitled Course",
+    course.university_name || "Unknown University",
+    course.minimum_grade || "N/A",
+    course.description
+      ? course.description.substring(0, 60) + (course.description.length > 60 ? "..." : "")
+      : "No description available",
   ]);
 
   // Generate the table
@@ -62,7 +61,6 @@ export const generateCoursesPDF = (courses: Course[], userName = "Student") => {
 
   // Add detailed information for each course
   courses.forEach((course, index) => {
-    // Check if we need a new page
     if (yPos > 250) {
       doc.addPage();
       yPos = 20;
@@ -70,27 +68,26 @@ export const generateCoursesPDF = (courses: Course[], userName = "Student") => {
 
     doc.setFontSize(12);
     doc.setTextColor(50, 50, 50);
-    doc.text(`${index + 1}. ${course.name} (${course.code})`, 14, yPos);
+    doc.text(`${index + 1}. ${course.name || "Untitled Course"} (${course.code || "N/A"})`, 14, yPos);
 
     yPos += 6;
 
     doc.setFontSize(10);
     doc.setTextColor(80, 80, 80);
-    doc.text(`University: ${course.university_name}`, 18, yPos);
+    doc.text(`University: ${course.university_name || "Unknown University"}`, 18, yPos);
 
     yPos += 5;
 
-    doc.text(`Required Points: ${course.minimum_grade}`, 18, yPos);
+    doc.text(`Required Points: ${course.minimum_grade || "N/A"}`, 18, yPos);
 
     yPos += 5;
 
-    // Split long descriptions into multiple lines
-    const descLines = doc.splitTextToSize(course.description, 170);
+    const description = course.description || "No description available";
+    const descLines = doc.splitTextToSize(description, 170);
     doc.text(descLines, 18, yPos);
 
     yPos += descLines.length * 5 + 8;
 
-    // Add additional course details
     if (course.duration_years) {
       doc.text(`Duration: ${course.duration_years} years`, 18, yPos);
       yPos += 5;
@@ -102,8 +99,11 @@ export const generateCoursesPDF = (courses: Course[], userName = "Student") => {
     }
 
     if (course.required_subjects && course.required_subjects.length > 0) {
-      const subjects = course.required_subjects.map((s) => s.subject.name).join(", ");
-      doc.text(`Required Subjects: ${subjects}`, 18, yPos);
+      const subjects = course.required_subjects
+        .map((s) => s.subject?.name || "Unknown")
+        .filter(Boolean)
+        .join(", ");
+      doc.text(`Required Subjects: ${subjects || "None"}`, 18, yPos);
       yPos += 5;
     }
 
@@ -112,7 +112,6 @@ export const generateCoursesPDF = (courses: Course[], userName = "Student") => {
       yPos += 5;
     }
 
-    // Add some space between courses
     yPos += 8;
   });
 
@@ -123,7 +122,7 @@ export const generateCoursesPDF = (courses: Course[], userName = "Student") => {
     doc.setFontSize(8);
     doc.setTextColor(150, 150, 150);
     doc.text(
-      "EduPathway - Find your perfect university course | www.edupathway.co.ke",
+      "EduHub - Find your perfect university course | www.edupathway.co.ke",
       14,
       doc.internal.pageSize.height - 10,
     );
@@ -131,5 +130,5 @@ export const generateCoursesPDF = (courses: Course[], userName = "Student") => {
   }
 
   // Save the PDF
-  doc.save("EduPathway-Selected-Courses.pdf");
+  doc.save("EduHub-Selected-Courses.pdf");
 };

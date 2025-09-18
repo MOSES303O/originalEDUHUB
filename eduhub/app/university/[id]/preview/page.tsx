@@ -1,4 +1,3 @@
-// frontend/app/universities/[code]/page.tsx
 "use client";
 
 import { useState, useEffect } from "react";
@@ -50,6 +49,12 @@ export default function UniversityPreviewPage() {
           throw new Error("University not found");
         }
         const uni = uniData[0];
+
+        // Validate uni.code
+        if (!uni.code) {
+          console.error("[loadUniversityData] University code is undefined for:", JSON.stringify(uni, null, 2));
+          throw new Error("University code is missing");
+        }
 
         // Fetch course count
         const courseCount = await fetchCourseCount(uni.code);
@@ -377,7 +382,7 @@ export default function UniversityPreviewPage() {
                 <div className="flex justify-between items-center">
                   <span className="text-xs text-gray-600 dark:text-gray-400">{course.department ?? "N/A"}</span>
                   <Badge variant="secondary" className="text-xs">
-                    {course.code}
+                    {course.code ?? "N/A"}
                   </Badge>
                 </div>
               </div>

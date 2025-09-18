@@ -2,7 +2,7 @@
 
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { ChevronDown, ChevronRight, CheckCircle, XCircle, Check } from "lucide-react";
+import { ChevronDown, ChevronRight, CheckCircle, XCircle, Trash2 } from "lucide-react";
 import { Course } from "@/types";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useToast } from "@/hooks/use-toast";
@@ -21,7 +21,7 @@ export function CourseRow({ course, showUniversity = true, onAuthRequired }: Cou
   const searchParams = useSearchParams();
   const { toast } = useToast();
   const { user, requirePayment } = useAuth();
-  const { isCourseSelected, toggleCourseSelection } = useSelectedCourses();
+  const { toggleCourseSelection } = useSelectedCourses();
   const [isExpanded, setIsExpanded] = useState(false);
   const userPoints = Number(searchParams.get("points") || "0");
 
@@ -82,29 +82,13 @@ export function CourseRow({ course, showUniversity = true, onAuthRequired }: Cou
       return;
     }
 
-    try {
-      await toggleCourseSelection(course);
-      toast({
-        title: isCourseSelected(course.id) ? "Course Removed" : "Course Selected",
-        description: `Course ${course.name} has been ${
-          isCourseSelected(course.id) ? "removed from" : "added to"
-        } your selected courses.`,
-        duration: 3000,
-      });
-    } catch (err: any) {
-      console.error("Error toggling course selection:", {
-        message: err.message,
-        status: err.response?.status,
-        data: err.response?.data,
-        headers: err.response?.headers,
-      });
-      toast({
-        title: "Error",
-        description: "Failed to update course selection. Please try again.",
-        variant: "destructive",
-        duration: 3000,
-      });
-    }
+    const wasSelected = course.is_selected || false;
+    await toggleCourseSelection(course);
+    toast({
+      title: wasSelected ? "Course Removed" : "Course Selected",
+      description: `Course ${course.name} has been ${wasSelected ? "removed from" : "added to"} your selected courses.`,
+      duration: 3000,
+    });
   };
 
   const toggleExpanded = (e: React.MouseEvent | React.KeyboardEvent) => {
@@ -150,16 +134,23 @@ export function CourseRow({ course, showUniversity = true, onAuthRequired }: Cou
         </td>
         <td className="p-4">
           <Button
-            variant={isCourseSelected(course.id) ? "default" : "outline"}
+            variant={course.is_selected ? "destructive" : "outline"}
             size="sm"
             onClick={handleSelect}
             className={
-              isCourseSelected(course.id)
-                ? "bg-emerald-500 hover:bg-emerald-600 text-white"
+              course.is_selected
+                ? "bg-red-500 hover:bg-red-600 text-white"
                 : "border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100"
             }
           >
-            {isCourseSelected(course.id) ? <Check className="h-4 w-4" /> : "Select"}
+            {course.is_selected ? (
+              <>
+                <Trash2 className="h-4 w-4 mr-2" />
+                Deselect
+              </>
+            ) : (
+              "Select"
+            )}
           </Button>
         </td>
         <td className="p-4">
@@ -239,14 +230,14 @@ export function CourseRow({ course, showUniversity = true, onAuthRequired }: Cou
               </div>
               <div className="pt-2 flex gap-2">
                 <Button
-                  variant={isCourseSelected(course.id) ? "default" : "outline"}
-                  className={isCourseSelected(course.id) ? "bg-emerald-500 hover:bg-emerald-600" : ""}
+                  variant={course.is_selected ? "destructive" : "outline"}
+                  className={course.is_selected ? "bg-red-500 hover:bg-red-600 text-white" : ""}
                   onClick={handleSelect}
                 >
-                  {isCourseSelected(course.id) ? (
+                  {course.is_selected ? (
                     <>
-                      <Check className="h-4 w-4 mr-2" />
-                      Selected
+                      <Trash2 className="h-4 w-4 mr-2" />
+                      Deselect
                     </>
                   ) : (
                     "Add to Selected"

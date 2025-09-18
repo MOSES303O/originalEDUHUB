@@ -1,4 +1,3 @@
-// frontend/app/selected-courses/page.tsx
 "use client";
 
 import { useState, useEffect } from "react";
@@ -9,7 +8,7 @@ import { ArrowLeft, Trash2, Heart, Download } from "lucide-react";
 import Link from "next/link";
 import { useToast } from "@/hooks/use-toast";
 import { PDFNotification } from "@/components/pdf-notification";
-import { generateCoursesPDF } from "@/lib/pdf-generator"; // Use updated generateCoursesPDF
+import { generateCoursesPDF } from "@/lib/pdf-generator";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -37,7 +36,6 @@ export default function SelectedCoursesPage() {
   const [showPdfNotification, setShowPdfNotification] = useState(false);
   const [showAuthModal, setShowAuthModal] = useState(false);
 
-  // Fetch selected courses for authenticated users
   useEffect(() => {
     if (!authLoading && !user) {
       setShowAuthModal(true);
@@ -65,7 +63,9 @@ export default function SelectedCoursesPage() {
       return;
     }
     try {
-      await removeSelectedCourse(selectionId);
+      // Convert selectionId to string to match removeSelectedCourse signature
+      const selectionIdStr = String(selectionId);
+      await removeSelectedCourse(selectionIdStr);
       setSelectedCourses(selectedCourses.filter((course) => course.id !== courseId));
       toast({
         title: "Course Removed",
@@ -141,7 +141,7 @@ export default function SelectedCoursesPage() {
                   Back to Courses
                 </Link>
               </Button>
-              <div className="flex flex-col md:flex-row md:items-center md:justify-between w-full">
+              <div className="flex flex-col md:flex-row md:items-center md: justify-between w-full">
                 <div>
                   <h1 className="text-3xl font-bold tracking-tighter sm:text-4xl md:text-5xl flex items-center gap-3">
                     Selected Courses

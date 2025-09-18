@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { ArrowLeft, Search, Heart } from "lucide-react";
 import Link from "next/link";
 import { Footer } from "@/components/footer";
-import { FindCourseForm } from "@/components/find-course-form"; // Import FindCourseForm
+import { FindCourseForm } from "@/components/find-course-form";
 import {
   fetchUniversities,
   fetchUniversityDetails,
@@ -35,7 +35,7 @@ export default function UniversityPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showAuthModal, setShowAuthModal] = useState(false);
-  const [showFindCourseForm, setShowFindCourseForm] = useState(false); // State for course form modal
+  const [showFindCourseForm, setShowFindCourseForm] = useState(false);
   const router = useRouter();
   const { toast } = useToast();
   const { user, loading: authLoading } = useAuth();
@@ -44,7 +44,7 @@ export default function UniversityPage() {
   // Handle Get Started button click
   const handleGetStarted = () => {
     if (!user) {
-      setShowAuthModal(true); // Show auth modal if not logged in
+      setShowAuthModal(true);
       toast({
         title: "Authentication Required",
         description: "Please log in to find courses.",
@@ -52,7 +52,7 @@ export default function UniversityPage() {
         duration: 3000,
       });
     } else {
-      setShowFindCourseForm(true); // Show course form if logged in
+      setShowFindCourseForm(true);
     }
   };
 
@@ -86,7 +86,7 @@ export default function UniversityPage() {
             })
             .map(async (uni: University) => {
               try {
-                const courseCount = await fetchCourseCount(uni.code);
+                const courseCount = await fetchCourseCount(uni.code!);
                 console.log(`[loadUniversities] Course count for ${uni.code}:`, courseCount);
                 return {
                   ...uni,
@@ -131,7 +131,11 @@ export default function UniversityPage() {
       try {
         const selected = await fetchSelectedUniversities();
         console.log("[loadSelectedUniversities] Selected universities:", selected);
-        setSelectedUniversities(new Set(selected.map((uni) => uni.code)));
+        // Filter out undefined codes to ensure Set<string>
+        const validCodes = selected
+          .map((uni) => uni.code)
+          .filter((code): code is string => typeof code === "string");
+        setSelectedUniversities(new Set(validCodes));
       } catch (err) {
         console.error("[loadSelectedUniversities] Failed to fetch selected universities:", JSON.stringify(err, null, 2));
       }
@@ -154,7 +158,7 @@ export default function UniversityPage() {
   }, [authLoading, user]);
 
   const cities = useMemo(() => {
-    const uniqueCities = [...new Set(universities.map((uni) => uni.city.toLowerCase()))].sort();
+    const uniqueCities = [...new Set(universities.map((uni) => (uni.city || "Unknown").toLowerCase()))].sort();
     console.log("[Cities] Unique cities:", uniqueCities);
     return uniqueCities;
   }, [universities]);
@@ -164,12 +168,12 @@ export default function UniversityPage() {
       const matchesSearch =
         searchTerm === "" ||
         university.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        university.code.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        university.city.toLowerCase().includes(searchTerm.toLowerCase());
+        (university.code && university.code.toLowerCase().includes(searchTerm.toLowerCase())) ||
+        ((university.city || "Unknown").toLowerCase().includes(searchTerm.toLowerCase()));
       const matchesCity =
-        cityFilter === "all" || university.city.toLowerCase() === cityFilter.toLowerCase();
+        cityFilter === "all" || (university.city || "Unknown").toLowerCase() === cityFilter.toLowerCase();
       console.log(
-        `[Filter] ${university.name}: search=${matchesSearch}, city=${matchesCity}, cityFilter=${cityFilter}, uniCity=${university.city}`
+        `[Filter] ${university.name}: search=${matchesSearch}, city=${matchesCity}, cityFilter=${cityFilter}, uniCity=${university.city || "Unknown"}`
       );
       return matchesSearch && matchesCity;
     });
@@ -342,12 +346,12 @@ export default function UniversityPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredUniversities.map((university) => (
-                  <UniversityRow
-                    key={university.code}
-                    university={university}
-                    onViewCourses={() => router.push(`/university/${university.code}/courses`)}
-                  />
+              {filteredUniversities.map((university) => (
+                <UniversityRow
+                key={university.code}
+                university={university}
+                onViewCourses={() => router.push(`/university/${university.code}/courses`)}
+                />
                 ))}
               </TableBody>
             </Table>
@@ -358,3 +362,4 @@ export default function UniversityPage() {
     </div>
   );
 }
+

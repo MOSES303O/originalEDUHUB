@@ -20,5 +20,4 @@ urlpatterns = [
     # Explicit paths for UserSelectedCoursesView
     path('user/selected-courses/', UserSelectedCoursesView.as_view(), name='user-selected-courses'),
     path('user/selected-courses/<uuid:pk>/', UserSelectedCoursesView.as_view(), name='user-selected-course-detail'),
-    path('user/selected-courses/download/', UserSelectedCoursesView.as_view(), name='user-selected-courses-download'),
 ]

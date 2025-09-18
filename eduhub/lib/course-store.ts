@@ -23,17 +23,11 @@ export const useSelectedCourses = create<CourseStore>()(
           if (!get().isCourseSelected(course.id)) {
             const newCourse = await insertSelectedCourse(course.id);
             set((state) => ({
-              selectedCourses: [...state.selectedCourses, newCourse],
+              selectedCourses: [...state.selectedCourses, { ...newCourse, is_selected: true }],
             }));
           }
-        } catch (error) {
-          const axiosError = error as import("axios").AxiosError<{ message?: string }>;
-          console.error("Add course failed:", {
-            message: axiosError.message,
-            status: axiosError.response?.status,
-            data: JSON.stringify(axiosError.response?.data, null, 2),
-          });
-          throw error;
+        } catch (error: any) {
+          console.error("Add course failed:", JSON.stringify(error, null, 2));
         }
       },
       toggleCourseSelection: async (course: Course) => {
@@ -50,28 +44,28 @@ export const useSelectedCourses = create<CourseStore>()(
           } else {
             const newCourse = await insertSelectedCourse(course.id);
             set((state) => ({
-              selectedCourses: [...state.selectedCourses, newCourse],
+              selectedCourses: [...state.selectedCourses, { ...newCourse, is_selected: true }],
             }));
           }
-        } catch (error) {
-          const axiosError = error as import("axios").AxiosError<{ message?: string }>;
-          console.error("Toggle course selection failed:", {
-            message: axiosError.message,
-            status: axiosError.response?.status,
-            data: JSON.stringify(axiosError.response?.data, null, 2),
-          });
-          throw error;
+        } catch (error: any) {
+          console.error("Toggle course selection failed:", JSON.stringify(error, null, 2));
         }
       },
       isCourseSelected: (courseId: string) => get().selectedCourses.some((course) => course.id === courseId),
       downloadSelectedCourses: async (format = "pdf") => {
-        const token = localStorage.getItem("token");
-        if (!token) throw new Error("No authentication token found");
         try {
-          const response = await apiClient.get(`/user/selected-courses/download/?format=${format}`, {
+          const token = localStorage.getItem("token");
+          if (!token) {
+            console.warn("No authentication token found in localStorage");
+            return;
+          }
+          console.log("Sending download selected courses request to:", `${apiClient.defaults.baseURL}user/selected-courses/download/?format=${format}`);
+          const response = await apiClient.get(`user/selected-courses/download/?format=${format}`, {
             headers: { Authorization: `Bearer ${token}` },
             responseType: "blob",
+            timeout: 10000,
           });
+          console.log(`Download ${format} response status: ${response.status}`);
           const url = window.URL.createObjectURL(new Blob([response.data]));
           const link = document.createElement("a");
           link.href = url;
@@ -79,14 +73,8 @@ export const useSelectedCourses = create<CourseStore>()(
           document.body.appendChild(link);
           link.click();
           link.remove();
-        } catch (error) {
-          const axiosError = error as import("axios").AxiosError<{ message?: string }>;
-          console.error("Error downloading selected courses:", {
-            message: axiosError.message,
-            status: axiosError.response?.status,
-            data: JSON.stringify(axiosError.response?.data, null, 2),
-          });
-          throw error;
+        } catch (error: any) {
+          console.error("Download selected courses failed:", JSON.stringify(error, null, 2));
         }
       },
     }),
@@ -96,18 +84,14 @@ export const useSelectedCourses = create<CourseStore>()(
     }
   )
 );
+
 export async function initializeSelectedCourses() {
   try {
     const courses = await fetchSelectedCourses();
-    const stringCourses = courses.map((course) => String(course)); // Ensure all values are strings
-    useSelectedCourses.getState().setSelectedCourses(stringCourses);
-  } catch (error) {
-    const axiosError = error as import("axios").AxiosError<{ message?: string }>;
-    console.error("Failed to initialize selected courses:", {
-      message: axiosError.message,
-      status: axiosError.response?.status,
-      data: JSON.stringify(axiosError.response?.data, null, 2),
-    });
-    throw error;
+    useSelectedCourses.getState().setSelectedCourses(courses.map((course) => ({ ...course, is_selected: true })));
+    console.log("Selected courses initialized successfully:", JSON.stringify(courses, null, 2));
+  } catch (error: any) {
+    console.log("No selected courses found, 404, or empty response received, setting empty array");
+    useSelectedCourses.getState().setSelectedCourses([]);
   }
 }

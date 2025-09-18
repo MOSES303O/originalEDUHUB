@@ -21,11 +21,11 @@ export interface Course {
   university_code?: string;
   category?: string;
   description?: string;
-  duration_years?: string;
-  minimum_grade?: string;
+  duration_years?: number;
+  minimum_grade?: string | number | undefined;
   career_prospects?: string;
   tuition_fee_per_year?: string;
-  application_fee?: string;
+  application_fee?: number;
   required_subjects?: Array<{ subject: { name: string } }>;
   average_rating?: number;
   total_reviews?: number;
@@ -35,24 +35,27 @@ export interface Course {
   department?: string;
   faculty_id?: number;
   qualification?: string; // Added to manage qualification status
-  selectionId?: number |string;
+  selectionId?: string;
   is_applied?: boolean; // To track if the user has applied
   created_at?: string; // To track when the course was added to selections
   updated_at?: string; // To track when the course selection was last updated
 }
 export interface University {
-  id: number;
+  id: number | string; // Adjusted to string for consistency with Course.university_name
   name: string;
-  slug: string;
-  code: string;
-  logo: string;
-  city: string;
-  campus: string;
+  slug: string | undefined; // From API response
+  code?: string;
+  logo: string | undefined; // From API response
+  city: string | undefined; // From API response
+  campus: string | undefined; // From API response
   faculties: Faculty[]; // List of faculties
   established_year:string;
-  ranking: number | null;
+  ranking?: number | null;
   available_courses?: number // Added via course count
   accreditation?: string // Not provided by API, fallback to "N/A"
+  description?: string; // From API response
+  is_applied?: boolean; // To track if the user has applied
+  selectionId?: number | string; // To track the selection ID if needed
 }
 export type Faculty = {
   id: number;
@@ -145,19 +148,91 @@ export interface LoginResponse {
 
 }
 export interface SelectedCourseResponse {
-  status: "success" | "error";
+  success: boolean;
   message: string;
-  data: {
-    id: string; // UUID from UserSelectedCourse
-    course: string; // UUID of Course
-    course_name: string;
-    university_name: string;
-    course_code?: string;
-    university_code?: string;
-    category?: string;
-    description?: string;
+  timestamp: string;
+  data: Array<{
+    id: string;
+    course: {
+      id: string;
+      name: string;
+      university_name?: string;
+      code?: string;
+      university_code?: string;
+      category?: string;
+      description?: string;
+      duration_years?: number;
+      minimum_grade?: string | number;
+      career_prospects?: string;
+      tuition_fee_per_year?: number;
+      start_date?: string;
+      application_deadline?: string;
+      delivery_mode?: string;
+      department?: string;
+      level?: string;
+      qualification?: string;
+      application_fee?: number;
+      average_rating?: number;
+      total_reviews?: number;
+      is_selected?: boolean;
+    };
     is_applied: boolean;
     application_date: string | null;
     created_at: string;
-  };
+  }> | {
+    id: string;
+    course: {
+      id: string;
+      name: string;
+      university_name?: string;
+      code?: string;
+      university_code?: string;
+      category?: string;
+      description?: string;
+      duration_years?: number;
+      minimum_grade?: string | number;
+      career_prospects?: string;
+      tuition_fee_per_year?: number;
+      start_date?: string;
+      application_deadline?: string;
+      delivery_mode?: string;
+      department?: string;
+      level?: string;
+      qualification?: string;
+      application_fee?: number;
+      average_rating?: number;
+      total_reviews?: number;
+      is_selected?: boolean;
+    };
+    is_applied: boolean;
+    application_date: string | null;
+    created_at: string;
+  } | null;
+  errors?: Record<string, any>;
+  meta?: Record<string, any>;
+}
+export interface SelectedUniversityResponse {
+  success: boolean;
+  message: string;
+  timestamp: string;
+  data: {
+    id: string;
+    university: {
+      id: string;
+      name: string;
+      slug: string;
+      logo?: string;
+      city?: string;
+      campus?: string;
+      description?: string;
+      created_at?: string;
+      faculties?: Faculty[];
+      established_year?:string;
+    };
+    is_applied: boolean;
+    application_date: string | null;
+    created_at: string;
+  } | null;
+  errors?: Record<string, any>;
+  meta?: Record<string, any>;
 }
