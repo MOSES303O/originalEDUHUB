@@ -111,10 +111,10 @@ export function UniversityRow({ university, onViewCourses }: UniversityRowProps)
                 {/* Faculties */}
                 <div>
                   <h4 className="text-gray-900 dark:text-gray-100 font-semibold mb-4">
-                    Faculties ({university.faculties.length})
+                    Faculties ({university.faculties?.length ?? 0})
                   </h4>
                   <div className="space-y-2">
-                    {university.faculties.length > 0 ? (
+                    {university.faculties && university.faculties.length > 0 ? (
                       university.faculties.map((faculty) => (
                         <div
                           key={faculty.id}

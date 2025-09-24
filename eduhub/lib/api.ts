@@ -424,26 +424,45 @@ export async function fetchUniversityDetails(code: string): Promise<University> 
     throw new Error(`Failed to fetch university details: ${JSON.stringify(errorDetails)}`);
   }
 }
-
 export async function fetchUniversities(params: Record<string, any> = {}): Promise<University[]> {
   try {
     console.log("[fetchUniversities] Fetching with params:", params);
     const response = await apiClient.get<University[]>('/universities/universities/', { params });
     console.log("[fetchUniversities] Raw response:", JSON.stringify(response.data, null, 2));
     const data = response.data;
+
     if (!Array.isArray(data)) {
       console.warn("[fetchUniversities] Invalid universities data received:", response.data);
       return [];
     }
-    console.log("[fetchUniversities] Universities received:", data);
-    return data;
+
+    // Transform the API response to match the University interface
+    const universities: University[] = data.map((item) => ({
+      id: item.id,
+      name: item.name,
+      slug: item.slug,
+      code: item.code,
+      logo: item.logo || null, // Default to null if not provided
+      city: item.city || "Unknown City", // Default value
+      campus: item.campus || "Main Campus", // Default value
+      faculties: [], // Default to an empty array
+      established_year: "N/A", // Default value
+      ranking: item.ranking,
+      available_courses: 0, // Default to 0
+      accreditation: item.accreditation || "N/A", // Default value
+      description: "No description available", // Default value
+      is_applied: false, // Default to false
+      selectionId: undefined, // Default to undefined
+    }));
+
+    console.log("[fetchUniversities] Universities received:", universities);
+    return universities;
   } catch (error: unknown) {
     const errorDetails = extractErrorDetails(error);
     console.error("[fetchUniversities] Failed to fetch universities:", errorDetails);
     throw new Error(`Failed to fetch universities: ${JSON.stringify(errorDetails)}`);
   }
 }
-
 export async function fetchCourseById(id: string | number): Promise<Course> {
   try {
     console.log('Fetching course with ID:', id);

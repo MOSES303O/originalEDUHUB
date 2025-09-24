@@ -41,21 +41,21 @@ export interface Course {
   updated_at?: string; // To track when the course selection was last updated
 }
 export interface University {
-  id: number | string; // Adjusted to string for consistency with Course.university_name
-  name: string;
-  slug: string | undefined; // From API response
-  code?: string;
-  logo: string | undefined; // From API response
-  city: string | undefined; // From API response
-  campus: string | undefined; // From API response
-  faculties: Faculty[]; // List of faculties
-  established_year:string;
-  ranking?: number | null;
-  available_courses?: number // Added via course count
-  accreditation?: string // Not provided by API, fallback to "N/A"
-  description?: string; // From API response
-  is_applied?: boolean; // To track if the user has applied
-  selectionId?: number | string; // To track the selection ID if needed
+  id: number | string; // Matches the API response
+  name: string; // Matches the API response
+  slug: string | undefined; // Matches the API response
+  code?: string; // Matches the API response
+  logo?: string | null; // Updated to match the API response (null is allowed)
+  city?: string; // Matches the API response
+  campus?: string; // Matches the API response
+  faculties?: Faculty[]; // Optional, as it is not in the API response
+  established_year?: string; // Optional, as it is not in the API response
+  ranking?: number | null; // Matches the API response
+  available_courses?: number; // Optional, as it is not in the API response
+  accreditation?: string; // Matches the API response
+  description?: string; // Optional, as it is not in the API response
+  is_applied?: boolean; // Optional, for tracking user application
+  selectionId?: number | string; // Optional, for tracking selection ID
 }
 export type Faculty = {
   id: number;
