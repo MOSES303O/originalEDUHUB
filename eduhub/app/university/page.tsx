@@ -234,7 +234,9 @@ export default function UniversityPage() {
     setSelectedUniversities(newSelected);
   };
 
-  console.log("[Render] State:", { loading, authLoading, error, filteredUniversitiesLength: filteredUniversities.length });
+  if (process.env.NODE_ENV !== 'production') {
+    console.log("[Render] State:", { loading, authLoading, error, filteredUniversitiesLength: filteredUniversities.length });
+  }
 
   return (
     <div className="min-h-screen bg-app-bg-light dark:bg-app-bg-dark">
