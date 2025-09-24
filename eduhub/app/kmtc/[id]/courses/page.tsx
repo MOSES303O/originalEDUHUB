@@ -1,4 +1,3 @@
-// frontend/app/kmtc/[id]/courses/page.tsx
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
@@ -17,10 +16,14 @@ import { CoursesSkeleton } from "@/components/courses-skeleton";
 import { AuthenticationModal } from "@/components/authentication-modal";
 import { FindCourseForm } from "@/components/find-course-form";
 import { useAuth } from "@/lib/auth-context";
-import { fetchCoursesByKMTCCampus, fetchKMTCCampuses } from "@/lib/api";
+import { fetchCoursesByKMTCCampus, fetchKMTCCampuses, fetchSelectedCourses } from "@/lib/api";
+import { generateCoursesPDF } from "@/lib/pdf-generator";
 import { KMTCCourse } from "@/types";
 import { notFound } from "next/navigation";
 import { useDebounce } from "use-debounce";
+
+// Opt out of SSG
+export const dynamic = "force-dynamic";
 
 export default function KMTCCoursesPage() {
   const params = useParams();
@@ -64,6 +67,36 @@ export default function KMTCCoursesPage() {
     } else {
       console.log("[KMTCCoursesPage] User authenticated and paid, showing FindCourseForm");
       setShowFindCourseForm(true);
+    }
+  };
+
+  // Handle PDF generation
+  const handleGeneratePDF = async () => {
+    try {
+      const selectedCoursesData = courses.filter((course) => selectedCourses.has(course.id));
+      if (selectedCoursesData.length === 0) {
+        toast({
+          title: "No Courses Selected",
+          description: "Please select at least one course to generate a PDF.",
+          variant: "destructive",
+          duration: 3000,
+        });
+        return;
+      }
+      generateCoursesPDF(selectedCoursesData, user?.phone_number || "Student");
+      toast({
+        title: "PDF Generated",
+        description: "Your course PDF has been downloaded.",
+        duration: 3000,
+      });
+    } catch (err) {
+      console.error("[KMTCCoursesPage] Error generating PDF:", JSON.stringify(err, null, 2));
+      toast({
+        title: "Error",
+        description: "Failed to generate PDF. Please try again.",
+        variant: "destructive",
+        duration: 3000,
+      });
     }
   };
 
@@ -139,7 +172,7 @@ export default function KMTCCoursesPage() {
     return () => {
       isMounted = false;
     };
-  }, [campusCode]); // Removed debouncedSearchTerm and departmentFilter
+  }, [campusCode]);
 
   const departments = useMemo(() => {
     const uniqueDepartments = [...new Set(courses.map((course) => course.department).filter((dept): dept is string => !!dept))];
@@ -241,14 +274,22 @@ export default function KMTCCoursesPage() {
               Back to KMTC Campuses
             </Button>
           </Link>
-          <Button
-            variant="outline"
-            className="border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100 bg-transparent"
-            onClick={() => router.push("/selected-courses")}
-          >
-            <Heart className="w-4 h-4 mr-2" />
-            Selected Courses ({selectedCourses.size})
-          </Button>
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              className="border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100 bg-transparent"
+              onClick={() => router.push("/selected-courses")}
+            >
+              <Heart className="w-4 h-4 mr-2" />
+              Selected Courses ({selectedCourses.size})
+            </Button>
+            <Button
+              className="bg-emerald-500 hover:bg-emerald-600 text-white"
+              onClick={handleGeneratePDF}
+            >
+              Download PDF
+            </Button>
+          </div>
         </div>
 
         <div className="mb-8">

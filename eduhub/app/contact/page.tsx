@@ -75,8 +75,8 @@ export default function ContactPage() {
                         <Mail className="h-6 w-6 text-emerald-600 mt-1" />
                         <div>
                           <h3 className="font-semibold">Email Us</h3>
-                          <p className="text-sm text-gray-500 mt-1">info@edupathway.co.ke</p>
-                          <p className="text-sm text-gray-500">support@edupathway.co.ke</p>
+                          <p className="text-sm text-gray-500 mt-1">info@eduhubco.ke</p>
+                          <p className="text-sm text-gray-500">support@eduhub.co.ke</p>
                         </div>
                       </div>
                       <div className="flex items-start space-x-4">
@@ -160,19 +160,19 @@ export default function ContactPage() {
             <div className="flex flex-col items-center gap-4 text-center mb-12">
               <h2 className="text-3xl font-bold tracking-tighter">Frequently Asked Questions</h2>
               <p className="max-w-[700px] text-gray-500 md:text-xl">
-                Find answers to common questions about EduPathway
+                Find answers to common questions about EduHub
               </p>
             </div>
             <div className="grid gap-6 md:grid-cols-2 lg:gap-12">
               <div className="space-y-4">
-                <h3 className="text-xl font-bold">How does EduPathway match me with courses?</h3>
+                <h3 className="text-xl font-bold">How does EduHub match me with courses?</h3>
                 <p className="text-gray-500">
-                  EduPathway uses an advanced algorithm that analyzes your high school subjects, grades, and interests
-                  to recommend university courses that align with your academic profile and career aspirations.
+                  EduHub uses an advanced algorithm that analyzes your high school subjects, grades, and interests
+                  to recommend Campus courses that align with your academic profile and career aspirations.
                 </p>
               </div>
               <div className="space-y-4">
-                <h3 className="text-xl font-bold">Is EduPathway free to use?</h3>
+                <h3 className="text-xl font-bold">Is EduHub free to use?</h3>
                 <p className="text-gray-500">
                   Basic course matching is free, but we offer premium features for a small fee that provide more
                   detailed recommendations, career guidance, and application assistance.
@@ -181,16 +181,16 @@ export default function ContactPage() {
               <div className="space-y-4">
                 <h3 className="text-xl font-bold">How accurate are the course recommendations?</h3>
                 <p className="text-gray-500">
-                  Our recommendations are based on comprehensive data from universities and education experts. We
+                  Our recommendations are based on comprehensive data from Campuses and education experts. We
                   regularly update our database to ensure accuracy, but we always recommend consulting with school
                   counselors for final decisions.
                 </p>
               </div>
               <div className="space-y-4">
-                <h3 className="text-xl font-bold">Can I apply to universities through EduPathway?</h3>
+                <h3 className="text-xl font-bold">Can I apply to Campuses through EduHub?</h3>
                 <p className="text-gray-500">
                   Currently, we don't process applications directly, but we provide information on application
-                  procedures and deadlines for each course. We're working on partnerships with universities to
+                  procedures and deadlines for each course. We're working on partnerships with Campuses to
                   streamline the application process in the future.
                 </p>
               </div>
@@ -204,7 +204,7 @@ export default function ContactPage() {
               <div className="space-y-2">
                 <h2 className="text-3xl font-bold tracking-tighter md:text-4xl text-white">Ready to Get Started?</h2>
                 <p className="max-w-[700px] text-emerald-100 md:text-xl mx-auto">
-                  Join thousands of students who have found their perfect university course with EduPathway
+                  Join thousands of students who have found their perfect Campus course with EduHub
                 </p>
               </div>
               <div className="w-full max-w-sm space-y-2">
