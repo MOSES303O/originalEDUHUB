@@ -28,11 +28,14 @@ jobs:
   # Build job
   build:
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: .  # Explicit root; adjust if project in subdir (e.g., ./web)
     steps:
       - name: Checkout
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0  # Full fetch to ensure all files (e.g., yarn.lock) are present
+          fetch-depth: 0  # Full history to ensure lockfiles are present
 
       - name: Detect package manager
         id: detect-package-manager
@@ -46,31 +49,31 @@ jobs:
 
           if [ -f "${{ github.workspace }}/yarn.lock" ]; then
             echo "manager=yarn" >> $GITHUB_OUTPUT
-            echo "lockfile=yarn.lock" >> $GITHUB_OUTPUT
             echo "command=install --frozen-lockfile" >> $GITHUB_OUTPUT
             echo "runner=yarn" >> $GITHUB_OUTPUT
+            echo "lockfile_path=yarn.lock" >> $GITHUB_OUTPUT
             echo "Debug: Detected Yarn"
             exit 0
           elif [ -f "${{ github.workspace }}/package-lock.json" ]; then
             echo "manager=npm" >> $GITHUB_OUTPUT
-            echo "lockfile=package-lock.json" >> $GITHUB_OUTPUT
             echo "command=ci --frozen-lockfile" >> $GITHUB_OUTPUT
             echo "runner=npm run" >> $GITHUB_OUTPUT
+            echo "lockfile_path=package-lock.json" >> $GITHUB_OUTPUT
             echo "Debug: Detected npm"
             exit 0
           elif [ -f "${{ github.workspace }}/pnpm-lock.yaml" ]; then
             echo "manager=pnpm" >> $GITHUB_OUTPUT
-            echo "lockfile=pnpm-lock.yaml" >> $GITHUB_OUTPUT
             echo "command=install --frozen-lockfile" >> $GITHUB_OUTPUT
             echo "runner=pnpm run" >> $GITHUB_OUTPUT
+            echo "lockfile_path=pnpm-lock.yaml" >> $GITHUB_OUTPUT
             echo "Debug: Detected pnpm"
             exit 0
           else
-            echo "Warning: No lockfile found. Defaulting to npm."
+            echo "Warning: No lockfile found. Defaulting to npm (cache disabled)."
             echo "manager=npm" >> $GITHUB_OUTPUT
-            echo "lockfile=" >> $GITHUB_OUTPUT  # Empty for no cache
             echo "command=install" >> $GITHUB_OUTPUT
             echo "runner=npm run" >> $GITHUB_OUTPUT
+            echo "lockfile_path=" >> $GITHUB_OUTPUT  # Empty disables cache
             echo "Debug: Defaulted to npm (no cache)"
             exit 0
           fi
@@ -80,7 +83,7 @@ jobs:
         with:
           node-version: "20"
           cache: ${{ steps.detect-package-manager.outputs.manager }}
-          cache-dependency-path: ${{ steps.detect-package-manager.outputs.lockfile }}  # Now a direct output; empty = no cache
+          cache-dependency-path: ${{ steps.detect-package-manager.outputs.lockfile_path }}  # Static output; empty = skip cache
 
       - name: Setup Pages
         uses: actions/configure-pages@v5
@@ -100,7 +103,7 @@ jobs:
         run: ${{ steps.detect-package-manager.outputs.runner }} ${{ steps.detect-package-manager.outputs.command }}
 
       - name: Build with Next.js
-        run: ${{ steps.detect-package-manager.outputs.runner }} build  # Assumes 'build' script in package.json
+        run: ${{ steps.detect-package-manager.outputs.runner }} build  # Runs 'build' script (e.g., next build)
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
