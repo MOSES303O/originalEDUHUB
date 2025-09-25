@@ -1,0 +1,18 @@
+{
+    "name": "originaleduhub",
+    "version": "1.0.0",
+    "private": true,
+    "workspaces": [
+      "eduhub",
+      "backend"
+    ],
+    "scripts": {
+      "frontend:dev": "npm run dev --workspace=eduhub",
+      "frontend:build": "npm run build --workspace=eduhub",
+      "frontend:start": "npm run start --workspace=eduhub",
+      "frontend:lint": "npm run lint --workspace=eduhub"
+    },
+    "devDependencies": {
+      "concurrently": "^8.2.2"
+    }
+  }

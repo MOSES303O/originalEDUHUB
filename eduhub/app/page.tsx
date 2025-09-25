@@ -88,7 +88,7 @@ export default function Home() {
               <Image
                 alt="Students studying"
                 className="mx-auto aspect-video overflow-hidden rounded-xl object-cover object-center sm:w-full lg:order-last"
-                src="./image.png"
+                src="/originalEDUHUB/image.png"
                 width={800}
                 height={550}
               />

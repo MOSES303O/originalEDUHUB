@@ -46,3 +46,4 @@ factory-boy==3.3.0
 # Production
 gunicorn==21.2.0
 whitenoise==6.6.0
+#GitHub Pages is static, so the backend (ochiengsenterprise.co.ke:8000) must be hosted separately (e.g., on a VPS, Heroku, or Render)
