@@ -30,80 +30,46 @@ jobs:
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: .  # Explicit root; adjust if project in subdir (e.g., ./web)
+        working-directory: .  # Root project; change to ./subdir if needed
     steps:
       - name: Checkout
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0  # Full history to ensure lockfiles are present
+          fetch-depth: 0  # Full clone to ensure yarn.lock is present
 
-      - name: Detect package manager
-        id: detect-package-manager
+      - name: Verify yarn.lock
         run: |
-          echo "Debug: Workspace path is ${{ github.workspace }}"
-          echo "Debug: Listing all files in workspace..."
-          ls -la ${{ github.workspace }}
-          echo "Debug: Checking for lockfiles and package.json..."
-          ls -la ${{ github.workspace }}/*.lock* 2>/dev/null || echo "No lockfiles found"
-          ls -la ${{ github.workspace }}/package.json || echo "package.json not found"
-
-          if [ -f "${{ github.workspace }}/yarn.lock" ]; then
-            echo "manager=yarn" >> $GITHUB_OUTPUT
-            echo "command=install --frozen-lockfile" >> $GITHUB_OUTPUT
-            echo "runner=yarn" >> $GITHUB_OUTPUT
-            echo "lockfile_path=yarn.lock" >> $GITHUB_OUTPUT
-            echo "Debug: Detected Yarn"
-            exit 0
-          elif [ -f "${{ github.workspace }}/package-lock.json" ]; then
-            echo "manager=npm" >> $GITHUB_OUTPUT
-            echo "command=ci --frozen-lockfile" >> $GITHUB_OUTPUT
-            echo "runner=npm run" >> $GITHUB_OUTPUT
-            echo "lockfile_path=package-lock.json" >> $GITHUB_OUTPUT
-            echo "Debug: Detected npm"
-            exit 0
-          elif [ -f "${{ github.workspace }}/pnpm-lock.yaml" ]; then
-            echo "manager=pnpm" >> $GITHUB_OUTPUT
-            echo "command=install --frozen-lockfile" >> $GITHUB_OUTPUT
-            echo "runner=pnpm run" >> $GITHUB_OUTPUT
-            echo "lockfile_path=pnpm-lock.yaml" >> $GITHUB_OUTPUT
-            echo "Debug: Detected pnpm"
-            exit 0
-          else
-            echo "Warning: No lockfile found. Defaulting to npm (cache disabled)."
-            echo "manager=npm" >> $GITHUB_OUTPUT
-            echo "command=install" >> $GITHUB_OUTPUT
-            echo "runner=npm run" >> $GITHUB_OUTPUT
-            echo "lockfile_path=" >> $GITHUB_OUTPUT  # Empty disables cache
-            echo "Debug: Defaulted to npm (no cache)"
-            exit 0
-          fi
+          echo "Debug: Workspace is ${{ github.workspace }}"
+          ls -la ${{ github.workspace }} || echo "Listing failed"
+          ls -la ${{ github.workspace }}/yarn.lock || (echo "yarn.lock missing—commit it to repo!" && exit 1)
+          echo "yarn.lock found—proceeding"
 
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
           node-version: "20"
-          cache: ${{ steps.detect-package-manager.outputs.manager }}
-          cache-dependency-path: ${{ steps.detect-package-manager.outputs.lockfile_path }}  # Static output; empty = skip cache
+          cache: 'yarn'
+          cache-dependency-path: '**/yarn.lock'  # Glob to find yarn.lock anywhere (root/subdir)
 
       - name: Setup Pages
         uses: actions/configure-pages@v5
         with:
           static_site_generator: next
 
-      - name: Restore cache
+      - name: Restore Next.js cache
         uses: actions/cache@v4
         with:
           path: |
             .next/cache
-          key: ${{ runner.os }}-nextjs-${{ hashFiles('**/yarn.lock', '**/package-lock.json', '**/pnpm-lock.yaml') }}-${{ hashFiles('**.[jt]s', '**.[jt]sx') }}
+          key: ${{ runner.os }}-nextjs-${{ hashFiles('**/yarn.lock') }}-${{ hashFiles('**.[jt]s', '**.[jt]sx') }}
           restore-keys: |
-            ${{ runner.os }}-nextjs-${{ hashFiles('**/yarn.lock', '**/package-lock.json', '**/pnpm-lock.yaml') }}-
+            ${{ runner.os }}-nextjs-${{ hashFiles('**/yarn.lock') }}-
 
       - name: Install dependencies
-        run: ${{ steps.detect-package-manager.outputs.runner }} ${{ steps.detect-package-manager.outputs.command }}
+        run: yarn install --frozen-lockfile
 
       - name: Build with Next.js
-        run: ${{ steps.detect-package-manager.outputs.runner }} build  # Runs 'build' script (e.g., next build)
+        run: yarn build
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
