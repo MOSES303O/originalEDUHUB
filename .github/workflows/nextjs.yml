@@ -32,7 +32,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0  # Full fetch to ensure yarn.lock and other files are present
+          fetch-depth: 0  # Full fetch to ensure all files (e.g., yarn.lock) are present
 
       - name: Detect package manager
         id: detect-package-manager
@@ -46,18 +46,21 @@ jobs:
 
           if [ -f "${{ github.workspace }}/yarn.lock" ]; then
             echo "manager=yarn" >> $GITHUB_OUTPUT
+            echo "lockfile=yarn.lock" >> $GITHUB_OUTPUT
             echo "command=install --frozen-lockfile" >> $GITHUB_OUTPUT
             echo "runner=yarn" >> $GITHUB_OUTPUT
             echo "Debug: Detected Yarn"
             exit 0
           elif [ -f "${{ github.workspace }}/package-lock.json" ]; then
             echo "manager=npm" >> $GITHUB_OUTPUT
+            echo "lockfile=package-lock.json" >> $GITHUB_OUTPUT
             echo "command=ci --frozen-lockfile" >> $GITHUB_OUTPUT
             echo "runner=npm run" >> $GITHUB_OUTPUT
             echo "Debug: Detected npm"
             exit 0
           elif [ -f "${{ github.workspace }}/pnpm-lock.yaml" ]; then
             echo "manager=pnpm" >> $GITHUB_OUTPUT
+            echo "lockfile=pnpm-lock.yaml" >> $GITHUB_OUTPUT
             echo "command=install --frozen-lockfile" >> $GITHUB_OUTPUT
             echo "runner=pnpm run" >> $GITHUB_OUTPUT
             echo "Debug: Detected pnpm"
@@ -65,10 +68,11 @@ jobs:
           else
             echo "Warning: No lockfile found. Defaulting to npm."
             echo "manager=npm" >> $GITHUB_OUTPUT
+            echo "lockfile=" >> $GITHUB_OUTPUT  # Empty for no cache
             echo "command=install" >> $GITHUB_OUTPUT
             echo "runner=npm run" >> $GITHUB_OUTPUT
-            echo "Debug: Defaulted to npm"
-            exit 0  # Proceed instead of failing
+            echo "Debug: Defaulted to npm (no cache)"
+            exit 0
           fi
 
       - name: Setup Node
@@ -76,15 +80,11 @@ jobs:
         with:
           node-version: "20"
           cache: ${{ steps.detect-package-manager.outputs.manager }}
-          cache-dependency-path: ${{ steps.detect-package-manager.outputs.manager == 'yarn' && format('{0}/yarn.lock', github.workspace) || format('{0}/package-lock.json', github.workspace) }}
+          cache-dependency-path: ${{ steps.detect-package-manager.outputs.lockfile }}  # Now a direct output; empty = no cache
 
       - name: Setup Pages
         uses: actions/configure-pages@v5
         with:
-          # Automatically inject basePath in your Next.js configuration file and disable
-          # server side image optimization (https://nextjs.org/docs/api-reference/next/image#unoptimized).
-          #
-          # You may remove this line if you want to manage the configuration yourself.
           static_site_generator: next
 
       - name: Restore cache
@@ -92,17 +92,15 @@ jobs:
         with:
           path: |
             .next/cache
-          # Generate a new cache whenever packages or source files change.
-          key: ${{ runner.os }}-nextjs-${{ hashFiles('**/package-lock.json', '**/yarn.lock', '**/pnpm-lock.yaml') }}-${{ hashFiles('**.[jt]s', '**.[jt]sx') }}
-          # If source files changed but packages didn't, rebuild from a prior cache.
+          key: ${{ runner.os }}-nextjs-${{ hashFiles('**/yarn.lock', '**/package-lock.json', '**/pnpm-lock.yaml') }}-${{ hashFiles('**.[jt]s', '**.[jt]sx') }}
           restore-keys: |
-            ${{ runner.os }}-nextjs-${{ hashFiles('**/package-lock.json', '**/yarn.lock', '**/pnpm-lock.yaml') }}-
+            ${{ runner.os }}-nextjs-${{ hashFiles('**/yarn.lock', '**/package-lock.json', '**/pnpm-lock.yaml') }}-
 
       - name: Install dependencies
         run: ${{ steps.detect-package-manager.outputs.runner }} ${{ steps.detect-package-manager.outputs.command }}
 
       - name: Build with Next.js
-        run: ${{ steps.detect-package-manager.outputs.runner }} build  # Assumes 'build' script in package.json; adjust if needed (e.g., 'next build')
+        run: ${{ steps.detect-package-manager.outputs.runner }} build  # Assumes 'build' script in package.json
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
