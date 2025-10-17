@@ -1,8 +1,9 @@
-// lib/api.ts
+// frontend/lib/api.ts
 import axios, { AxiosError } from 'axios';
-import { University, Course, LoginResponse, SubjectGrades, KMTCCampus, KMTCCourse, Department, Faculty,SelectedCourseResponse,SelectedUniversityResponse } from '@/types';
+import { University, Course, LoginResponse, SubjectGrades, KMTCCampus, KMTCCourse, Department, Faculty, SelectedCourseResponse } from '@/types';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/v1';
+console.log('API_BASE_URL initialized:', API_BASE_URL);
 
 // Create axios instance
 const apiClient = axios.create({
@@ -11,68 +12,40 @@ const apiClient = axios.create({
     'Content-Type': 'application/json',
   },
 });
-
 interface TokenResponse {
   access: string;
   refresh: string;
 }
 
-interface ApiError {
-  status?: number;
-  data?: unknown;
-  errors?: Record<string, string[]>;
-  error_details?: string;
-  code?: string;
-  url?: string;
-  message: string;
-  isAxiosError?: boolean;
-}
-
-// Utility to extract error details
-const extractErrorDetails = (error: any) => {
-  const axiosError = error as AxiosError<{ message?: string; errors?: Record<string, string[]> }>;
-  return {
-    message: axiosError.response?.data?.message || axiosError.message || "Unknown error",
-    status: axiosError.response?.status,
-    data: axiosError.response?.data || { message: `Server returned non-JSON or empty response (status ${axiosError.response?.status || 'unknown'})`, body: axiosError.response?.data },
-    headers: axiosError.response?.headers,
-    code: axiosError.code,
-    requestUrl: axiosError.config?.url,
-    fullUrl: axiosError.config ? `${apiClient.defaults.baseURL}${axiosError.config.url}` : "unknown",
-  };
-};
-// Fetch CSRF token
-const fetchCsrfToken = async () => {
-  try {
-    const response = await apiClient.get('/get-csrf-token/');
-    const csrfToken = response.data.csrfToken;
-    console.log('Fetched CSRF token:', csrfToken?.substring(0, 20) + '...');
-    return csrfToken;
-  } catch (error) {
-    console.error('Failed to fetch CSRF token:', extractErrorDetails(error));
-    return null;
-  }
-};
-
 // Consolidated request interceptor
 apiClient.interceptors.request.use(
   async (config) => {
-    const token = localStorage.getItem('token');
+    console.log('Axios Request:', {
+      url: config.url,
+      fullUrl: `${config.baseURL}${config.url}`,
+      method: config.method,
+      headers: config.headers,
+      params: config.params,
+      data: JSON.stringify(config.data, null, 2),
+    });
+    const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
     const publicEndpoints = ['/auth/register/', '/auth/login/', '/get-csrf-token/'];
     const isPublicEndpoint = publicEndpoints.some((pattern) =>
       new RegExp(pattern).test(config.url || '')
     );
     if (token && !isPublicEndpoint) {
       config.headers.Authorization = `Bearer ${token}`;
-      console.log(`Adding Authorization header for ${config.url}: Bearer ${token.substring(0, 20)}...`);
+      console.log(`Adding Authorization header for ${config.url}: Bearer ${token?.substring(0, 20)}...`);
     } else {
       console.log(`No Authorization header for ${config.url}: ${isPublicEndpoint ? 'Public endpoint' : 'No token'}`);
     }
     if (['post', 'put', 'patch', 'delete'].includes(config.method?.toLowerCase() || '')) {
-      const csrfToken = document.cookie
-        .split('; ')
-        .find((row) => row.startsWith('csrftoken='))
-        ?.split('=')[1] || (await fetchCsrfToken());
+      const csrfToken = typeof window !== 'undefined'
+        ? document.cookie
+            .split('; ')
+            .find((row) => row.startsWith('csrftoken='))
+            ?.split('=')[1] || (await fetchCsrfToken())
+        : await fetchCsrfToken();
       if (csrfToken) {
         config.headers['X-CSRFTOKEN'] = csrfToken;
         console.log(`Adding CSRF token for ${config.url}: ${csrfToken.substring(0, 20)}...`);
@@ -80,7 +53,6 @@ apiClient.interceptors.request.use(
         console.warn(`No CSRF token available for ${config.url}`);
       }
     }
-    console.log('Request payload:', JSON.stringify(config.data, null, 2)); // Log request payload
     return config;
   },
   (error) => {
@@ -92,7 +64,10 @@ apiClient.interceptors.request.use(
 // Consolidated response interceptor
 apiClient.interceptors.response.use(
   (response) => {
-    console.log(`Response for ${response.config.url}:`, JSON.stringify(response.data, null, 2));
+    console.log(`Axios Response for ${response.config.url}:`, {
+      status: response.status,
+      data: JSON.stringify(response.data, null, 2),
+    });
     return response;
   },
   async (error: AxiosError) => {
@@ -149,7 +124,6 @@ apiClient.interceptors.response.use(
 
     // Specific status code handling
     if (status === 404 && url.includes('/payments/my-subscriptions/active/')) {
-      // Handle no active subscription gracefully
       console.log(`No active subscription for ${url}:`, JSON.stringify(responseData, null, 2));
       return Promise.resolve({
         ...error,
@@ -170,10 +144,12 @@ apiClient.interceptors.response.use(
           }
         } catch (refreshError) {
           console.error('Token refresh failed:', extractErrorDetails(refreshError));
-          localStorage.removeItem('token');
-          localStorage.removeItem('refreshToken');
-          localStorage.removeItem('phone_number');
-          window.location.href = '/login';
+          if (typeof window !== 'undefined') {
+            localStorage.removeItem('token');
+            localStorage.removeItem('refreshToken');
+            localStorage.removeItem('phone_number');
+            window.location.href = '/login';
+          }
         }
       }
     } else if (status === 429) {
@@ -202,15 +178,211 @@ apiClient.interceptors.response.use(
         ...error.response,
         data: typeof responseData === 'object' && responseData !== null
           ? { ...responseData, message: errorMessage }
-          : { message: errorMessage, body: errorDetails.body},
+          : { message: errorMessage, body: errorDetails.body },
       } as any,
     });
   }
 );
 
-export default apiClient;
+interface ErrorResponse {
+  message?: string;
+  errors?: Record<string, string[]>;
+  [key: string]: any;
+}
 
-// Updated login function
+interface ApiError {
+  status?: number;
+  data?: ErrorResponse | string | null;
+  errors?: Record<string, string[]>;
+  error_details?: string;
+  code?: string;
+  url?: string;
+  message: string;
+  isAxiosError?: boolean;
+}
+
+// Utility to extract error details
+const extractErrorDetails = (error: any): ApiError => {
+  const axiosError = error as AxiosError<ErrorResponse>;
+  let message = axiosError.message || 'Unknown error';
+  let data = axiosError.response?.data;
+  let status = axiosError.response?.status;
+  let url = axiosError.config ? `${axiosError.config.baseURL}${axiosError.config.url || ''}` : 'unknown';
+
+  if (axiosError.response) {
+    const headers = axiosError.response.headers as Record<string, string> | undefined;
+    const contentType = headers?.['content-type'] || '';
+    if (!contentType.includes('application/json') || data == null) {
+      message = `Non-JSON response or empty data (status ${status || 'unknown'})`;
+      console.error('Non-JSON or empty response received:', {
+        url,
+        status,
+        headers,
+        body: typeof data === 'string' ? data : data ?? 'Empty response body',
+      });
+      data = { message, body: typeof data === 'string' ? data : data ?? 'Empty response body' };
+    } else if (typeof data === 'object' && data !== null && 'message' in data) {
+      message = data.message || message;
+    }
+  } else {
+    message = axiosError.code === 'ERR_NETWORK'
+      ? 'Network error: Unable to connect to the server'
+      : 'No response received from the server';
+    console.error('No response received:', {
+      url,
+      code: axiosError.code,
+      message,
+    });
+    data = { message };
+  }
+
+  return {
+    message,
+    status,
+    data,
+    errors: typeof data === 'object' && data !== null && 'errors' in data ? data.errors : undefined,
+    code: axiosError.code,
+    url,
+    isAxiosError: axiosError.isAxiosError,
+  };
+};
+
+// Fetch CSRF token
+const fetchCsrfToken = async () => {
+  try {
+    const response = await apiClient.get('/get-csrf-token/');
+    const csrfToken = response.data.csrfToken;
+    console.log('Fetched CSRF token:', csrfToken?.substring(0, 20) + '...');
+    return csrfToken;
+  } catch (error) {
+    console.error('Failed to fetch CSRF token:', extractErrorDetails(error));
+    return null;
+  }
+};
+
+export async function fetchCourseById(id: string | number): Promise<Course | null> {
+  try {
+    const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+    console.log(`Preparing to fetch course with ID: ${id}, Token: ${token ? 'Present' : 'Missing'}`);
+    console.log(`Target URL: ${API_BASE_URL}/courses/courses/${id}/`);
+    const headers: Record<string, string> = {};
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    } else {
+      console.warn('No token found, proceeding without authentication');
+    }
+    const response = await apiClient.get<Course>(`/courses/courses/${id}/`, {
+      headers,
+      timeout: 15000,
+    });
+    console.log('Raw course response:', JSON.stringify(response.data, null, 2));
+    if (!response.data?.id) {
+      console.warn('Invalid course data received: missing id', response.data);
+      return null;
+    }
+    const courseData = response.data;
+    return {
+      id: courseData.id.toString(),
+      name: courseData.name || 'Unknown',
+      code: courseData.code || 'N/A',
+      university: {
+        id: courseData.university?.id || courseData.universityId || 'unknown',
+        name: courseData.university?.name || courseData.university_name || 'Unknown',
+        slug: courseData.university?.slug || (courseData.university_name?.toLowerCase().replace(/\s+/g, '-') || 'unknown'),
+        code: courseData.university?.code || courseData.university_code || undefined,
+        logo: courseData.university?.logo || null,
+        city: courseData.university?.city || undefined,
+        campus: courseData.university?.campus || undefined,
+        ranking: courseData.university?.ranking || null,
+        accreditation: courseData.university?.accreditation || undefined,
+      },
+      universityId: courseData.university?.id || courseData.universityId || undefined,
+      university_name: courseData.university?.name || courseData.university_name || undefined,
+      minimum_grade: courseData.minimum_grade || undefined,
+      required_subjects: courseData.required_subjects || undefined,
+      description: courseData.description || undefined,
+      duration_years: courseData.duration_years || undefined,
+      startDate: courseData.startDate ||undefined,
+      applicationDeadline: courseData.applicationDeadline || undefined,
+      career_prospects: courseData.career_prospects || undefined,
+      tuition_fee_per_year: courseData.tuition_fee_per_year != null ? Number(courseData.tuition_fee_per_year) : undefined,
+      application_fee: courseData.application_fee != null ? Number(courseData.application_fee) : undefined,
+      category: courseData.category || undefined,
+      is_selected: courseData.is_selected || false,
+      is_applied: courseData.is_applied || false,
+      user_application: courseData.user_application || null,
+      created_at: courseData.created_at || undefined,
+      updated_at: courseData.updated_at || undefined,
+    };
+  } catch (error: any) {
+    const errorDetails = extractErrorDetails(error);
+    console.error('Failed to fetch course:', JSON.stringify(errorDetails, null, 2));
+    return null;
+  }
+}
+
+export async function fetchCourses(params: Record<string, any> = {}): Promise<Course[]> {
+  try {
+    console.log('Fetching courses with params:', JSON.stringify(params, null, 2));
+    console.log('Fetching courses from:', `${API_BASE_URL}/courses/courses/`);
+    const headers: Record<string, string> = {};
+    const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    } else {
+      console.warn('No token found, proceeding without authentication');
+    }
+    const response = await apiClient.get<{ success: boolean; message: string; data: Course[] }>(
+      '/courses/courses/',
+      { params, headers, timeout: 15000 }
+    );
+    console.log('Raw courses response:', JSON.stringify(response.data, null, 2));
+    if (!response.data.success || !Array.isArray(response.data.data)) {
+      console.warn('Invalid courses data received:', JSON.stringify(response.data, null, 2));
+      return [];
+    }
+    console.log('Courses received:', JSON.stringify(response.data.data, null, 2));
+    return response.data.data.map((course) => ({
+      id: course.id.toString(),
+      name: course.name || 'Unknown',
+      code: course.code || 'N/A',
+      university: {
+        id: course.university?.id || course.universityId || 'unknown',
+        name: course.university?.name || course.university_name || 'Unknown',
+        slug: course.university?.slug || (course.university_name?.toLowerCase().replace(/\s+/g, '-') || 'unknown'),
+        code: course.university?.code || course.university_code || undefined,
+        logo: course.university?.logo || null,
+        city: course.university?.city || undefined,
+        campus: course.university?.campus || undefined,
+        ranking: course.university?.ranking || null,
+        accreditation: course.university?.accreditation || undefined,
+      },
+      universityId: course.university?.id || course.universityId || undefined,
+      university_name: course.university?.name || course.university_name || undefined,
+      minimum_grade: course.minimum_grade || undefined,
+      required_subjects: course.required_subjects || undefined,
+      description: course.description || undefined,
+      duration_years: course.duration_years || undefined,
+      startDate: course.startDate || undefined,
+      applicationDeadline: course.applicationDeadline || undefined,
+      career_prospects: course.career_prospects || undefined,
+      tuition_fee_per_year: course.tuition_fee_per_year != null ? Number(course.tuition_fee_per_year) : undefined,
+      application_fee: course.application_fee != null ? Number(course.application_fee) : undefined,
+      category: course.category || undefined,
+      is_selected: course.is_selected || false,
+      is_applied: course.is_applied || false,
+      user_application: course.user_application || null,
+      created_at: course.created_at || undefined,
+      updated_at: course.updated_at || undefined,
+    }));
+  } catch (error: any) {
+    const errorDetails = extractErrorDetails(error);
+    console.error('Failed to fetch courses:', JSON.stringify(errorDetails, null, 2));
+    return [];
+  }
+}
+
+// Unrelated functions remain unchanged as per your request
 export async function login(phone: string, password: string): Promise<LoginResponse['data']> {
   try {
     console.log('Sending login request to:', `${API_BASE_URL}/auth/login/`);
@@ -245,7 +417,6 @@ export async function login(phone: string, password: string): Promise<LoginRespo
   }
 }
 
-// Other functions remain unchanged
 export async function fetchSubjects(): Promise<Array<{ id: string; name: string }>> {
   try {
     console.log('Fetching subjects...');
@@ -268,27 +439,6 @@ export async function fetchSubjects(): Promise<Array<{ id: string; name: string 
     const errorDetails = extractErrorDetails(error);
     console.error('Failed to fetch subjects:', errorDetails);
     throw new Error(`Failed to fetch subjects: ${JSON.stringify(errorDetails)}`);
-  }
-}
-
-// ... (other functions unchanged as provided in your original lib/api.ts)
-export async function fetchCourses(params: Record<string, any> = {}): Promise<Course[]> {
-  try {
-    console.log('Fetching courses with params:', params);
-    const response = await apiClient.get<{ success: boolean; message: string; data: Course[] }>(
-      '/courses/courses/',
-      { params }
-    );
-    if (!response.data.success || !Array.isArray(response.data.data)) {
-      console.warn('Invalid courses data received:', response.data);
-      return [];
-    }
-    console.log('Courses received:', response.data.data);
-    return response.data.data;
-  } catch (error: unknown) {
-    const errorDetails = extractErrorDetails(error);
-    console.error('Failed to fetch courses:', errorDetails);
-    throw new Error(`Failed to fetch courses: ${JSON.stringify(errorDetails)}`);
   }
 }
 
@@ -436,23 +586,22 @@ export async function fetchUniversities(params: Record<string, any> = {}): Promi
       return [];
     }
 
-    // Transform the API response to match the University interface
     const universities: University[] = data.map((item) => ({
       id: item.id,
       name: item.name,
       slug: item.slug,
       code: item.code,
-      logo: item.logo || null, // Default to null if not provided
-      city: item.city || "Unknown City", // Default value
-      campus: item.campus || "Main Campus", // Default value
-      faculties: [], // Default to an empty array
-      established_year: "N/A", // Default value
+      logo: item.logo || null,
+      city: item.city || "Unknown City",
+      campus: item.campus || "Main Campus",
+      faculties: [],
+      established_year: "N/A",
       ranking: item.ranking,
-      available_courses: 0, // Default to 0
-      accreditation: item.accreditation || "N/A", // Default value
-      description: "No description available", // Default value
-      is_applied: false, // Default to false
-      selectionId: undefined, // Default to undefined
+      available_courses: 0,
+      accreditation: item.accreditation || "N/A",
+      description: "No description available",
+      is_applied: false,
+      selectionId: undefined,
     }));
 
     console.log("[fetchUniversities] Universities received:", universities);
@@ -463,23 +612,6 @@ export async function fetchUniversities(params: Record<string, any> = {}): Promi
     throw new Error(`Failed to fetch universities: ${JSON.stringify(errorDetails)}`);
   }
 }
-export async function fetchCourseById(id: string | number): Promise<Course> {
-  try {
-    console.log('Fetching course with ID:', id);
-    const response = await apiClient.get<Course>(`/courses/courses/${id}/`);
-    console.log('Raw course response:', JSON.stringify(response.data, null, 2));
-    if (!response.data.id) {
-      console.warn('Invalid course data received: missing id', response.data);
-      throw new Error('Invalid course data');
-    }
-    console.log('Course received:', response.data);
-    return response.data;
-  } catch (error: unknown) {
-    const errorDetails = extractErrorDetails(error);
-    console.error('Failed to fetch course:', errorDetails);
-    throw new Error(`Failed to fetch course: ${JSON.stringify(errorDetails)}`);
-  }
-}
 
 export async function fetchCoursesByUniversity(universityCode: string, params: Record<string, string> = {}): Promise<Course[]> {
   try {
@@ -488,12 +620,19 @@ export async function fetchCoursesByUniversity(universityCode: string, params: R
       return [];
     }
     console.log('[fetchCoursesByUniversity] Fetching courses for universityCode:', universityCode, 'with params:', params);
+    const headers: Record<string, string> = {};
+    const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    } else {
+      console.warn('No token found, proceeding without authentication');
+    }
     const response = await apiClient.get<{
       success: boolean;
       message: string;
       timestamp: string;
       data: Course[];
-    }>('/courses/courses/', { params: { university_code: universityCode, ...params } });
+    }>('/courses/courses/', { params: { university_code: universityCode, ...params }, headers, timeout: 15000 });
     console.log('[fetchCoursesByUniversity] Raw API response:', JSON.stringify(response.data, null, 2));
     if (!response.data.success || !Array.isArray(response.data.data)) {
       console.warn('[fetchCoursesByUniversity] Invalid courses data received:', response.data);
@@ -501,10 +640,42 @@ export async function fetchCoursesByUniversity(universityCode: string, params: R
     }
     const validCourses = response.data.data.filter(
       (course) => course.university_code === universityCode
-    );
+    ).map((course) => ({
+      id: course.id.toString(),
+      name: course.name || 'Unknown',
+      code: course.code || 'N/A',
+      university: {
+        id: course.university?.id || course.universityId || 'unknown',
+        name: course.university?.name || course.university_name || 'Unknown',
+        slug: course.university?.slug || (course.university_name?.toLowerCase().replace(/\s+/g, '-') || 'unknown'),
+        code: course.university?.code || course.university_code || undefined,
+        logo: course.university?.logo || null,
+        city: course.university?.city || undefined,
+        campus: course.university?.campus || undefined,
+        ranking: course.university?.ranking || null,
+        accreditation: course.university?.accreditation || undefined,
+      },
+      universityId: course.university?.id || course.universityId || undefined,
+      university_name: course.university?.name || course.university_name || undefined,
+      minimum_grade: course.minimum_grade || undefined,
+      required_subjects: course.required_subjects || undefined,
+      description: course.description || undefined,
+      duration_years: course.duration_years || undefined,
+      startDate: course.startDate ||  undefined,
+      applicationDeadline: course.applicationDeadline || undefined,
+      career_prospects: course.career_prospects || undefined,
+      tuition_fee_per_year: course.tuition_fee_per_year != null ? Number(course.tuition_fee_per_year) : undefined,
+      application_fee: course.application_fee != null ? Number(course.application_fee) : undefined,
+      category: course.category || undefined,
+      is_selected: course.is_selected || false,
+      is_applied: course.is_applied || false,
+      user_application: course.user_application || null,
+      created_at: course.created_at || undefined,
+      updated_at: course.updated_at || undefined,
+    }));
     console.log(`[fetchCoursesByUniversity] Filtered courses for ${universityCode}:`, JSON.stringify(validCourses, null, 2));
     return validCourses;
-  } catch (error: unknown) {
+  } catch (error: any) {
     const errorDetails = extractErrorDetails(error);
     console.error('[fetchCoursesByUniversity] Failed to fetch courses for university', universityCode, ':', errorDetails);
     return [];
@@ -516,10 +687,10 @@ export async function matchUniversityCampus(courseId: string | number): Promise<
     const course = await fetchCourseById(courseId);
     const universities = await fetchUniversities();
     const matchedUniversity = universities.find((university: University) =>
-      university.code === course.university_code || university.name === course.university_name
+      university.code === course?.university_code || university.name === course?.university_name
     );
     return matchedUniversity?.campus || 'Not specified';
-  } catch (error: unknown) {
+  } catch (error: any) {
     const errorDetails = extractErrorDetails(error);
     console.error(`Failed to match university campus for course ID ${courseId}:`, errorDetails);
     return 'Not specified';
@@ -544,7 +715,7 @@ export async function matchCourses(subjectGrades: SubjectGrades, totalPoints: nu
   }
 }
 
-export const register = async (data: {
+export async function register(data: {
   phone_number: string;
   first_name?: string;
   last_name?: string;
@@ -552,7 +723,7 @@ export const register = async (data: {
   password: string;
   password_confirm?: string;
   subjects: { subject_id: string; grade: string }[];
-}) => {
+}) {
   try {
     const response = await apiClient.post('/auth/register/', data);
     console.log("Register API response:", response.data);
@@ -563,268 +734,169 @@ export const register = async (data: {
     console.error("Register error:", errorDetails);
     throw new Error(JSON.stringify(errorDetails));
   }
-};
+}
 
 export async function insertSelectedCourse(courseId: string): Promise<Course> {
   try {
-    const token = localStorage.getItem("token");
+    const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
     if (!token) {
-      throw new Error("No authentication token found");
+      throw new Error('No authentication token found');
     }
-    console.log("Sending insert selected course request for courseId:", courseId);
-    const response = await apiClient.post<SelectedCourseResponse>("/user/selected-courses/", { course: courseId }, {
+    console.log('Sending insert selected course request for courseId:', courseId);
+    const response = await apiClient.post<SelectedCourseResponse>('/user/selected-courses/', { course: courseId }, {
       headers: { Authorization: `Bearer ${token}` },
       timeout: 10000,
     });
-    console.log("Insert selected course response:", JSON.stringify(response.data, null, 2));
+    console.log('Insert selected course response:', JSON.stringify(response.data, null, 2));
     const data = response.data;
     if (!data.success) {
-      throw new Error(data.errors?.detail || "Failed to select course");
+      throw new Error(data.errors?.detail || 'Failed to select course');
     }
     const item = Array.isArray(data.data) ? data.data[0] : data.data;
     if (!item) {
-      throw new Error("No valid course data found in the response.");
+      throw new Error('No valid course data found in the response.');
     }
     return {
-      id: item.course.id,
-      name: item.course.name || "Unknown",
-      university_name: item.course.university_name || "N/A",
-      selectionId: item.id,
-      is_applied: item.is_applied,
-      created_at: item.created_at,
-      code: item.course.code,
-      university_code: item.course.university_code,
-      category: item.course.category,
-      description: item.course.description,
-      duration_years: item.course.duration_years,
-      minimum_grade: item.course.minimum_grade,
-      career_prospects: item.course.career_prospects,
-      //tuition_fee_per_year: item.course.tuition_fee_per_year,
-      //start_date: item.course.start_date,
-      applicationDeadline: item.course.application_deadline,
-      //delivery_mode: item.course.delivery_mode,
-      department: item.course.department,
-      //level: item.course.level,
-      qualification: item.course.qualification,
-      application_fee: item.course.application_fee,
-      average_rating: item.course.average_rating,
-      total_reviews: item.course.total_reviews,
+      id: item.course.id.toString(),
+      name: item.course.name || 'Unknown',
+      code: item.course.code || 'N/A',
+      university: {
+        id: item.course.id || 'unknown',
+        name: item.course.university_name || 'Unknown',
+        slug: item.course.university_name?.toLowerCase().replace(/\s+/g, '-') || 'unknown',
+        code: item.course.university_code || undefined,
+        logo: null,
+        city: undefined,
+        campus: undefined,
+        ranking: null,
+        accreditation: undefined,
+      },
+      universityId: item.course.id || undefined,
+      university_name: item.course.university_name || undefined,
+      minimum_grade: item.course.minimum_grade || undefined,
+      description: item.course.description || undefined,
+      duration_years: item.course.duration_years || undefined,
+      startDate: item.course.start_date || undefined,
+      applicationDeadline: item.course.application_deadline || undefined,
+      career_prospects: item.course.career_prospects || undefined,
+      tuition_fee_per_year: item.course.tuition_fee_per_year != null ? Number(item.course.tuition_fee_per_year) : undefined,
+      application_fee: item.course.application_fee != null ? Number(item.course.application_fee) : undefined,
+      category: item.course.category || undefined,
       is_selected: true,
+      is_applied: item.is_applied || false,
+      user_application: item.is_applied ? {
+        id: item.id,
+        status: item.is_applied ? 'applied' : 'pending',
+        application_number: `APP-${item.id}`,
+        submitted_at: item.application_date || null,
+      } : null,
+      created_at: item.created_at || undefined,
+      updated_at: item.course.updated_at || undefined,
     };
   } catch (error: any) {
     const errorDetails = extractErrorDetails(error);
-    console.error("Insert selected course failed:", JSON.stringify(errorDetails, null, 2));
+    console.error('Insert selected course failed:', JSON.stringify(errorDetails, null, 2));
     throw error;
   }
 }
 
 export async function removeSelectedCourse(selectionId: string): Promise<void> {
   try {
-    const token = localStorage.getItem("token");
+    const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
     if (!token) {
-      throw new Error("No authentication token found");
+      throw new Error('No authentication token found');
     }
-    console.log("Sending remove selected course request for selectionId:", selectionId);
+    console.log('Sending remove selected course request for selectionId:', selectionId);
     const response = await apiClient.delete<SelectedCourseResponse>(`/user/selected-courses/${selectionId}/`, {
       headers: { Authorization: `Bearer ${token}` },
       timeout: 10000,
     });
-    console.log("Remove selected course response:", JSON.stringify(response.data || "No content", null, 2));
+    console.log('Remove selected course response:', JSON.stringify(response.data || 'No content', null, 2));
     if (response.data && !response.data.success) {
-      throw new Error(response.data.errors?.detail || "Failed to deselect course");
+      throw new Error(response.data.errors?.detail || 'Failed to deselect course');
     }
   } catch (error: any) {
     const errorDetails = extractErrorDetails(error);
-    console.error("Remove selected course failed:", JSON.stringify(errorDetails, null, 2));
+    console.error('Remove selected course failed:', JSON.stringify(errorDetails, null, 2));
     throw error;
   }
 }
+
 export async function fetchSelectedCourses(): Promise<Course[]> {
   try {
-    const token = localStorage.getItem("token");
+    const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
     if (!token) {
-      console.log("No authentication token found in localStorage, returning empty array");
+      console.log('No authentication token found in localStorage, returning empty array');
       return [];
     }
-    console.log("Sending fetch selected courses request to:", `${apiClient.defaults.baseURL}user/selected-courses/`);
-    const response = await apiClient.get<SelectedCourseResponse>("/user/selected-courses/", {
+    console.log('Sending fetch selected courses request to:', `${apiClient.defaults.baseURL}/user/selected-courses/`);
+    const response = await apiClient.get<SelectedCourseResponse>('/user/selected-courses/', {
       headers: { Authorization: `Bearer ${token}` },
       timeout: 10000,
     });
-    console.log("Fetch selected courses response:", JSON.stringify(response.data, null, 2));
+    console.log('Fetch selected courses response:', JSON.stringify(response.data, null, 2));
     const data = response.data;
 
-    if (!data || typeof data !== "object" || Object.keys(data).length === 0) {
-      console.log("Empty or invalid response received for selected courses, returning empty array");
+    if (!data || typeof data !== 'object' || Object.keys(data).length === 0) {
+      console.log('Empty or invalid response received for selected courses, returning empty array');
       return [];
     }
 
     if (!data.success) {
-      console.warn("Invalid response success status for selected courses:", JSON.stringify(data, null, 2));
+      console.warn('Invalid response success status for selected courses:', JSON.stringify(data, null, 2));
       return [];
     }
 
     if (!data.data || data.data === null) {
-      console.log("No data field in response or data is null, returning empty array");
+      console.log('No data field in response or data is null, returning empty array');
       return [];
     }
     const items = Array.isArray(data.data) ? data.data : [data.data];
-    return items.map((item) =>({
-      id: item.course.id,
-      name: item.course.name || "Unknown",
-      university_name: item.course.university_name || "N/A",
-      selectionId: item.id,
-      is_applied: item.is_applied,
-      created_at: item.created_at,
-      code: item.course.code,
-      university_code: item.course.university_code,
-      category: item.course.category,
-      description: item.course.description,
-      duration_years: item.course.duration_years,
-      minimum_grade: item.course.minimum_grade,
-      career_prospects: item.course.career_prospects,
-      tuition_fee_per_year: item.course.tuition_fee_per_year != null ? String(item.course.tuition_fee_per_year) : undefined, // Convert to string
-      start_date: item.course.start_date,
-      application_deadline: item.course.application_deadline,
-      delivery_mode: item.course.delivery_mode,
-      department: item.course.department,
-      level: item.course.level,
-      qualification: item.course.qualification,
-      application_fee: item.course.application_fee,
-      average_rating: item.course.average_rating,
-      total_reviews: item.course.total_reviews,
+    return items.map((item) => ({
+      id: item.course.id.toString(),
+      name: item.course.name || 'Unknown',
+      code: item.course.code || 'N/A',
+      university: {
+        id: item.course.id || 'unknown',
+        name: item.course.university_name || 'Unknown',
+        slug: item.course.university_name?.toLowerCase().replace(/\s+/g, '-') || 'unknown',
+        code: item.course.university_code || undefined,
+        logo: null,
+        city: undefined,
+        campus: undefined,
+        ranking: null,
+        accreditation: undefined,
+      },
+      universityId: item.course.id || undefined,
+      university_name: item.course.university_name || undefined,
+      minimum_grade: item.course.minimum_grade || undefined,
+      description: item.course.description || undefined,
+      duration_years: item.course.duration_years || undefined,
+      startDate: item.course.start_date || undefined,
+      applicationDeadline: item.course.application_deadline || undefined,
+      career_prospects: item.course.career_prospects || undefined,
+      tuition_fee_per_year: item.course.tuition_fee_per_year != null ? Number(item.course.tuition_fee_per_year) : undefined,
+      application_fee: item.course.application_fee != null ? Number(item.course.application_fee) : undefined,
+      category: item.course.category || undefined,
       is_selected: true,
+      is_applied: item.is_applied || false,
+      user_application: item.is_applied ? {
+        id: item.id,
+        status: item.is_applied ? 'applied' : 'pending',
+        application_number: `APP-${item.id}`,
+        submitted_at: item.application_date || null,
+      } : null,
+      created_at: item.created_at || undefined,
+      updated_at: item.course.updated_at || undefined,
     }));
   } catch (error: any) {
     const errorDetails = extractErrorDetails(error);
-    // Only log errors for unexpected issues (exclude 404 or empty responses)
-    if (errorDetails.status && errorDetails.status !== 404 && errorDetails.data && Object.keys(errorDetails.data).length > 0 && errorDetails.data.message !== "Server returned non-JSON or empty response (status 404)") {
-      console.error("Fetch selected courses API error:", JSON.stringify(errorDetails, null, 2));
-    } else {
-      console.log("Empty, 404, or expected error response received for selected courses, returning empty array");
-    }
+    console.log('Empty, 404, or expected error response received for selected courses, returning empty array');
     return [];
   }
-} 
-export async function insertSelectedUniversity(universityId: string): Promise<University> {
-  try {
-    const token = localStorage.getItem("token");
-    if (!token) {
-      throw new Error("No authentication token found");
-    }
-    console.log("Sending insert selected university request for universityId:", universityId);
-    const response = await apiClient.post<SelectedUniversityResponse>("/user/selected-universities/", { university: universityId }, {
-      headers: { Authorization: `Bearer ${token}` },
-      timeout: 10000,
-    });
-    console.log("Insert selected university response:", JSON.stringify(response.data, null, 2));
-    const data = response.data;
-
-    if (!data.success || !data.data) {
-      throw new Error(data.errors?.detail || data.message || "Failed to select university");
-    }
-
-    const item = data.data;
-    if (!item || !item.university) {
-      throw new Error("Invalid response data: missing university information");
-    }
-
-    return {
-      id: item.university.id,
-      name: item.university.name || "Unknown",
-      slug: item.university.slug || "",
-      logo: item.university.logo,
-      city: item.university.city,
-      campus: item.university.campus,
-      description: item.university.description,
-      faculties: item.university.faculties || [],
-      established_year: item.university.established_year?.toString() || "Unknown",
-      selectionId: item.id,
-      is_applied: item.is_applied || false,
-    };
-  } catch (error: any) {
-    const errorDetails = extractErrorDetails(error);
-    console.error("Insert selected university API error:", JSON.stringify(errorDetails, null, 2));
-    throw new Error(errorDetails.message || "Insert selected university failed due to network error");
-  }
 }
-
-export async function removeSelectedUniversity(selectionId: string): Promise<void> {
-  try {
-    const token = localStorage.getItem("token");
-    if (!token) {
-      console.error("No authentication token found in localStorage");
-      throw new Error("No authentication token found");
-    }
-    console.log("Sending remove selected university request to:", `${apiClient.defaults.baseURL}/user/selected-universities/${selectionId}/`);
-    const response = await apiClient.delete(`/user/selected-universities/${selectionId}/`, {
-      headers: { Authorization: `Bearer ${token}` },
-      timeout: 10000,
-    });
-    console.log("Remove selected university response:", JSON.stringify(response.data, null, 2));
-    const data = response.data;
-
-    if (!data.status || data.status !== "success") {
-      const errorMessage = data.message || "Remove university failed: Invalid response structure";
-      throw new Error(errorMessage);
-    }
-  } catch (error: any) {
-    const errorDetails = extractErrorDetails(error);
-    console.error("Remove selected university API error:", JSON.stringify(errorDetails, null, 2));
-    throw new Error(errorDetails.message || "Remove selected university failed due to network error");
-  }
-}
-export async function fetchSelectedUniversities(): Promise<University[]> {
-    try {
-      const token = localStorage.getItem("token");
-    if (!token) {
-      console.error("No authentication token found in localStorage");
-      return []; // Return empty array instead of throwing error
-    }
-    console.log("Sending fetch selected universities request to:", `${apiClient.defaults.baseURL}/user/selected-universities/`);
-    const response = await apiClient.get<SelectedUniversityResponse>("/user/selected-universities/", {
-      headers: { Authorization: `Bearer ${token}` },
-      timeout: 10000,
-    });
-    console.log("Fetch selected universities response:", JSON.stringify(response.data, null, 2));
-    const data = response.data;
-
-    if (!data || typeof data !== "object") {
-      console.error("Non-JSON or empty response received:", JSON.stringify(data, null, 2));
-      return []; // Return empty array to prevent UI errors
-    }
-    if(!data.success || !data.data) {
-      console.error("Invalid response structure:", JSON.stringify(data, null, 2));
-      return []; 
-    }
-      const items = Array.isArray(data.data) ? data.data : [data.data];
-      return items.map((item: any) => ({
-      id: item.university.id,
-      selectionId: item.id,
-      name: item.university.name || "Unknown",
-      code: item.university.code,
-      faculties: item.university.faculties || [],
-      established_year: item.university.established_year?.toString() || "Unknown",
-      //location: item.university.location,
-      description: item.university.description,
-      is_applied: item.is_applied,
-      //created_at: item.created_at,
-      slug: item.university.slug,
-      logo: item.university.logo,
-      city: item.university.city,
-      campus: item.university.campus,
-      //website: item.university.website,
-      //founded_year: item.university.founded_year,
-      ranking: item.university.ranking,
-      }));
-    } catch (error: any) {
-      const errorDetails = extractErrorDetails(error);
-      console.error("Fetch selected universities API error:", JSON.stringify(errorDetails, null, 2));
-      throw new Error(errorDetails.message || "Fetch selected universities failed due to network error");
-    }
-  }
 export async function refreshToken(): Promise<string> {
-  const refreshToken = localStorage.getItem('refreshToken');
+  const refreshToken = typeof window !== 'undefined' ? localStorage.getItem('refreshToken') : null;
   if (!refreshToken) {
     throw new Error('No refresh token available');
   }
@@ -834,11 +906,14 @@ export async function refreshToken(): Promise<string> {
     localStorage.setItem('token', response.data.access);
     localStorage.setItem('refreshToken', response.data.refresh);
     return response.data.access;
-  } catch (error: unknown) {
+  } catch (error: any) {
     const errorDetails = extractErrorDetails(error);
     console.error('Token refresh failed:', errorDetails);
-    localStorage.removeItem('token');
-    localStorage.removeItem('refreshToken');
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('token');
+      localStorage.removeItem('refreshToken');
+      localStorage.removeItem('phone_number');
+    }
     throw new Error(`Token refresh failed: ${JSON.stringify(errorDetails)}`);
   }
 }
@@ -859,7 +934,7 @@ export async function initiatePayment(amount: number, plan_id: number, phone_num
       message: response.data.message || 'Payment initiation failed',
     };
     throw new Error(`Payment initiation failed: ${JSON.stringify(errorDetails)}`);
-  } catch (error: unknown) {
+  } catch (error: any) {
     const errorDetails = extractErrorDetails(error);
     console.error('Payment initiation failed:', errorDetails);
     throw new Error(`Payment initiation failed: ${JSON.stringify(errorDetails)}`);
@@ -876,7 +951,7 @@ export async function verifyPayment(reference: string) {
       throw new Error('Invalid payment verification data');
     }
     return response.data;
-  } catch (error: unknown) {
+  } catch (error: any) {
     const errorDetails = extractErrorDetails(error);
     console.error('Payment verification failed:', errorDetails);
     throw new Error(`Payment verification failed: ${JSON.stringify(errorDetails)}`);
@@ -905,12 +980,13 @@ export async function fetchKMTCCampuses(params: Record<string, string> = {}): Pr
       city: campus.city,
       description: campus.description,
     }));
-  } catch (error: unknown) {
+  } catch (error: any) {
     const errorDetails = extractErrorDetails(error);
     console.error('[fetchKMTCCampuses] Failed to fetch campuses:', errorDetails);
     throw new Error(`Failed to fetch KMTC campuses: ${JSON.stringify(errorDetails)}`);
   }
 }
+
 export async function fetchCoursesByKMTCCampus(campusCode: string, params: Record<string, string> = {}): Promise<KMTCCourse[]> {
   try {
     if (!campusCode || typeof campusCode !== 'string') {
@@ -959,9 +1035,11 @@ export async function fetchCoursesByKMTCCampus(campusCode: string, params: Recor
     );
     console.log('[fetchCoursesByKMTCCampus] Courses for', campusCode, ':', JSON.stringify(courses, null, 2));
     return courses;
-  } catch (error: unknown) {
+  } catch (error: any) {
     const errorDetails = extractErrorDetails(error);
     console.error('[fetchCoursesByKMTCCampus] Failed to fetch courses for campus', campusCode, ':', errorDetails);
     return [];
   }
 }
+
+export default apiClient;

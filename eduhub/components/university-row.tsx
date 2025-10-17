@@ -111,32 +111,33 @@ export function UniversityRow({ university, onViewCourses }: UniversityRowProps)
                 {/* Faculties */}
                 <div>
                   <h4 className="text-gray-900 dark:text-gray-100 font-semibold mb-4">
-                    Faculties ({university.faculties?.length ?? 0})
+                     Faculties (
+                     {Array.isArray(university.faculties) ? university.faculties.length : 0})
                   </h4>
                   <div className="space-y-2">
-                    {university.faculties && university.faculties.length > 0 ? (
+                    {Array.isArray(university.faculties) && university.faculties.length > 0 ? (
                       university.faculties.map((faculty) => (
                         <div
                           key={faculty.id}
-                          className="p-3 rounded-lg border border-gray-200 dark:border-gray-600"
+         className="p-3 rounded-lg border border-gray-200 dark:border-gray-600"
                         >
                           <div className="flex justify-between items-start mb-2">
                             <span className="text-gray-900 dark:text-gray-100 font-medium text-sm">
                               {faculty.name}
                             </span>
                             <Badge variant="secondary" className="text-xs">
-                              {faculty.courseCount ?? 0} courses
+             {faculty.courseCount ?? 0} courses
                             </Badge>
                           </div>
                         </div>
                       ))
                     ) : (
-                      <div className="text-gray-600 dark:text-gray-300 text-sm">
-                        No faculties available
-                      </div>
+     <div className="text-gray-600 dark:text-gray-300 text-sm">
+       No faculties available
+     </div>
                     )}
                   </div>
-                </div>
+                  </div>
               </div>
             </div>
           </td>

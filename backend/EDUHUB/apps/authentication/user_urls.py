@@ -18,6 +18,6 @@ urlpatterns = [
     # User subjects and grades
     path('', include(router.urls)),
     # Explicit paths for UserSelectedCoursesView
-    path('user/selected-courses/', UserSelectedCoursesView.as_view(), name='user-selected-courses'),
-    path('user/selected-courses/<uuid:pk>/', UserSelectedCoursesView.as_view(), name='user-selected-course-detail'),
+    path('selected-courses/', UserSelectedCoursesView.as_view(), name='user-selected-courses'),
+    path('selected-courses/<uuid:pk>/', UserSelectedCoursesView.as_view(), name='user-selected-course-detail'),
 ]

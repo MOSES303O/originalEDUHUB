@@ -2,7 +2,7 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { MapPin, BookOpen, Building2 } from "lucide-react"
 import Image from "next/image"
-import type { UniversityWithCourses } from "@/types/university"
+import type { UniversityWithCourses } from "@/types"
 
 interface UniversityCardProps {
   university: UniversityWithCourses

@@ -17,14 +17,26 @@ export interface Course {
   id: string;
   name: string;
   code?: string;
-  university_name?: string; // Changed from University to string
+  university_name?: string ; // Changed from University to string
   university_code?: string;
   category?: string;
   description?: string;
   duration_years?: number;
+  university:{
+    id: number | string;
+    name: string;
+    slug: string;
+    code?: string;
+    logo?: string | null;
+    city?: string;
+    campus?: string;
+    ranking?: number | null;
+    accreditation?: string;
+  }
+  universityId?: number | string; // Optional for compatibility
   minimum_grade?: string | number | undefined;
   career_prospects?: string;
-  tuition_fee_per_year?: string;
+  tuition_fee_per_year?: number;
   application_fee?: number;
   required_subjects?: Array<{ subject: { name: string } }>;
   average_rating?: number;
@@ -33,9 +45,15 @@ export interface Course {
   startDate?: string; // Optional, as it’s not in the API response
   applicationDeadline?: string; // Optional, as it’s not in the API response
   department?: string;
-  faculty_id?: number;
+  faculty_id?: string | number;
   qualification?: string; // Added to manage qualification status
   selectionId?: string;
+  user_application?: {
+    id: string;
+    status: string;
+    application_number: string;
+    submitted_at: string | null;
+  } | null;
   is_applied?: boolean; // To track if the user has applied
   created_at?: string; // To track when the course was added to selections
   updated_at?: string; // To track when the course selection was last updated
@@ -48,14 +66,43 @@ export interface University {
   logo?: string | null; // Updated to match the API response (null is allowed)
   city?: string; // Matches the API response
   campus?: string; // Matches the API response
-  faculties?: Faculty[]; // Optional, as it is not in the API response
+  faculties?:Array<{
+    name: string;
+    courseCount: number;
+    departments: string[];
+    id?: number | string;
+    university_id?: number;
+    slug?: string;
+    description?: string;
+  }>;
   established_year?: string; // Optional, as it is not in the API response
   ranking?: number | null; // Matches the API response
   available_courses?: number; // Optional, as it is not in the API response
   accreditation?: string; // Matches the API response
   description?: string; // Optional, as it is not in the API response
-  is_applied?: boolean; // Optional, for tracking user application
-  selectionId?: number | string; // Optional, for tracking selection ID
+}
+export interface UniversityWithCourses extends University {
+  courseCount: number;
+  departments: Array<{
+    name: string;
+    courseCount: number;
+    courses: Course[];
+    id?: number | string;
+    faculty_id?: number;
+    slug?: string | undefined;
+    description?: string;
+  }>;
+  faculties: Array<{
+    name: string;
+    courseCount: number;
+    departments: string[];
+    id?: number | string;
+    university_id?: number;
+    slug?: string | undefined;
+    description?: string;
+  }>;
+  establishedYear: string;
+  accreditation: string;
 }
 export type Faculty = {
   id: number;
@@ -172,7 +219,14 @@ export interface SelectedCourseResponse {
       level?: string;
       qualification?: string;
       application_fee?: number;
+      updated_at?: string;
       average_rating?: number;
+      user_application?: {
+        id: string;
+        status: string;
+        application_number: string;
+        submitted_at: string | null;
+      } | null;
       total_reviews?: number;
       is_selected?: boolean;
     };
@@ -198,36 +252,18 @@ export interface SelectedCourseResponse {
       delivery_mode?: string;
       department?: string;
       level?: string;
+      updated_at?: string;
+      user_application?: {
+        id: string;
+        status: string;
+        application_number: string;
+        submitted_at: string | null;
+      } | null;
       qualification?: string;
       application_fee?: number;
       average_rating?: number;
       total_reviews?: number;
       is_selected?: boolean;
-    };
-    is_applied: boolean;
-    application_date: string | null;
-    created_at: string;
-  } | null;
-  errors?: Record<string, any>;
-  meta?: Record<string, any>;
-}
-export interface SelectedUniversityResponse {
-  success: boolean;
-  message: string;
-  timestamp: string;
-  data: {
-    id: string;
-    university: {
-      id: string;
-      name: string;
-      slug: string;
-      logo?: string;
-      city?: string;
-      campus?: string;
-      description?: string;
-      created_at?: string;
-      faculties?: Faculty[];
-      established_year?:string;
     };
     is_applied: boolean;
     application_date: string | null;

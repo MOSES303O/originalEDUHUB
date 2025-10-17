@@ -1,10 +1,13 @@
-import type { NextConfig } from "next";
+// frontend/next.config.js
+/** @type {import('next').NextConfig} */
 import path from "path";
 
-const nextConfig: NextConfig = {
-  output: "standalone", // Required for GitHub Pages
+const isVercel = process.env.VERCEL === "1";
+
+const nextConfig = {
+  output: "standalone",
   images: {
-    unoptimized: true, // Disables Next.js image optimization (not supported on GH Pages)
+    unoptimized: true,
     remotePatterns: [
       {
         protocol: "https",
@@ -15,14 +18,31 @@ const nextConfig: NextConfig = {
       {
         protocol: "http",
         hostname: "localhost",
-        port: "3000",
+        port: "8000",
+        pathname: "/media/**",
+      },
+      {
+        protocol: "https",
+        hostname: "*.onrender.com",
         pathname: "/media/**",
       },
     ],
   },
-  basePath: "/originalEDUHUB", // Required if repo name != username.github.io
-  assetPrefix: "/originalEDUHUB/", // Ensures assets load correctly
-  outputFileTracingRoot: path.join(__dirname, ".."), // Points to originalEDUHUB root
+  basePath: isVercel ? "" : "/originalEDUHUB",
+  assetPrefix: isVercel ? "" : "/originalEDUHUB/",
+  outputFileTracingRoot: path.join(__dirname, ".."),
+  async rewrites() {
+    const destination = isVercel
+      ? (process.env.NEXT_PUBLIC_API_URL || "https://your-backend.onrender.com/api/v1")
+      : "http://localhost:8000/api/v1";
+    console.log('Next.js rewrite destination:', destination);
+    return [
+      {
+        source: "/api/v1/:path*",
+        destination: `${destination}/:path*`,
+      },
+    ];
+  },
 };
 
 export default nextConfig;
