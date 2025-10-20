@@ -1,6 +1,9 @@
 # ------------------------
 # Python / Django
 # ------------------------
+__pypackages__/
+*.py[cod]
+*$py.class
 __pycache__/
 *.py[cod]
 *.pyo
@@ -14,19 +17,22 @@ __pycache__/
 db.sqlite3
 media/
 staticfiles/
+settings/
 .DS_Store
 
 # Django specific
 .env
+.myvach
+myvach/
 *.env
 *.local
 /secrets.json
+.python
 
 # VSCode / IDE
 .vscode/
 .idea/
 *.swp
-
 # ------------------------
 # Node.js / Next.js
 # ------------------------

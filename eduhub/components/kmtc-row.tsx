@@ -11,57 +11,69 @@ import { fetchCoursesByKMTCCampus } from "@/lib/api";
 
 interface KMTCRowProps {
   campus: KMTCCampus;
-  onViewCourses?: () => void; // Added optional onViewCourses prop
+  onViewCourses?: () => void;
 }
 
 export function KMTCRow({ campus, onViewCourses }: KMTCRowProps) {
   const [isExpanded, setIsExpanded] = useState(false);
   const [courses, setCourses] = useState<KMTCCourse[]>([]);
+  const [courseCount, setCourseCount] = useState<number>(0);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
 
-  // Fetch courses when the row is expanded
+  // Fetch courses and count when component mounts or campus changes
   useEffect(() => {
-    if (isExpanded) {
-      const loadCourses = async () => {
-        setIsLoading(true);
-        try {
-          const fetchedCourses = await fetchCoursesByKMTCCampus(campus.code);
-          setCourses(fetchedCourses);
-        } catch (err) {
-          setError("Failed to load courses. Please try again.");
-          console.error("[KMTCRow] Error fetching courses for campus", campus.code, ":", err);
-        } finally {
-          setIsLoading(false);
-        }
-      };
-      loadCourses();
-    }
-  }, [isExpanded, campus.code]);
+    const loadCourseCount = async () => {
+      setIsLoading(true);
+      try {
+        const fetchedCourses = await fetchCoursesByKMTCCampus(campus.code);
+        setCourses(fetchedCourses);
+        setCourseCount(fetchedCourses.length);
+      } catch (err) {
+        setError("Failed to load courses. Please try again.");
+        console.error("[KMTCRow] Error fetching courses for campus", campus.code, ":", err);
+        setCourseCount(0);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    loadCourseCount();
+  }, [campus.code]);
 
-  const toggleExpanded = () => {
+  const toggleExpanded = (e: React.MouseEvent | React.KeyboardEvent) => {
+    if (e.type === "keydown" && (e as React.KeyboardEvent).key !== "Enter" && (e as React.KeyboardEvent).key !== " ") {
+      return;
+    }
     setIsExpanded(!isExpanded);
   };
 
-  const handleViewCourses = () => {
+  const handleViewCourses = (e: React.MouseEvent) => {
+    e.stopPropagation(); // Prevent row click from toggling expansion
     console.log("[KMTCRow] Navigating to courses for campus:", campus.code);
-    router.push(`/kmtc/${campus.code}/courses`);
+    if (onViewCourses) {
+      onViewCourses();
+    } else {
+      router.push(`/kmtc/${campus.code}/courses`);
+    }
   };
 
   return (
     <>
       {/* Main Row */}
-      <tr className="border-b border-gray-200 transition-colors">
+      <tr
+        className="border-b border-gray-200 dark:border-gray-700 cursor-pointer hover:bg-muted/50"
+        onClick={toggleExpanded}
+        onKeyDown={toggleExpanded}
+        role="button"
+        tabIndex={0}
+      >
         <td className="p-4">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={toggleExpanded}
-            className="text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 p-1"
-          >
-            {isExpanded ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
-          </Button>
+          {isExpanded ? (
+            <ChevronDown className="w-4 h-4 text-gray-400" />
+          ) : (
+            <ChevronRight className="w-4 h-4 text-gray-400" />
+          )}
         </td>
         <td className="p-4 text-gray-900 dark:text-gray-100 font-medium">{campus.code}</td>
         <td className="p-4">
@@ -75,7 +87,7 @@ export function KMTCRow({ campus, onViewCourses }: KMTCRowProps) {
         <td className="p-4 text-gray-600 dark:text-gray-300 capitalize">{campus.city}</td>
         <td className="p-4 text-center">
           <Badge variant="outline" className="border-emerald-500 text-emerald-600 dark:text-emerald-400">
-            KMTC Campus
+            {isLoading ? "Loading..." : `${courseCount} Courses`}
           </Badge>
         </td>
         <td className="p-4 text-center">
@@ -88,7 +100,7 @@ export function KMTCRow({ campus, onViewCourses }: KMTCRowProps) {
             <Button
               size="sm"
               className="bg-emerald-500 hover:bg-emerald-600 text-white"
-              onClick={onViewCourses || handleViewCourses} // Use onViewCourses if provided, else fallback to handleViewCourses
+              onClick={handleViewCourses}
             >
               <BookOpen className="w-3 h-3 mr-1" />
               View Courses
@@ -99,7 +111,7 @@ export function KMTCRow({ campus, onViewCourses }: KMTCRowProps) {
 
       {/* Expanded Content */}
       {isExpanded && (
-        <tr className="border-b border-gray-200 dark:border-gray-800">
+        <tr className="bg-muted/50">
           <td colSpan={7} className="p-0">
             <div className="bg-gray-50 dark:bg-gray-800/30 p-6 border-l-4 border-emerald-500">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -145,7 +157,7 @@ export function KMTCRow({ campus, onViewCourses }: KMTCRowProps) {
                 <div>
                   <h4 className="text-gray-900 dark:text-gray-100 font-semibold mb-4 flex items-center gap-2">
                     <BookOpen className="w-4 h-4 text-emerald-500" />
-                    Courses Offered
+                    Courses Offered ({courseCount})
                   </h4>
                   {isLoading ? (
                     <div className="text-gray-600 dark:text-gray-300">Loading courses...</div>

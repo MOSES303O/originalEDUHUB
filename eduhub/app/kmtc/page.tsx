@@ -1,3 +1,4 @@
+// frontend/components/kmtc-courses-page.tsx
 "use client";
 
 import React, { Suspense, useState, useEffect, useMemo } from "react";
@@ -8,7 +9,6 @@ import { useSearchParams, useRouter } from "next/navigation";
 import { Table, TableBody, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { fetchKMTCCampuses, fetchSelectedCourses } from "@/lib/api";
-import { generateCoursesPDF } from "@/lib/pdf-generator";
 import { CoursesSkeleton } from "@/components/courses-skeleton";
 import { useSelectedCourses, initializeSelectedCourses } from "@/lib/course-store";
 import { useToast } from "@/hooks/use-toast";
@@ -65,29 +65,6 @@ function KMTCCoursesPageContent() {
     } else {
       console.log("[KMTCCoursesPage] User authenticated and paid, showing FindCourseForm");
       setShowFindCourseForm(true);
-    }
-  };
-
-  const handleGeneratePDF = async () => {
-    try {
-      const courses = await fetchSelectedCourses();
-      const kmtcCourses = courses.filter((course) =>
-        course.university_name?.toLowerCase().includes("kmtc")
-      );
-      generateCoursesPDF(kmtcCourses, user?.phone_number || "Student");
-      toast({
-        title: "PDF Generated",
-        description: "Your KMTC courses PDF has been downloaded.",
-        duration: 3000,
-      });
-    } catch (err) {
-      console.error("[KMTCCoursesPage] Error generating PDF:", err);
-      toast({
-        title: "Error",
-        description: "Failed to generate PDF. Please try again.",
-        variant: "destructive",
-        duration: 3000,
-      });
     }
   };
 
@@ -197,12 +174,6 @@ function KMTCCoursesPageContent() {
                   >
                     <Heart className="h-4 w-4" />
                     Selected Courses ({selectedCourses.length})
-                  </Button>
-                  <Button
-                    className="bg-emerald-600 hover:bg-emerald-700"
-                    onClick={handleGeneratePDF}
-                  >
-                    Download PDF
                   </Button>
                 </div>
               </div>

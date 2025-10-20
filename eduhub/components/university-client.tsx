@@ -35,7 +35,7 @@ export default function UniversityClient({ initialUniversities, initialError }: 
   const router = useRouter();
   const { toast } = useToast();
   const { user, loading: authLoading } = useAuth();
-  const debouncedSetSearchTerm = useMemo(() => debounce(setSearchTerm, 300), []);
+  const setSearchTermDebounced = useMemo(() => debounce((value: string) => setSearchTerm(value), 300), []);
 
   const handleGetStarted = () => {
     if (!user) {
@@ -70,12 +70,12 @@ export default function UniversityClient({ initialUniversities, initialError }: 
   }, [universities]);
 
   const filteredUniversities = useMemo(() => {
-    const filtered = universities.filter((university) => {
+    return universities.filter((university) => {
       const matchesSearch =
         searchTerm === "" ||
-        university.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (university.name && university.name.toLowerCase().includes(searchTerm.toLowerCase())) ||
         (university.code && university.code.toLowerCase().includes(searchTerm.toLowerCase())) ||
-        ((university.city || "Unknown").toLowerCase().includes(searchTerm.toLowerCase()));
+        ((university.city || "Unknown") && (university.city || "Unknown").toLowerCase().includes(searchTerm.toLowerCase()));
       const matchesCity =
         cityFilter === "all" || (university.city || "Unknown").toLowerCase() === cityFilter.toLowerCase();
       console.log(
@@ -83,8 +83,6 @@ export default function UniversityClient({ initialUniversities, initialError }: 
       );
       return matchesSearch && matchesCity;
     });
-    console.log("[Filter] Filtered universities:", filtered);
-    return filtered;
   }, [universities, searchTerm, cityFilter]);
 
   if (process.env.NODE_ENV !== "production") {
@@ -92,8 +90,100 @@ export default function UniversityClient({ initialUniversities, initialError }: 
   }
 
   return (
-    <div className="min-h-screen bg-app-bg-light dark:bg-app-bg-dark">
+    <div className="flex min-h-screen flex-col">
       <Header currentPage="universities" onGetStarted={handleGetStarted} user={user} />
+      <main className="flex-1">
+        <section className="w-full py-12 md:py-24 lg:py-32">
+          <div className="container px-4 md:px-6">
+            <div className="flex flex-col items-start gap-4 mb-8">
+              <Button variant="outline" size="sm" asChild className="mb-2">
+                <Link href="/">
+                  <ArrowLeft className="mr-2 h-4 w-4" />
+                  Back to Home
+                </Link>
+              </Button>
+              <div className="flex flex-col md:flex-row md:items-center md:justify-between w-full">
+                <div>
+                  <h1 className="text-3xl font-bold tracking-tighter sm:text-4xl md:text-5xl">Available Universities</h1>
+                  <p className="text-gray-500 md:text-xl">
+                    Browse through our comprehensive list of accredited universities
+                  </p>
+                </div>
+              </div>
+              <div className="flex flex-col md:flex-row gap-4 w-full mb-6">
+                <div className="flex-1 relative">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                  <Input
+                    placeholder="Search universities by name, code, or location..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTermDebounced(e.target.value)}
+                    className="pl-10 bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-400"
+                  />
+                </div>
+                <Select value={cityFilter} onValueChange={setCityFilter}>
+                  <SelectTrigger className="w-[200px] bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-700 text-gray-900 dark:text-gray-100">
+                    <SelectValue placeholder="Filter by city" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-700">
+                    <SelectItem value="all">All Cities</SelectItem>
+                    {cities.map((city) => (
+                      <SelectItem key={city} value={city}>
+                        {city.charAt(0).toUpperCase() + city.slice(1)}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            {authLoading ? (
+              <CoursesSkeleton />
+            ) : error ? (
+              <div className="flex justify-center items-center p-8 rounded-md border bg-red-50 dark:bg-red-900/20 dark:text-red-300">
+                <p>{error}</p>
+                <Button variant="outline" className="ml-4" onClick={() => window.location.reload()}>
+                  Try Again
+                </Button>
+              </div>
+            ) : filteredUniversities.length === 0 ? (
+              <div className="flex flex-col items-center justify-center p-8 rounded-md border bg-gray-50 dark:bg-gray-800">
+                <p className="text-gray-500 dark:text-gray-400 mb-4">
+                  {searchTerm || cityFilter !== "all" ? "No universities found matching your criteria." : "No universities available."}
+                </p>
+                <Button asChild variant="outline">
+                  <Link href="/">Start a New Search</Link>
+                </Button>
+              </div>
+            ) : (
+              <div className="rounded-md border">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="w-[50px]"></TableHead>
+                      <TableHead>University Code</TableHead>
+                      <TableHead>University Name</TableHead>
+                      <TableHead>Location</TableHead>
+                      <TableHead className="text-center">Available Courses</TableHead>
+                      <TableHead className="text-center">Accreditation</TableHead>
+                      <TableHead className="text-right">Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {filteredUniversities.map((university) => (
+                      <UniversityRow
+                        key={university.code}
+                        university={university}
+                        onViewCourses={() => router.push(`/university/${university.code}/courses`)}
+                      />
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            )}
+          </div>
+        </section>
+      </main>
+      <Footer />
       {showAuthModal && <AuthenticationModal onClose={() => setShowAuthModal(false)} canClose={!!user} />}
       {showFindCourseForm && (
         <FindCourseForm
@@ -101,99 +191,6 @@ export default function UniversityClient({ initialUniversities, initialError }: 
           setShowFindCourseForm={setShowFindCourseForm}
         />
       )}
-      <div className="container mx-auto px-4 py-8">
-        <div className="flex items-center justify-between mb-8">
-          <Link href="/">
-            <Button
-              variant="outline"
-              className="border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100 bg-transparent"
-            >
-              <ArrowLeft className="w-4 h-4 mr-2" />
-              Back to Home
-            </Button>
-          </Link>
-        </div>
-
-        <div className="mb-8">
-          <h1 className="text-4xl font-bold gradient-text mb-2">Available Universities</h1>
-          <p className="text-gray-600 dark:text-gray-400">
-            Browse through our comprehensive list of accredited universities
-          </p>
-        </div>
-
-        <div className="flex flex-col md:flex-row gap-4 mb-6">
-          <div className="flex-1 relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-            <Input
-              placeholder="Search universities by name, code, or location..."
-              value={searchTerm}
-              onChange={(e) => debouncedSetSearchTerm(e.target.value)}
-              className="pl-10 bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-400"
-            />
-            {searchTerm && (
-              <Button variant="ghost" size="sm" onClick={() => setSearchTerm("")}>
-                Clear
-              </Button>
-            )}
-          </div>
-          <Select value={cityFilter} onValueChange={setCityFilter}>
-            <SelectTrigger className="w-[200px] bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-700 text-gray-900 dark:text-gray-100">
-              <SelectValue placeholder="Filter by city" />
-            </SelectTrigger>
-            <SelectContent className="bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-700">
-              <SelectItem value="all">All Cities</SelectItem>
-              {cities.map((city) => (
-                <SelectItem key={city} value={city}>
-                  {city.charAt(0).toUpperCase() + city.slice(1)}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-
-        {authLoading ? (
-          <CoursesSkeleton />
-        ) : error ? (
-          <div className="flex justify-center items-center p-8 rounded-md border bg-red-50 dark:bg-red-900/20 dark:text-red-300">
-            <p>{error}</p>
-            <Button variant="outline" className="ml-4" onClick={() => window.location.reload()}>
-              Try Again
-            </Button>
-          </div>
-        ) : filteredUniversities.length === 0 ? (
-          <div className="text-center py-12">
-            <p className="text-gray-600 dark:text-gray-400 text-lg">
-              {searchTerm || cityFilter !== "all" ? "No universities found matching your criteria." : "No universities available."}
-            </p>
-          </div>
-        ) : (
-          <div className="rounded-lg overflow-hidden border border-gray-200 dark:border-gray-700 shadow-sm">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="w-[50px]"></TableHead>
-                  <TableHead>University Code</TableHead>
-                  <TableHead>University Name</TableHead>
-                  <TableHead>Location</TableHead>
-                  <TableHead className="text-center">Available Courses</TableHead>
-                  <TableHead className="text-center">Accreditation</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredUniversities.map((university) => (
-                  <UniversityRow
-                    key={university.code}
-                    university={university}
-                    onViewCourses={() => router.push(`/university/${university.code}/courses`)}
-                  />
-                ))}
-              </TableBody>
-            </Table>
-          </div>
-        )}
-      </div>
-      <Footer />
     </div>
   );
 }

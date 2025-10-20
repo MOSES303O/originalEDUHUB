@@ -1,49 +1,42 @@
 asgiref==3.8.1
+attrs==25.3.0
+certifi==2025.4.26
+charset-normalizer==3.4.2
+click==8.3.0
+colorama==0.4.6
+dj-database-url==3.0.1
 Django==5.2.1
+django-cors-headers==4.7.0
+django-extensions==4.1
+django-filter==25.1
+django-phonenumber-field==8.1.0
+django-redis==6.0.0
 djangorestframework==3.16.0
 djangorestframework_simplejwt==5.5.0
+drf-spectacular==0.28.0
+gunicorn==23.0.0
+h11==0.16.0
+idna==3.10
+inflection==0.5.1
+jsonschema==4.24.0
+jsonschema-specifications==2025.4.1
+packaging==25.0
+phonenumbers==9.0.6
+pillow==11.2.1
+psycopg2==2.9.11
 PyJWT==2.9.0
+python-decouple==3.8
+PyYAML==6.0.2
+redis==6.2.0
+referencing==0.36.2
+reportlab==4.4.3
+requests==2.32.3
+rpds-py==0.25.1
+setuptools==80.9.0
 sqlparse==0.5.3
 tzdata==2025.2
- 
- # Core Django packages
-Django==5.2.1
-djangorestframework==3.16.0
-django-cors-headers==4.3.1
-django-environ==0.11.2
-psycopg2-binary==2.9.7
-#pip install python-decouple
-#pip install requests
-#pip install Pillow
-# Authentication & Security
-djangorestframework-simplejwt==5.5.0
-django-oauth-toolkit==1.7.1
-cryptography==41.0.7
-
-# Database & Caching
-redis==5.0.1
-django-redis==5.4.0
-celery==5.3.4
-
-# API Documentation
-drf-spectacular==0.26.5
-drf-spectacular[sidecar]==0.26.5
-
-# File handling & Storage
-Pillow==10.1.0
-django-storages==1.14.2
-boto3==1.29.7
-
-# Monitoring & Logging
-sentry-sdk==1.38.0
-django-debug-toolbar==4.2.0
-
-# Testing
-pytest==7.4.3
-pytest-django==4.7.0
-factory-boy==3.3.0
-
-# Production
-gunicorn==21.2.0
-whitenoise==6.6.0
-#GitHub Pages is static, so the backend (ochiengsenterprise.co.ke:8000) must be hosted separately (e.g., on a VPS, Heroku, or Render)
+uritemplate==4.1.1
+urllib3==2.4.0
+uvicorn==0.38.0
+wheel==0.45.1
+whitenoise==6.9.0

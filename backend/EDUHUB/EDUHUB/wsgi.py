@@ -10,6 +10,7 @@ https://docs.djangoproject.com/en/5.2/howto/deployment/wsgi/
 import os
 from django.core.wsgi import get_wsgi_application
 
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'EDUHUB.settings.development')
+base_module="EDUHUB.deployment" if "RENDER_EXTERNAL_HOSTNAME" in os.environ else "EDUHUB.settings.base"
+os.environ.setdefault("DJANGO_SETTINGS_MODULE", base_module)
 
 application = get_wsgi_application()

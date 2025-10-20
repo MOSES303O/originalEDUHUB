@@ -1,51 +1,54 @@
 """
 Development settings for EDUHUB backend.
 """
-
-from .base import *
+import os
+import dj_database_url
+from .base import BASE_DIR
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
 
-ALLOWED_HOSTS = ['localhost', '127.0.0.1', '0.0.0.0']
-
-# Development-specific apps
-INSTALLED_APPS += [
-    'django_extensions',
+ALLOWED_HOSTS = ['localhost', '127.0.0.1', '0.0.0.0',os.environ.get['RENDER_EXTERNAL_HOSTNAME']]
+CSRF_TRUSTED_ORIGINS = ['https://'+os.environ.get('RENDER_EXTERNAL_HOSTNAME')]
+SECRET_KEY = os.environ.get('SECRET_KEY')
+MIDDLEWARE = [
+    'corsheaders.middleware.CorsMiddleware',
+    'django.middleware.security.SecurityMiddleware',
+    'Wwhitenoise.middleware.WhiteNoiseMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
+    'django.contrib.sessions.middleware.SessionMiddleware',
+    'django.middleware.common.CommonMiddleware',
+    'django.middleware.csrf.CsrfViewMiddleware',
+    'django.contrib.auth.middleware.AuthenticationMiddleware',
+    'django.contrib.messages.middleware.MessageMiddleware',
+    'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'apps.core.middleware.RequestLoggingMiddleware',
+    'apps.core.middleware.RateLimitMiddleware',
 ]
 
-# Development middleware
-if DEBUG:
-    MIDDLEWARE += [
-        'django.middleware.common.BrokenLinkEmailsMiddleware',
-    ]
-
-# Database for development (SQLite3)
-DATABASES = {
+# CORS Configuration
+#CORS_ALLOWED_ORIGINS = [
+#    "http://127.0.0.1:3000",
+#   "http://localhost:3000",
+#    "https://your-frontend.vercel.app",
+#]
+STORAGES={
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',  # Or use 'django.db.backends.postgresql', 'mysql', etc.
-        'NAME': BASE_DIR / 'db.sqlite3',         # Use BASE_DIR if already defined
-    }
+        'BACKEND': 'django.core.files.storage.FileSystemStorage',
+        'OPTIONS': {
+        }
+    },
+    "staticfiles": {
+        "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
+    },
 }
 
-
-
-# CORS settings for development
-CORS_ALLOW_ALL_ORIGINS = True
+DATABASES = {
+    'default': dj_database_url.config(
+        default=os.environ.get('DATABASE_URL'),
+        conn_max_age=600
+    )
+}
 
 # Email backend for development
 EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
-
-# Disable rate limiting in development
-RATE_LIMIT_ENABLE = False
-
-# Cache configuration for development
-CACHES = {
-    'default': {
-        'BACKEND': 'django.core.cache.backends.dummy.DummyCache',
-    }
-}
-
-# Logging for development
-LOGGING['handlers']['console']['level'] = 'DEBUG'
-LOGGING['loggers']['apps']['level'] = 'DEBUG'

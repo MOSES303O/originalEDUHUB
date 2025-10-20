@@ -16,7 +16,7 @@ import { CoursesSkeleton } from "@/components/courses-skeleton";
 import { AuthenticationModal } from "@/components/authentication-modal";
 import { FindCourseForm } from "@/components/find-course-form";
 import { useAuth } from "@/lib/auth-context";
-import { fetchCoursesByKMTCCampus, fetchKMTCCampuses, fetchSelectedCourses } from "@/lib/api";
+import { fetchCoursesByKMTCCampus, fetchKMTCCampuses} from "@/lib/api";
 import { generateCoursesPDF } from "@/lib/pdf-generator";
 import { KMTCCourse } from "@/types";
 import { notFound } from "next/navigation";

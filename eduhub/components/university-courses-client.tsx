@@ -11,9 +11,7 @@ import { Table, TableBody, TableHead, TableHeader, TableRow } from "@/components
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ArrowLeft, Search } from "lucide-react";
 import Link from "next/link";
-import { useParams, useRouter } from "next/navigation";
 import { useToast } from "@/hooks/use-toast";
-import { CoursesSkeleton } from "@/components/courses-skeleton";
 import { AuthenticationModal } from "@/components/authentication-modal";
 import { FindCourseForm } from "@/components/find-course-form";
 import { useAuth } from "@/lib/auth-context";
@@ -31,9 +29,6 @@ export default function UniversityCoursesClient({
   initialCourses,
   initialError,
 }: UniversityCoursesClientProps) {
-  const params = useParams();
-  const universityCode = params.id as string;
-  const router = useRouter();
   const { toast } = useToast();
   const { user } = useAuth();
 
@@ -185,6 +180,8 @@ export default function UniversityCoursesClient({
                   <TableHead>Course Name</TableHead>
                   <TableHead className="text-center">Required Grade</TableHead>
                   <TableHead className="text-center">Qualification</TableHead>
+                  <TableHead className="text-center">Type</TableHead>
+                  <TableHead className="text-center">Choose</TableHead>
                   <TableHead className="text-center">Actions</TableHead>
                 </TableRow>
               </TableHeader>
