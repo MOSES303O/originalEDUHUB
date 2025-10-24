@@ -202,7 +202,10 @@ interface ApiError {
 }
 
 // Utility to extract error details
-const extractErrorDetails = (error: any): ApiError => {
+// ... (rest of the imports and existing code remain unchanged)
+
+// Utility to extract error details
+export const extractErrorDetails = (error: any): ApiError => { // Added export
   const axiosError = error as AxiosError<ErrorResponse>;
   let message = axiosError.message || 'Unknown error';
   let data = axiosError.response?.data;
@@ -247,6 +250,7 @@ const extractErrorDetails = (error: any): ApiError => {
   };
 };
 
+// ... (rest of api.ts, including insertSelectedCourse, remains unchanged)
 // Fetch CSRF token
 const fetchCsrfToken = async () => {
   try {
@@ -736,30 +740,33 @@ export async function register(data: {
   }
 }
 
-export async function insertSelectedCourse(courseId: string): Promise<Course> {
+export async function insertSelectedCourse(courseCode: string): Promise<Course> {
   try {
-    const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
-    if (!token) {
-      throw new Error('No authentication token found');
+    if (!courseCode || typeof courseCode !== 'string' || courseCode.trim() === '') {
+      console.error("[insertSelectedCourse] Invalid courseCode:", courseCode);
+      throw new Error("Invalid course code");
     }
-    console.log('Sending insert selected course request for courseId:', courseId);
-    const response = await apiClient.post<SelectedCourseResponse>('/user/selected-courses/', { course: courseId }, {
-      headers: { Authorization: `Bearer ${token}` },
-      timeout: 10000,
-    });
-    console.log('Insert selected course response:', JSON.stringify(response.data, null, 2));
+    const token = localStorage.getItem("token");
+    if (!token) {
+      console.error("[insertSelectedCourse] No authentication token found in localStorage");
+      throw new Error("Authentication required. Please log in.");
+    }
+    console.log('[insertSelectedCourse] Sending request for courseCode:', courseCode);
+    const response = await apiClient.post<SelectedCourseResponse>('/user/selected-courses/', { course_code: courseCode });
+    console.log('[insertSelectedCourse] Response:', JSON.stringify(response.data, null, 2));
     const data = response.data;
     if (!data.success) {
+      console.error('[insertSelectedCourse] API error:', data.errors?.detail || 'Unknown error');
       throw new Error(data.errors?.detail || 'Failed to select course');
     }
     const item = Array.isArray(data.data) ? data.data[0] : data.data;
-    if (!item) {
+    if (!item || !item.course?.id) {
       throw new Error('No valid course data found in the response.');
     }
     return {
       id: item.course.id.toString(),
-      name: item.course.name || 'Unknown',
       code: item.course.code || 'N/A',
+      name: item.course.name || 'Unknown',
       university: {
         id: item.course.id || 'unknown',
         name: item.course.university_name || 'Unknown',
@@ -792,32 +799,37 @@ export async function insertSelectedCourse(courseId: string): Promise<Course> {
       } : null,
       created_at: item.created_at || undefined,
       updated_at: item.course.updated_at || undefined,
+      selectionId: item.id,
+      qualification: item.course.category || undefined,
+      average_rating: item.course.average_rating || undefined,
+      total_reviews: item.course.total_reviews || undefined,
     };
   } catch (error: any) {
     const errorDetails = extractErrorDetails(error);
-    console.error('Insert selected course failed:', JSON.stringify(errorDetails, null, 2));
+    console.error('[insertSelectedCourse] Failed:', JSON.stringify(errorDetails, null, 2));
     throw error;
   }
 }
 
 export async function removeSelectedCourse(selectionId: string): Promise<void> {
   try {
+    if (!selectionId || !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(selectionId)) {
+      console.error("[removeSelectedCourse] Invalid selectionId format:", selectionId);
+      throw new Error("Invalid selection ID format");
+    }
     const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
     if (!token) {
       throw new Error('No authentication token found');
     }
-    console.log('Sending remove selected course request for selectionId:', selectionId);
-    const response = await apiClient.delete<SelectedCourseResponse>(`/user/selected-courses/${selectionId}/`, {
+    console.log('[removeSelectedCourse] Sending request for selectionId:', selectionId);
+    await apiClient.delete(`/user/selected-courses/${selectionId}/`, {
       headers: { Authorization: `Bearer ${token}` },
       timeout: 10000,
     });
-    console.log('Remove selected course response:', JSON.stringify(response.data || 'No content', null, 2));
-    if (response.data && !response.data.success) {
-      throw new Error(response.data.errors?.detail || 'Failed to deselect course');
-    }
+    console.log('[removeSelectedCourse] Successfully removed selectionId:', selectionId);
   } catch (error: any) {
     const errorDetails = extractErrorDetails(error);
-    console.error('Remove selected course failed:', JSON.stringify(errorDetails, null, 2));
+    console.error('[removeSelectedCourse] Failed:', JSON.stringify(errorDetails, null, 2));
     throw error;
   }
 }

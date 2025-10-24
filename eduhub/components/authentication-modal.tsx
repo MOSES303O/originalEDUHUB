@@ -1,3 +1,4 @@
+// frontend/components/authentication-modal.tsx
 "use client";
 
 import React, { useState, useEffect } from "react";
@@ -91,7 +92,7 @@ export function AuthenticationModal({ onClose, canClose }: AuthenticationModalPr
       }
 
       console.log("Calling signIn with token:", userToken.substring(0, 20) + "...");
-      await signIn(userToken);
+      await signIn(formattedPhone, "&mo1se2s3@");
       console.log("signIn completed, requirePayment:", requirePayment);
 
       if (!requirePayment) {
@@ -125,7 +126,7 @@ export function AuthenticationModal({ onClose, canClose }: AuthenticationModalPr
   const modalContent = showFindCourseForm ? (
     <FindCourseForm onClose={onClose} setShowFindCourseForm={setShowFindCourseForm} />
   ) : (
-    <Card className="w-full max-w-md bg-[#1a2521]">
+    <Card className="w-full max-w-[90vw] sm:max-w-md bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-700">
       <CardHeader>
         <div className="flex items-center justify-between">
           <Button
@@ -136,9 +137,9 @@ export function AuthenticationModal({ onClose, canClose }: AuthenticationModalPr
               onClose();
             }}
           >
-            <ArrowLeft className="h-5 w-5" />
+            <ArrowLeft className="h-4 w-4 sm:h-5 sm:w-5" />
           </Button>
-          <CardTitle className="text-2xl">Login</CardTitle>
+          <CardTitle className="text-lg sm:text-xl md:text-2xl text-gray-900 dark:text-gray-100">Login</CardTitle>
           <Button
             variant="ghost"
             size="icon"
@@ -146,71 +147,77 @@ export function AuthenticationModal({ onClose, canClose }: AuthenticationModalPr
             disabled={!canClose}
             className={canClose ? "" : "opacity-50 cursor-not-allowed"}
           >
-            <X className="h-5 w-5" />
+            <X className="h-4 w-4 sm:h-5 sm:w-5" />
           </Button>
         </div>
-        <CardDescription>Enter your phone number to check your subscription.</CardDescription>
+        <CardDescription className="text-xs sm:text-sm text-gray-500 dark:text-gray-400">
+          Enter your phone number to check your subscription.
+        </CardDescription>
       </CardHeader>
       <form onSubmit={handleSubmit}>
-        <CardContent>
-          <div className="space-y-4">
-            {error && (
-              <Alert variant="destructive">
-                <AlertDescription>{error}</AlertDescription>
-              </Alert>
-            )}
-            {noSubscription && countdown > 0 && (
-              <div className="text-center">
-                <p className="text-sm text-gray-500 mb-2">No active subscription. Redirecting in {countdown} seconds...</p>
-                <div className="w-full bg-gray-200 rounded-full h-2.5">
-                  <div
-                    className="bg-emerald-600 h-2.5 rounded-full"
-                    style={{ width: `${(countdown / 10) * 100}%` }}
-                  ></div>
-                </div>
+        <CardContent className="space-y-4 sm:space-y-6">
+          {error && (
+            <Alert variant="destructive">
+              <AlertDescription className="text-xs sm:text-sm">{error}</AlertDescription>
+            </Alert>
+          )}
+          {noSubscription && countdown > 0 && (
+            <div className="text-center">
+              <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 mb-2">
+                No active subscription. Redirecting in {countdown} seconds...
+              </p>
+              <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2 sm:h-2.5">
+                <div
+                  className="bg-emerald-600 h-2 sm:h-2.5 rounded-full"
+                  style={{ width: `${(countdown / 10) * 100}%` }}
+                ></div>
               </div>
-            )}
-            {!noSubscription && (
-              <div className="space-y-2">
-                <Label htmlFor="phone">Phone Number</Label>
-                <div className="flex">
-                  <div className="flex items-center px-3 border border-r-0 rounded-l-md bg-muted">+254</div>
-                  <Input
-                    id="phone"
-                    type="tel"
-                    placeholder="712345678"
-                    className="rounded-l-none"
-                    value={phoneNumber}
-                    onChange={handlePhoneChange}
-                    maxLength={10}
-                    disabled={isSubmitting}
-                    required
-                  />
+            </div>
+          )}
+          {!noSubscription && (
+            <div className="space-y-2">
+              <Label htmlFor="phone" className="text-xs sm:text-sm text-gray-900 dark:text-gray-100">
+                Phone Number
+              </Label>
+              <div className="flex">
+                <div className="flex items-center px-2 sm:px-3 border border-r-0 rounded-l-md bg-muted text-xs sm:text-sm">
+                  +254
                 </div>
-                <p className="text-xs text-gray-500">Enter your registered phone number</p>
+                <Input
+                  id="phone"
+                  type="tel"
+                  placeholder="712345678"
+                  className="rounded-l-none text-xs sm:text-sm"
+                  value={phoneNumber}
+                  onChange={handlePhoneChange}
+                  maxLength={10}
+                  disabled={isSubmitting}
+                  required
+                />
               </div>
-            )}
-            <Button
-              type="button"
-              variant="outline"
-              className="w-full"
-              onClick={() => setShowFindCourseForm(true)}
-              disabled={isSubmitting || noSubscription}
-            >
-              Switch to Register
-            </Button>
-          </div>
+              <p className="text-xs text-gray-500 dark:text-gray-400">Enter your registered phone number</p>
+            </div>
+          )}
+          <Button
+            type="button"
+            variant="outline"
+            className="w-full text-xs sm:text-sm border-gray-200 dark:border-gray-600"
+            onClick={() => setShowFindCourseForm(true)}
+            disabled={isSubmitting || noSubscription}
+          >
+            Switch to Register
+          </Button>
         </CardContent>
         {!noSubscription && (
           <CardFooter>
             <Button
               type="submit"
-              className="w-full bg-emerald-600 hover:bg-emerald-700"
+              className="w-full bg-emerald-600 hover:bg-emerald-700 text-xs sm:text-sm"
               disabled={isSubmitting}
             >
               {isSubmitting ? (
                 <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  <Loader2 className="mr-2 h-4 w-4 sm:h-5 sm:w-5 animate-spin" />
                   Logging In...
                 </>
               ) : (
@@ -224,7 +231,7 @@ export function AuthenticationModal({ onClose, canClose }: AuthenticationModalPr
   );
 
   return createPortal(
-    <div className="fixed top-[80px] inset-x-0 bottom-0 bg-black/50 flex items-center justify-center z-40 p-4">
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 sm:p-6 overflow-y-auto">
       {modalContent}
     </div>,
     document.body

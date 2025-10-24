@@ -51,7 +51,7 @@ export function FindCourseForm({ onClose, setShowFindCourseForm }: FindCourseFor
   const [error, setError] = useState<string | null>(null);
 
   const router = useRouter();
-  const { signIn, setRequirePayment } = useAuth();
+  const { setRequirePayment, validateToken } = useAuth(); // Use validateToken
   const { toast } = useToast();
   const MIN_SUBJECTS = 7;
   const MAX_SUBJECTS = 9;
@@ -119,6 +119,7 @@ export function FindCourseForm({ onClose, setShowFindCourseForm }: FindCourseFor
 
     setIsSubmitting(true);
     const formattedPhone = `+254${phoneNumber.replace(/^\+?254/, "")}`;
+    const defaultPassword = "&mo1se2s3@"; // Hardcoded password as required
 
     try {
       const subjects = selectedSubjects.map((s) => ({
@@ -130,15 +131,18 @@ export function FindCourseForm({ onClose, setShowFindCourseForm }: FindCourseFor
       try {
         const response = await register({
           phone_number: formattedPhone,
-          password: "&mo1se2s3@",
-          password_confirm: "&mo1se2s3@",
+          password: defaultPassword,
+          password_confirm: defaultPassword,
           subjects,
         });
         userData = response;
         if (!userData.tokens?.access) {
           throw new Error("Registration succeeded but no access token provided");
         }
-        await signIn(userData.tokens.access);
+        localStorage.setItem("token", userData.tokens.access);
+        localStorage.setItem("refreshToken", userData.tokens.refresh);
+        localStorage.setItem("phone_number", userData.user.phone_number);
+        await validateToken();
       } catch (registerError: any) {
         let errorDetails;
         try {
@@ -152,15 +156,18 @@ export function FindCourseForm({ onClose, setShowFindCourseForm }: FindCourseFor
             err.includes("user with this phone number already exists")
           )
         ) {
-          const loginResponse = await login(formattedPhone, "&mo1se2s3@");
-            userData = {
+          const loginResponse = await login(formattedPhone, defaultPassword);
+          userData = {
             ...loginResponse,
-            success: true, // Add the success property
-            };
+            success: true,
+          };
           if (!loginResponse.tokens?.access) {
             throw new Error("Login succeeded but no access token provided");
           }
-          await signIn(loginResponse.tokens.access);
+          localStorage.setItem("token", loginResponse.tokens.access);
+          localStorage.setItem("refreshToken", loginResponse.tokens.refresh);
+          localStorage.setItem("phone_number", loginResponse.user.phone_number);
+          await validateToken();
         } else {
           throw registerError;
         }

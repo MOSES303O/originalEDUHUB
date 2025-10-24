@@ -2,7 +2,6 @@
 @tailwind components;
 @tailwind utilities;
 
-
 @layer base {
   :root {
     --background: 0 0% 100%;
@@ -49,45 +48,49 @@
     --ring: 142.4 71.8% 29.2%;
   }
 
-  * {
-    @apply border-gray-500;
-  }
-
+  /* Remove global border to prevent clutter */
   body {
     @apply bg-background text-foreground;
     font-feature-settings: "rlig" 1, "calt" 1;
   }
 }
 
-/* Use @layer for custom utilities when possible */
 @layer utilities {
   .text-balance {
     text-wrap: balance;
   }
 
-  /* Custom scrollbar for dark mode */
-  .dark ::-webkit-scrollbar {
-    width: 10px;
-    height: 10px;
+  /* Responsive scrollbar */
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
   }
 
-  .dark ::-webkit-scrollbar-track {
-    background: hsl(217.2 32.6% 17.5%);
+  ::-webkit-scrollbar-track {
+    background: hsl(var(--muted));
   }
 
-  .dark ::-webkit-scrollbar-thumb {
-    background: hsl(215 20.2% 65.1%);
-    border-radius: 5px;
+  ::-webkit-scrollbar-thumb {
+    background: hsl(var(--muted-foreground));
+    border-radius: 4px;
   }
 
-  .dark ::-webkit-scrollbar-thumb:hover {
-    background: hsl(142.1 70.6% 45.3%);
+  ::-webkit-scrollbar-thumb:hover {
+    background: hsl(var(--primary));
+  }
+
+  @media (max-width: 640px) {
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
   }
 }
+
 @layer components {
-  /* Gradient text */
+  /* Gradient text with responsive font size */
   .gradient-text {
-    @apply bg-clip-text text-transparent bg-gradient-to-r from-green-400 to-emerald-600;
+    @apply bg-clip-text text-transparent bg-gradient-to-r from-green-400 to-emerald-600 text-sm sm:text-base md:text-lg;
   }
 
   /* Card hover effects */

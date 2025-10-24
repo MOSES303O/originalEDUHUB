@@ -308,7 +308,7 @@ class UserSelectedCoursesView(APIResponseMixin, GenericAPIView, ListModelMixin, 
             user=self.request.user,
             action='COURSE_SELECTED',
             ip_address=self.get_client_ip(self.request),
-            details={'course_id': str(self.request.data.get('course'))}
+            details={'course_code': str(self.request.data.get('course'))}
         )
 
     def create(self, request, *args, **kwargs):
@@ -336,7 +336,7 @@ class UserSelectedCoursesView(APIResponseMixin, GenericAPIView, ListModelMixin, 
                 user=request.user,
                 action='COURSE_UPDATED',
                 ip_address=self.get_client_ip(request),
-                details={'course_id': str(self.get_object().course.id)}
+                details={'course_code': str(self.get_object().course.id)}
             )
             return self.success_response(
                 message="Course selection updated successfully",
@@ -352,13 +352,13 @@ class UserSelectedCoursesView(APIResponseMixin, GenericAPIView, ListModelMixin, 
 
     def delete(self, request, *args, **kwargs):
         try:
-            course_id = self.get_object().course.id
+            course_code = self.get_object().course.code
             response = self.destroy(request, *args, **kwargs)
             log_user_activity(
                 user=request.user,
                 action='COURSE_REMOVED',
                 ip_address=self.get_client_ip(request),
-                details={'course_id': str(course_id)}
+                details={'course_code': str(course_code)}
             )
             return self.success_response(
                 message="Course removed from selection successfully",

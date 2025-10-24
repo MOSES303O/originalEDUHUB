@@ -859,7 +859,7 @@ class UserSelectedCoursesView(APIResponseMixin, GenericAPIView, ListModelMixin, 
             user=self.request.user,
             action='COURSE_SELECTED',
             ip_address=self.get_client_ip(self.request),
-            details={'course_id': str(self.request.data.get('course'))}
+            details={'course_code': str(self.request.data.get('course'))}
         )
 
     def get(self, request, *args, **kwargs):
@@ -902,14 +902,14 @@ class UserSelectedCoursesView(APIResponseMixin, GenericAPIView, ListModelMixin, 
     def delete(self, request, *args, **kwargs):
         try:
             instance = self.get_object()
-            course_id = str(instance.course.id)
-            print(f"Deselecting course {course_id} for user: {request.user.phone_number}")
+            course_code = str(instance.course.code)
+            print(f"Deselecting course {course_code} for user: {request.user.phone_number}")
             self.perform_destroy(instance)
             log_user_activity(
                 user=self.request.user,
                 action='COURSE_DESELECTED',
                 ip_address=self.get_client_ip(self.request),
-                details={'course_id': course_id}
+                details={'course_code': course_code}
             )
             return self.success_response(
                 message="Course deselected successfully",

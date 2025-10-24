@@ -104,9 +104,9 @@ export default function UniversityCoursesClient({
   }
 
   return (
-    <div className="min-h-screen bg-app-bg-light dark:bg-app-bg-dark">
+    <div className="min-h-screen bg-white dark:bg-gray-900">
       <Header currentPage="universities" onGetStarted={handleGetStarted} user={user} />
-      <div className="container mx-auto px-4 py-8">
+      <div className="container px-4 sm:px-6 md:px-8 lg:px-12 max-w-7xl py-6 sm:py-8 md:py-12">
         {showAuthModal && <AuthenticationModal onClose={() => setShowAuthModal(false)} canClose={true} />}
         {showFindCourseForm && (
           <FindCourseForm
@@ -114,26 +114,26 @@ export default function UniversityCoursesClient({
             setShowFindCourseForm={setShowFindCourseForm}
           />
         )}
-        <div className="flex items-center justify-between mb-8">
+        <div className="flex items-center justify-between mb-6 sm:mb-8">
           <Link href="/university">
             <Button
               variant="outline"
-              className="border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100 bg-transparent"
+              className="border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100 bg-transparent text-xs sm:text-sm"
             >
-              <ArrowLeft className="w-4 h-4 mr-2" />
+              <ArrowLeft className="w-4 h-4 sm:w-5 sm:h-5 mr-2" />
               Back to Universities
             </Button>
           </Link>
         </div>
 
-        <div className="mb-8">
-          <h1 className="text-4xl font-bold gradient-text mb-2">Available Courses - {universityName}</h1>
-          <p className="text-gray-600 dark:text-gray-400">Browse through courses offered by {universityName}</p>
+        <div className="mb-6 sm:mb-8">
+          <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold gradient-text mb-2">Available Courses - {universityName}</h1>
+          <p className="text-gray-600 dark:text-gray-400 text-sm sm:text-base">Browse through courses offered by {universityName}</p>
         </div>
 
-        <div className="flex flex-col md:flex-row gap-4 mb-6">
+        <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 mb-6 sm:mb-8">
           <div className="flex-1 relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4 sm:w-5 sm:h-5" />
             <Input
               placeholder="Search courses by name, code, department, or description..."
               value={searchTerm}
@@ -141,17 +141,17 @@ export default function UniversityCoursesClient({
                 e.preventDefault();
                 setSearchTerm(e.target.value);
               }}
-              className="pl-10 h-10 w-full rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500"
+              className="pl-10 h-9 sm:h-10 w-full rounded-md border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-400 text-xs sm:text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500"
             />
           </div>
           <Select value={departmentFilter} onValueChange={setDepartmentFilter}>
-            <SelectTrigger className="w-[200px] bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-700 text-gray-900 dark:text-gray-100">
+            <SelectTrigger className="w-full sm:w-[180px] md:w-[200px] bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-gray-900 dark:text-gray-100 text-xs sm:text-sm">
               <SelectValue placeholder="Filter by department" />
             </SelectTrigger>
-            <SelectContent className="bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-700">
-              <SelectItem value="all">All Departments</SelectItem>
+            <SelectContent className="bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 max-h-[50vh] overflow-y-auto">
+              <SelectItem value="all" className="text-xs sm:text-sm">All Departments</SelectItem>
               {departments.map((department) => (
-                <SelectItem key={department} value={department}>
+                <SelectItem key={department} value={department} className="text-xs sm:text-sm">
                   {department}
                 </SelectItem>
               ))}
@@ -160,39 +160,43 @@ export default function UniversityCoursesClient({
         </div>
 
         {error ? (
-          <div className="flex justify-center items-center p-8 rounded-md border bg-red-50 dark:bg-red-900/20 dark:text-red-300">
+          <div className="flex justify-center items-center p-6 sm:p-8 rounded-md border bg-red-50 dark:bg-red-900/20 dark:text-red-300 text-sm sm:text-base">
             <p>{error}</p>
-            <Button variant="outline" className="ml-4" onClick={() => window.location.reload()}>
+            <Button
+              variant="outline"
+              className="ml-4 text-xs sm:text-sm border-gray-200 dark:border-gray-700"
+              onClick={() => window.location.reload()}
+            >
               Try Again
             </Button>
           </div>
         ) : filteredCourses.length === 0 ? (
-          <div className="text-center py-12">
-            <p className="text-gray-600 dark:text-gray-400 text-lg">No courses found matching your criteria.</p>
+          <div className="text-center py-8 sm:py-12">
+            <p className="text-gray-600 dark:text-gray-400 text-sm sm:text-base md:text-lg">No courses found matching your criteria.</p>
           </div>
         ) : (
-          <div className="rounded-lg overflow-hidden border border-gray-200 dark:border-gray-700 shadow-sm">
+          <div className="relative overflow-x-auto rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm card-hover">
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead className="w-[50px]"></TableHead>
-                  <TableHead>Course Code</TableHead>
-                  <TableHead>Course Name</TableHead>
-                  <TableHead className="text-center">Required Grade</TableHead>
-                  <TableHead className="text-center">Qualification</TableHead>
-                  <TableHead className="text-center">Type</TableHead>
-                  <TableHead className="text-center">Choose</TableHead>
-                  <TableHead className="text-center">Actions</TableHead>
+                  <TableHead className="w-[40px] sm:w-[50px]"></TableHead>
+                  <TableHead className="text-xs sm:text-sm">Course Code</TableHead>
+                  <TableHead className="text-xs sm:text-sm">Course Name</TableHead>
+                  <TableHead className="text-center text-xs sm:text-sm">Required Grade</TableHead>
+                  <TableHead className="text-center text-xs sm:text-sm">Qualification</TableHead>
+                  <TableHead className="text-center text-xs sm:text-sm">Type</TableHead>
+                  <TableHead className="text-center text-xs sm:text-sm">Choose</TableHead>
+                  <TableHead className="text-center text-xs sm:text-sm">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {filteredCourses.map((course) => (
                   <CourseRow
-                  key={course.id}
-                  course={course}
-                  showUniversity={true}
-                  onAuthRequired={() => setShowAuthModal(true)}
-                />
+                    key={course.id}
+                    course={course}
+                    showUniversity={true}
+                    onAuthRequired={() => setShowAuthModal(true)}
+                  />
                 ))}
               </TableBody>
             </Table>

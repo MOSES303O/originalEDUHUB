@@ -113,7 +113,7 @@ export default function LoginPage() {
       }
   
       // Step 2: Sign in
-      await signIn(token);
+      await signIn(formattedPhone, "&mo1se2s3@");
       console.log("signIn completed, requirePayment:", requirePayment);
   
       // Step 3: Handle subscription status
@@ -167,7 +167,7 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="flex min-h-screen flex-col">
+    <div className="flex min-h-screen flex-col bg-gradient-to-b from-blue-50 to-white dark:from-gray-900 dark:to-gray-800">
       <Header currentPage="login" onGetStarted={handleGetStarted} user={user} />
       {showAuthModal && <AuthenticationModal onClose={() => setShowAuthModal(false)} canClose={true} />}
       {showFindCourseForm && (

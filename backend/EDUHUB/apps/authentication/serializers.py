@@ -218,24 +218,53 @@ class UserDetailSerializer(serializers.ModelSerializer):
         return mask_phone_number(obj.phone_number) if obj.phone_number else None
 
 class UserSelectedCourseSerializer(serializers.ModelSerializer):
+    course_code = serializers.CharField(write_only=True)
     course = CourseListSerializer(read_only=True)
 
     class Meta:
         model = UserSelectedCourse
-        fields = [
-            'id', 'course',
-            'is_applied', 'application_date', 'created_at'
-        ]
-        read_only_fields = ['id', 'created_at', 'is_applied', 'application_date']
+        fields = ['id', 'course', 'course_code', 'is_applied', 'application_date', 'created_at']
+        read_only_fields = ['id', 'course', 'created_at', 'is_applied', 'application_date']
 
-    def validate_course(self, value):
-        if not Course.objects.filter(id=value.id, is_active=True).exists():
-            raise serializers.ValidationError("Course not found or inactive")
-        return value
+    def validate_course_code(self, value):
+        """
+        Validate that the course code exists and corresponds to an active course.
+        """
+        print(f"[UserSelectedCourseSerializer] Validating course_code: {value}")
+        try:
+            course = Course.objects.get(code=value, is_active=True)
+            return course
+        except Course.DoesNotExist:
+            raise serializers.ValidationError(f"Course with code {value} does not exist or is inactive.")
 
     def validate(self, data):
+        """
+        Ensure the course is not already selected by the user.
+        """
+        print(f"[UserSelectedCourseSerializer] Validating data: {data}")
         user = self.context['request'].user
+        course = data.get('course_code')  # This is the Course object from validate_course_code
         if self.instance is None:
-            if UserSelectedCourse.objects.filter(user=user, course=data.get('course')).exists():
-                raise serializers.ValidationError("Course already selected")
+            if UserSelectedCourse.objects.filter(user=user, course=course).exists():
+                raise serializers.ValidationError(f"Course {course.code} already selected.")
         return data
+
+    def create(self, validated_data):
+        """
+        Create a UserSelectedCourse instance with the authenticated user.
+        """
+        print(f"[UserSelectedCourseSerializer] Creating with validated_data: {validated_data}")
+        user = self.context['request'].user
+        course = validated_data.pop('course_code')  # Course object from validate_course_code
+        try:
+            selected_course = UserSelectedCourse.objects.create(
+                user=user,
+                course=course,
+                is_applied=validated_data.get('is_applied', False),
+                application_date=validated_data.get('application_date', None)
+            )
+            print(f"[UserSelectedCourseSerializer] Created UserSelectedCourse: {selected_course.id}")
+            return selected_course
+        except Exception as e:
+            print(f"[UserSelectedCourseSerializer] Error creating UserSelectedCourse: {str(e)}")
+            raise serializers.ValidationError(f"Failed to create selected course: {str(e)}")

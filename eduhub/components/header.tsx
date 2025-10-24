@@ -1,3 +1,4 @@
+// frontend/components/header.tsx
 "use client";
 
 import { useState, useEffect } from "react";
@@ -9,9 +10,9 @@ import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 
 interface HeaderProps {
-  currentPage?: string; // Define currentPage prop
-  onGetStarted?: () => void; // Add onGetStarted prop
-  user?: any; // Define user prop if needed
+  currentPage?: string;
+  onGetStarted?: () => void;
+  user?: any;
 }
 
 export function Header({ currentPage, onGetStarted, user }: HeaderProps) {
@@ -53,20 +54,22 @@ export function Header({ currentPage, onGetStarted, user }: HeaderProps) {
   return (
     <header
       className={`sticky top-0 z-40 w-full transition-all duration-300 ${
-        isScrolled ? "bg-app-bg-light/90 dark:bg-app-bg-dark/90 backdrop-blur-md border-b border-app-bg-dark" : "bg-app-bg-light dark:bg-app-bg-dark"
+        isScrolled
+          ? "bg-white/90 dark:bg-gray-900/90 backdrop-blur-md border-b border-gray-200 dark:border-gray-700"
+          : "bg-white dark:bg-gray-900"
       }`}
     >
-      <div className="container flex h-16 items-center justify-between py-4">
+      <div className="container px-4 sm:px-6 md:px-8 lg:px-12 max-w-7xl flex h-14 sm:h-16 items-center justify-between">
         <div className="flex items-center gap-2">
-          <GraduationCap className="h-7 w-7 text-emerald-500" />
-          <span className="text-xl font-bold gradient-text">EduHub</span>
+          <GraduationCap className="h-6 w-6 sm:h-7 sm:w-7 text-emerald-500" />
+          <span className="text-base sm:text-lg md:text-xl font-bold gradient-text">EduHub</span>
         </div>
-        <nav className="hidden md:flex items-center gap-6">
+        <nav className="hidden lg:flex items-center gap-4 sm:gap-6">
           {navItems.map((item) => (
             <Link
               key={item.path}
               href={item.path}
-              className={`text-sm font-medium transition-colors animated-underline ${
+              className={`text-xs sm:text-sm font-medium transition-colors animated-underline ${
                 pathname === item.path ? "text-emerald-500" : "text-gray-900 dark:text-gray-100 hover:text-emerald-400"
               }`}
             >
@@ -74,15 +77,15 @@ export function Header({ currentPage, onGetStarted, user }: HeaderProps) {
             </Link>
           ))}
         </nav>
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-2 sm:gap-4">
           <Link
             href="/login"
-            className="text-sm font-medium text-gray-900 dark:text-gray-100 hover:text-emerald-400 transition-colors hidden md:block"
+            className="text-xs sm:text-sm font-medium text-gray-900 dark:text-gray-100 hover:text-emerald-400 transition-colors hidden lg:block animated-underline"
           >
             LOGIN PAY
           </Link>
           <Button
-            className="bg-gradient-to-r from-emerald-500 to-green-400 hover:opacity-90 text-gray-900 dark:text-gray-100"
+            className="bg-gradient-to-r from-emerald-500 to-green-400 hover:opacity-90 text-gray-900 dark:text-gray-100 text-xs sm:text-sm"
             onClick={handleGetStarted}
           >
             Get Started
@@ -90,28 +93,30 @@ export function Header({ currentPage, onGetStarted, user }: HeaderProps) {
           <Button
             variant="ghost"
             size="icon"
-            className="md:hidden text-gray-900 dark:text-gray-100"
+            className="lg:hidden text-gray-900 dark:text-gray-100"
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
           >
-            {mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+            {mobileMenuOpen ? <X className="h-4 w-4 sm:h-5 sm:w-5" /> : <Menu className="h-4 w-4 sm:h-5 sm:w-5" />}
           </Button>
         </div>
       </div>
       {mobileMenuOpen && (
         <motion.div
-          className="md:hidden bg-app-bg-light/95 dark:bg-app-bg-dark/95 border-b border-app-bg-dark"
+          className="lg:hidden bg-white/95 dark:bg-gray-900/95 border-b border-gray-200 dark:border-gray-700"
           initial={{ opacity: 0, height: 0 }}
           animate={{ opacity: 1, height: "auto" }}
           exit={{ opacity: 0, height: 0 }}
           transition={{ duration: 0.3 }}
         >
-          <div className="container py-4 flex flex-col space-y-4">
+          <div className="container px-4 sm:px-6 md:px-8 lg:px-12 max-w-7xl py-4 flex flex-col space-y-3 sm:space-y-4">
             {navItems.map((item) => (
               <Link
                 key={item.path}
                 href={item.path}
-                className={`text-base font-medium px-2 py-2 rounded-md ${
-                  pathname === item.path ? "bg-emerald-500/10 text-emerald-500" : "text-gray-900 dark:text-gray-100 hover:bg-app-bg-dark/50"
+                className={`text-sm sm:text-base font-medium px-2 py-2 rounded-md ${
+                  pathname === item.path
+                    ? "bg-emerald-500/10 text-emerald-500"
+                    : "text-gray-900 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800"
                 }`}
                 onClick={() => setMobileMenuOpen(false)}
               >
@@ -120,7 +125,7 @@ export function Header({ currentPage, onGetStarted, user }: HeaderProps) {
             ))}
             <Link
               href="/login"
-              className="text-base font-medium px-2 py-2 rounded-md text-gray-900 dark:text-gray-100 hover:bg-app-bg-dark/50"
+              className="text-sm sm:text-base font-medium px-2 py-2 rounded-md text-gray-900 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800"
               onClick={() => setMobileMenuOpen(false)}
             >
               Login Pay

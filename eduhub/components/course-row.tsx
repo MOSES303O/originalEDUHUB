@@ -60,7 +60,18 @@ export function CourseRow({ course, showUniversity = true, onAuthRequired }: Cou
 
   const handleSelect = async (e: React.MouseEvent) => {
     e.stopPropagation();
+    if (!course.id || !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(course.id)) {
+      console.error("[CourseRow] Invalid course ID:", course);
+      toast({
+        title: "Error",
+        description: "Invalid course ID. Please try another course.",
+        variant: "destructive",
+        duration: 3000,
+      });
+      return;
+    }
     if (!user) {
+      console.log("[CourseRow] User not authenticated, triggering onAuthRequired");
       onAuthRequired();
       toast({
         title: "Authentication Required",
@@ -70,8 +81,8 @@ export function CourseRow({ course, showUniversity = true, onAuthRequired }: Cou
       });
       return;
     }
-
     if (requirePayment) {
+      console.log("[CourseRow] User requires payment, triggering onAuthRequired");
       onAuthRequired();
       toast({
         title: "Subscription Required",
@@ -81,14 +92,24 @@ export function CourseRow({ course, showUniversity = true, onAuthRequired }: Cou
       });
       return;
     }
-
-    const wasSelected = course.is_selected || false;
-    await toggleCourseSelection(course);
-    toast({
-      title: wasSelected ? "Course Removed" : "Course Selected",
-      description: `Course ${course.name} has been ${wasSelected ? "removed from" : "added to"} your selected courses.`,
-      duration: 3000,
-    });
+    try {
+      console.log("[CourseRow] Toggling course:", course.id, course.name);
+      const wasSelected = course.is_selected || false;
+      await toggleCourseSelection(course);
+      toast({
+        title: wasSelected ? "Course Removed" : "Course Selected",
+        description: `Course ${course.name} has been ${wasSelected ? "removed from" : "added to"} your selected courses.`,
+        duration: 3000,
+      });
+    } catch (err: any) {
+      console.error("[CourseRow] Failed to toggle course:", JSON.stringify(err, null, 2));
+      toast({
+        title: "Error",
+        description: "Failed to update course selection. Please try again.",
+        variant: "destructive",
+        duration: 3000,
+      });
+    }
   };
 
   const toggleExpanded = (e: React.MouseEvent | React.KeyboardEvent) => {

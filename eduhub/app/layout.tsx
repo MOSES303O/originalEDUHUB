@@ -10,9 +10,9 @@ import { Toaster } from "@/components/ui/toaster"
 const inter = Inter({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
-  title: "EduHub - Find Your Perfect University Course",
-  description: "Discover university courses tailored to your high school subjects and interests.",
-  keywords: "education, university, courses, career, high school, subjects, Kenya, university courses",
+  title: "EduHub - Find Your Perfect Campus Course",
+  description: "Discover Campus courses tailored to your high school subjects and interests.",
+  keywords: "education, university,Campuses,campus,eduhub.com,kuccps,kmtc, courses, career, high school, subjects,kcse,colleges,polytechnics Kenya, university courses",
   authors: [{ name: "EduHub Team" }],
 }
 // ✅ ADD this separately
@@ -29,7 +29,7 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <head>
         <link rel="icon" href="/favicon.ico" />
-        <meta name="theme-color" content="#10b981" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
       </head>
       <body className={`${inter.className} antialiased`} >
         <AuthProvider>

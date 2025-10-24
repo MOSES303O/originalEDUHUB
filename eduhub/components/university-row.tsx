@@ -33,50 +33,62 @@ export function UniversityRow({ university, onViewCourses }: UniversityRowProps)
         role="button"
         tabIndex={0}
       >
-        <td className="p-4">
+        <td className="p-2 sm:p-3 md:p-4">
           {isExpanded ? (
             <ChevronDown className="w-4 h-4 text-gray-400" />
           ) : (
             <ChevronRight className="w-4 h-4 text-gray-400" />
           )}
         </td>
-        <td className="p-4 text-gray-900 dark:text-gray-100 font-medium">{university.code}</td>
-        <td className="p-4">
-          <div className="flex items-center gap-3">
+        <td className="p-2 sm:p-3 md:p-4 text-gray-900 dark:text-gray-100 font-medium text-xs sm:text-sm">
+          {university.code}
+        </td>
+        <td className="p-2 sm:p-3 md:p-4">
+          <div className="flex items-center gap-2 sm:gap-3">
             {university.logo ? (
               <Image
                 src={university.logo}
                 alt={`${university.name} logo`}
-                width={32}
-                height={32}
-                className="rounded border"
+                width={24}
+                height={24}
+                className="rounded border sm:w-8 sm:h-8"
               />
             ) : (
-              <div className="w-8 h-8 bg-gradient-to-br from-emerald-500 to-green-400 rounded flex items-center justify-center">
+              <div className="w-6 h-6 sm:w-8 sm:h-8 bg-gradient-to-br from-emerald-500 to-green-400 rounded flex items-center justify-center">
                 <span className="text-white text-xs font-bold">{university.name.charAt(0)}</span>
               </div>
             )}
-            <span className="text-gray-900 dark:text-gray-100 font-medium">{university.name}</span>
+            <span className="text-gray-900 dark:text-gray-100 font-medium text-xs sm:text-sm truncate">
+              {university.name}
+            </span>
           </div>
         </td>
-        <td className="p-4 text-gray-600 dark:text-gray-300 capitalize">{university.city}</td>
-        <td className="p-4 text-center">
-          <Badge variant="outline" className="border-emerald-500 text-emerald-600 dark:text-emerald-400">
+        <td className="p-2 sm:p-3 md:p-4 text-gray-600 dark:text-gray-300 capitalize text-xs sm:text-sm">
+          {university.city}
+        </td>
+        <td className="p-2 sm:p-3 md:p-4 text-center">
+          <Badge
+            variant="outline"
+            className="border-emerald-500 text-emerald-600 dark:text-emerald-400 text-xs sm:text-sm"
+          >
             {university.available_courses ?? 0} Courses
           </Badge>
         </td>
-        <td className="p-4 text-center">
-          <Badge variant="outline" className="border-blue-500 text-blue-600 dark:text-blue-400">
+        <td className="p-2 sm:p-3 md:p-4 text-center">
+          <Badge
+            variant="outline"
+            className="border-blue-500 text-blue-600 dark:text-blue-400 text-xs sm:text-sm"
+          >
             {university.accreditation ?? "N/A"}
           </Badge>
         </td>
-        <td className="p-4">
-          <div className="flex gap-2">
+        <td className="p-2 sm:p-3 md:p-4">
+          <div className="flex justify-end">
             <Button
               size="sm"
-              className="bg-emerald-500 hover:bg-emerald-600 text-white"
+              className="bg-emerald-500 hover:bg-emerald-600 text-white text-xs sm:text-sm"
               onClick={(e) => {
-                e.stopPropagation(); // Prevent row click from toggling expansion
+                e.stopPropagation();
                 onViewCourses();
               }}
             >
@@ -91,15 +103,15 @@ export function UniversityRow({ university, onViewCourses }: UniversityRowProps)
       {isExpanded && (
         <tr className="bg-muted/50">
           <td colSpan={7} className="p-0">
-            <div className="bg-gray-50 dark:bg-gray-800/30 p-6 border-l-4 border-emerald-500">
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div className="bg-gray-50 dark:bg-gray-800/30 p-3 sm:p-4 md:p-6 border-l-4 border-emerald-500">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 md:gap-6">
                 {/* University Details */}
                 <div>
-                  <h4 className="text-gray-900 dark:text-gray-100 font-semibold mb-4 flex items-center gap-2">
+                  <h4 className="text-gray-900 dark:text-gray-100 font-semibold mb-2 sm:mb-3 md:mb-4 flex items-center gap-2 text-xs sm:text-sm md:text-base">
                     <Award className="w-4 h-4 text-emerald-500" />
                     University Information
                   </h4>
-                  <div className="space-y-3 text-sm">
+                  <div className="space-y-2 sm:space-y-3 text-xs sm:text-sm">
                     <div className="flex items-center gap-2 text-gray-600 dark:text-gray-300">
                       <MapPin className="w-4 h-4" />
                       <span className="capitalize">
@@ -119,7 +131,7 @@ export function UniversityRow({ university, onViewCourses }: UniversityRowProps)
 
                 {/* Faculties */}
                 <div>
-                  <h4 className="text-gray-900 dark:text-gray-100 font-semibold mb-4">
+                  <h4 className="text-gray-900 dark:text-gray-100 font-semibold mb-2 sm:mb-3 md:mb-4 text-xs sm:text-sm md:text-base">
                     Faculties ({Array.isArray(university.faculties) ? university.faculties.length : 0})
                   </h4>
                   <div className="space-y-2">
@@ -127,10 +139,10 @@ export function UniversityRow({ university, onViewCourses }: UniversityRowProps)
                       university.faculties.map((faculty) => (
                         <div
                           key={faculty.id}
-                          className="p-3 rounded-lg border border-gray-200 dark:border-gray-600"
+                          className="p-2 sm:p-3 rounded-lg border border-gray-200 dark:border-gray-600"
                         >
-                          <div className="flex justify-between items-start mb-2">
-                            <span className="text-gray-900 dark:text-gray-100 font-medium text-sm">
+                          <div className="flex justify-between items-start">
+                            <span className="text-gray-900 dark:text-gray-100 font-medium text-xs sm:text-sm truncate">
                               {faculty.name}
                             </span>
                             <Badge variant="secondary" className="text-xs">
@@ -140,7 +152,7 @@ export function UniversityRow({ university, onViewCourses }: UniversityRowProps)
                         </div>
                       ))
                     ) : (
-                      <div className="text-gray-600 dark:text-gray-300 text-sm">
+                      <div className="text-gray-600 dark:text-gray-300 text-xs sm:text-sm">
                         No faculties available
                       </div>
                     )}

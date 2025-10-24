@@ -20,35 +20,53 @@ export const useSelectedCourses = create<CourseStore>()(
       setSelectedCourses: (courses: Course[]) => set({ selectedCourses: courses }),
       addCourse: async (course: Course) => {
         try {
+          if (!course.id) {
+            console.error("[CourseStore] Invalid course ID:", course);
+            throw new Error("Invalid course ID");
+          }
           if (!get().isCourseSelected(course.id)) {
+            console.log("[CourseStore] Adding course:", course.id, course.name);
             const newCourse = await insertSelectedCourse(course.id);
             set((state) => ({
               selectedCourses: [...state.selectedCourses, { ...newCourse, is_selected: true }],
             }));
+          } else {
+            console.log("[CourseStore] Course already selected:", course.id);
           }
         } catch (error: any) {
-          console.error("Add course failed:", JSON.stringify(error, null, 2));
+          console.error("[CourseStore] Add course failed:", JSON.stringify(error, null, 2));
+          throw error;
         }
       },
       toggleCourseSelection: async (course: Course) => {
-        const isSelected = get().isCourseSelected(course.id);
         try {
+          if (!course.code) {
+            console.error("[CourseStore] Invalid course code:", course);
+            throw new Error("Invalid course code");
+          }
+          const isSelected = get().isCourseSelected(course.id);
           if (isSelected) {
             const selectedCourse = get().selectedCourses.find((c) => c.id === course.id);
             if (selectedCourse?.selectionId) {
+              console.log("[CourseStore] Deselecting course:", course.id, course.code, course.name);
               await removeSelectedCourse(selectedCourse.selectionId);
               set((state) => ({
                 selectedCourses: state.selectedCourses.filter((c) => c.id !== course.id),
               }));
+            } else {
+              console.error("[CourseStore] No selectionId for course:", course.id, course.code);
+              throw new Error("Missing selection ID for deselection");
             }
           } else {
-            const newCourse = await insertSelectedCourse(course.id);
+            console.log("[CourseStore] Selecting course:", course.id, course.code, course.name);
+            const newCourse = await insertSelectedCourse(course.code);
             set((state) => ({
               selectedCourses: [...state.selectedCourses, { ...newCourse, is_selected: true }],
             }));
           }
         } catch (error: any) {
-          console.error("Toggle course selection failed:", JSON.stringify(error, null, 2));
+          console.error("[CourseStore] Toggle course selection failed:", JSON.stringify(error, null, 2));
+          throw error;
         }
       },
       isCourseSelected: (courseId: string) => get().selectedCourses.some((course) => course.id === courseId),
@@ -56,16 +74,16 @@ export const useSelectedCourses = create<CourseStore>()(
         try {
           const token = localStorage.getItem("token");
           if (!token) {
-            console.warn("No authentication token found in localStorage");
-            return;
+            console.warn("[CourseStore] No authentication token found");
+            throw new Error("No authentication token");
           }
-          console.log("Sending download selected courses request to:", `${apiClient.defaults.baseURL}user/selected-courses/download/?format=${format}`);
+          console.log("[CourseStore] Downloading selected courses in format:", format);
           const response = await apiClient.get(`user/selected-courses/download/?format=${format}`, {
             headers: { Authorization: `Bearer ${token}` },
             responseType: "blob",
             timeout: 10000,
           });
-          console.log(`Download ${format} response status: ${response.status}`);
+          console.log(`[CourseStore] Download ${format} response status: ${response.status}`);
           const url = window.URL.createObjectURL(new Blob([response.data]));
           const link = document.createElement("a");
           link.href = url;
@@ -73,8 +91,10 @@ export const useSelectedCourses = create<CourseStore>()(
           document.body.appendChild(link);
           link.click();
           link.remove();
+          window.URL.revokeObjectURL(url);
         } catch (error: any) {
-          console.error("Download selected courses failed:", JSON.stringify(error, null, 2));
+          console.error("[CourseStore] Download selected courses failed:", JSON.stringify(error, null, 2));
+          throw error;
         }
       },
     }),
@@ -87,11 +107,12 @@ export const useSelectedCourses = create<CourseStore>()(
 
 export async function initializeSelectedCourses() {
   try {
+    console.log("[CourseStore] Initializing selected courses");
     const courses = await fetchSelectedCourses();
     useSelectedCourses.getState().setSelectedCourses(courses.map((course) => ({ ...course, is_selected: true })));
-    console.log("Selected courses initialized successfully:", JSON.stringify(courses, null, 2));
+    console.log("[CourseStore] Selected courses initialized:", JSON.stringify(courses, null, 2));
   } catch (error: any) {
-    console.log("No selected courses found, 404, or empty response received, setting empty array");
+    console.log("[CourseStore] No selected courses found or error occurred, setting empty array");
     useSelectedCourses.getState().setSelectedCourses([]);
   }
 }

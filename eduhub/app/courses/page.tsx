@@ -128,7 +128,7 @@ export default function CoursesPage() {
   }, [coursesData, searchTerm]);
 
   return (
-    <div className="flex min-h-screen flex-col">
+    <div className="flex min-h-screen flex-col bg-gradient-to-b from-blue-50 to-white dark:from-gray-900 dark:to-gray-800">
       <Header currentPage="courses" onGetStarted={handleGetStarted} user={user} />
       <main className="flex-1">
         <section className="w-full py-12 md:py-24 lg:py-32">

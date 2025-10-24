@@ -22,7 +22,6 @@ export function KMTCRow({ campus, onViewCourses }: KMTCRowProps) {
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
 
-  // Fetch courses and count when component mounts or campus changes
   useEffect(() => {
     const loadCourseCount = async () => {
       setIsLoading(true);
@@ -49,84 +48,82 @@ export function KMTCRow({ campus, onViewCourses }: KMTCRowProps) {
   };
 
   const handleViewCourses = (e: React.MouseEvent) => {
-    e.stopPropagation(); // Prevent row click from toggling expansion
+    e.stopPropagation();
     console.log("[KMTCRow] Navigating to courses for campus:", campus.code);
     if (onViewCourses) {
       onViewCourses();
     } else {
-      router.push(`/kmtc/${campus.code}/courses`);
+      router.push(`/kmtc/${campus.code}/courses`); // Updated to correct route
     }
   };
 
   return (
     <>
-      {/* Main Row */}
       <tr
-        className="border-b border-gray-200 dark:border-gray-700 cursor-pointer hover:bg-muted/50"
+        className="border-b border-gray-200 dark:border-gray-700 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800 card-hover"
         onClick={toggleExpanded}
         onKeyDown={toggleExpanded}
         role="button"
         tabIndex={0}
       >
-        <td className="p-4">
+        <td className="p-3 sm:p-4 w-[40px] sm:w-[50px]">
           {isExpanded ? (
-            <ChevronDown className="w-4 h-4 text-gray-400" />
+            <ChevronDown className="w-4 h-4 sm:w-5 sm:h-5 text-gray-400" />
           ) : (
-            <ChevronRight className="w-4 h-4 text-gray-400" />
+            <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5 text-gray-400" />
           )}
         </td>
-        <td className="p-4 text-gray-900 dark:text-gray-100 font-medium">{campus.code}</td>
-        <td className="p-4">
-          <div className="flex items-center gap-3">
-            <div className="w-8 h-8 bg-gradient-to-br from-emerald-500 to-green-400 rounded flex items-center justify-center">
-              <span className="text-white text-xs font-bold">{campus.name.charAt(0)}</span>
+        <td className="p-3 sm:p-4 text-xs sm:text-sm text-gray-900 dark:text-gray-100 font-medium">{campus.code}</td>
+        <td className="p-3 sm:p-4">
+          <div className="flex items-center gap-2 sm:gap-3">
+            <div className="w-6 h-6 sm:w-8 sm:h-8 bg-gradient-to-br from-emerald-500 to-green-400 rounded flex items-center justify-center">
+              <span className="text-white text-xs sm:text-sm font-bold">{campus.name.charAt(0)}</span>
             </div>
-            <span className="text-gray-900 dark:text-gray-100 font-medium">{campus.name}</span>
+            <span className="text-xs sm:text-sm text-gray-900 dark:text-gray-100 font-medium text-ellipsis overflow-hidden whitespace-nowrap max-w-[150px] sm:max-w-[200px]">
+              {campus.name}
+            </span>
           </div>
         </td>
-        <td className="p-4 text-gray-600 dark:text-gray-300 capitalize">{campus.city}</td>
-        <td className="p-4 text-center">
-          <Badge variant="outline" className="border-emerald-500 text-emerald-600 dark:text-emerald-400">
+        <td className="p-3 sm:p-4 text-xs sm:text-sm text-gray-600 dark:text-gray-300 capitalize">{campus.city}</td>
+        <td className="p-3 sm:p-4 text-center">
+          <Badge variant="outline" className="border-emerald-500 text-emerald-600 dark:text-emerald-400 text-xs sm:text-sm">
             {isLoading ? "Loading..." : `${courseCount} Courses`}
           </Badge>
         </td>
-        <td className="p-4 text-center">
-          <Badge variant="outline" className="border-emerald-500 text-emerald-600 dark:text-emerald-400">
+        <td className="p-3 sm:p-4 text-center">
+          <Badge variant="outline" className="border-emerald-500 text-emerald-600 dark:text-emerald-400 text-xs sm:text-sm">
             KMTC Campus
           </Badge>
         </td>
-        <td className="p-4">
+        <td className="p-3 sm:p-4">
           <div className="flex gap-2">
             <Button
               size="sm"
-              className="bg-emerald-500 hover:bg-emerald-600 text-white"
+              className="bg-emerald-500 hover:bg-emerald-600 text-white text-xs sm:text-sm"
               onClick={handleViewCourses}
             >
-              <BookOpen className="w-3 h-3 mr-1" />
+              <BookOpen className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
               View Courses
             </Button>
           </div>
         </td>
       </tr>
-
-      {/* Expanded Content */}
       {isExpanded && (
-        <tr className="bg-muted/50">
+        <tr className="bg-gray-50 dark:bg-gray-800">
           <td colSpan={7} className="p-0">
-            <div className="bg-gray-50 dark:bg-gray-800/30 p-6 border-l-4 border-emerald-500">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {/* Campus Information */}
+            <div className="bg-gray-50 dark:bg-gray-800 p-4 sm:p-6 border-l-4 border-emerald-500">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
                 <div>
-                  <h4 className="text-gray-900 dark:text-gray-100 font-semibold mb-4 flex items-center gap-2">
-                    <MapPin className="w-4 h-4 text-emerald-500" />
+                  <h4 className="text-gray-900 dark:text-gray-100 font-semibold mb-3 sm:mb-4 flex items-center gap-2 text-sm sm:text-base">
+                    <MapPin className="w-4 h-4 sm:w-5 sm:h-5 text-emerald-500" />
                     Campus Information
                   </h4>
-                  <div className="space-y-3 text-sm text-gray-600 dark:text-gray-300">
+                  <div className="space-y-2 sm:space-y-3 text-xs sm:text-sm text-gray-600 dark:text-gray-300">
                     <div className="flex items-center gap-2">
-                      <MapPin className="w-4 h-4" />
+                      <MapPin className="w-4 h-4 sm:w-5 sm:h-5" />
                       <span className="capitalize">{campus.city}</span>
                     </div>
-                    <div>{campus.description || "No description available"}</div>
+                    <div className="text-ellipsis overflow-hidden">{campus.description || "No description available"}</div>
                     <div className="flex items-center gap-2">
                       <span>Campus Code:</span>
                       <span className="font-medium">{campus.code}</span>
@@ -136,43 +133,41 @@ export function KMTCRow({ campus, onViewCourses }: KMTCRowProps) {
                       <span className="font-medium">{campus.slug}</span>
                     </div>
                     <div className="flex items-center gap-2">
-                      <Phone className="w-4 h-4" />
+                      <Phone className="w-4 h-4 sm:w-5 sm:h-5" />
                       <span>Contact: Not available</span>
                     </div>
                     <div className="flex items-center gap-2">
-                      <Globe className="w-4 h-4" />
+                      <Globe className="w-4 h-4 sm:w-5 sm:h-5" />
                       <a
                         href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(campus.city + " KMTC")}`}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-emerald-500 hover:underline"
+                        className="text-emerald-500 hover:underline animated-underline"
                       >
                         View on Google Maps
                       </a>
                     </div>
                   </div>
                 </div>
-
-                {/* Courses Offered */}
                 <div>
-                  <h4 className="text-gray-900 dark:text-gray-100 font-semibold mb-4 flex items-center gap-2">
-                    <BookOpen className="w-4 h-4 text-emerald-500" />
+                  <h4 className="text-gray-900 dark:text-gray-100 font-semibold mb-3 sm:mb-4 flex items-center gap-2 text-sm sm:text-base">
+                    <BookOpen className="w-4 h-4 sm:w-5 sm:h-5 text-emerald-500" />
                     Courses Offered ({courseCount})
                   </h4>
                   {isLoading ? (
-                    <div className="text-gray-600 dark:text-gray-300">Loading courses...</div>
+                    <div className="text-gray-600 dark:text-gray-300 text-xs sm:text-sm">Loading courses...</div>
                   ) : error ? (
-                    <div className="text-red-500 dark:text-red-400">{error}</div>
+                    <div className="text-red-500 dark:text-red-400 text-xs sm:text-sm">{error}</div>
                   ) : courses.length === 0 ? (
-                    <div className="text-gray-600 dark:text-gray-300">No courses available for this campus.</div>
+                    <div className="text-gray-600 dark:text-gray-300 text-xs sm:text-sm">No courses available for this campus.</div>
                   ) : (
-                    <ul className="space-y-3 text-sm text-gray-600 dark:text-gray-300">
+                    <ul className="space-y-3 sm:space-y-4 text-xs sm:text-sm text-gray-600 dark:text-gray-300 max-h-[300px] sm:max-h-[400px] overflow-y-auto">
                       {courses.map((course) => (
                         <li key={course.id} className="flex flex-col">
-                          <span className="font-medium">{course.name} ({course.code})</span>
-                          <span className="text-xs">Department: {course.department}</span>
-                          <span className="text-xs">Required Grade: {course.required_grade}</span>
-                          <span className="text-xs">Description: {course.description}</span>
+                          <span className="font-medium text-ellipsis overflow-hidden whitespace-nowrap">{course.name} ({course.code})</span>
+                          <span className="text-xs sm:text-sm">Department: {course.department}</span>
+                          <span className="text-xs sm:text-sm">Required Grade: {course.required_grade}</span>
+                          <span className="text-xs sm:text-sm text-ellipsis overflow-hidden">Description: {course.description}</span>
                         </li>
                       ))}
                     </ul>
