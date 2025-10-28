@@ -6,7 +6,7 @@ import sys
 
 def main():
     """Run administrative tasks."""
-    base_module="EDUHUB.deployment" if "RENDER_EXTERNAL_HOSTNAME" in os.environ else "EDUHUB.settings.base"
+    base_module="EDUHUB.settings.development" if "RENDER_EXTERNAL_HOSTNAME" in os.environ else "EDUHUB.settings.base"
     os.environ.setdefault("DJANGO_SETTINGS_MODULE", base_module)
     try:
         from django.core.management import execute_from_command_line
