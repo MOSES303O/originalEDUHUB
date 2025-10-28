@@ -14,6 +14,9 @@ export const metadata: Metadata = {
   description: "Discover Campus courses tailored to your high school subjects and interests.",
   keywords: "education, university,Campuses,campus,eduhub.com,kuccps,kmtc, courses, career, high school, subjects,kcse,colleges,polytechnics Kenya, university courses",
   authors: [{ name: "EduHub Team" }],
+  icons: {
+    icon: "/originalEDUHUB/favicon.ico",
+  },
 }
 // ✅ ADD this separately
 export const viewport = {

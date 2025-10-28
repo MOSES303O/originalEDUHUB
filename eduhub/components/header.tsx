@@ -15,7 +15,7 @@ interface HeaderProps {
   user?: any;
 }
 
-export function Header({ currentPage, onGetStarted, user }: HeaderProps) {
+export function Header({ onGetStarted, user }: HeaderProps) {
   const [isScrolled, setIsScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const pathname = usePathname();

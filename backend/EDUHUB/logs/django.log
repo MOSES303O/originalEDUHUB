@@ -977,3 +977,54 @@ INFO 2025-10-24 15:58:46,440 basehttp 1388 3900 "GET /api/v1/courses/courses/ HT
 INFO 2025-10-24 15:58:46,442 middleware 1388 3900 Request: GET /api/v1/courses/courses/
 INFO 2025-10-24 15:58:46,476 middleware 1388 3900 Response: 200 - Duration: 0.03s
 INFO 2025-10-24 15:58:46,478 basehttp 1388 3900 "GET /api/v1/courses/courses/ HTTP/1.1" 200 1545
+INFO 2025-10-25 01:14:35,427 autoreload 9608 800 Watching for file changes with StatReloader
+INFO 2025-10-25 03:27:43,153 middleware 9608 9896 Request: GET /api/v1/courses/courses/
+INFO 2025-10-25 03:27:43,140 middleware 9608 11656 Request: GET /api/v1/kmtc/campuses/
+INFO 2025-10-25 03:27:43,196 middleware 9608 13400 Request: GET /api/v1/universities/universities/
+INFO 2025-10-25 03:27:44,749 middleware 9608 13400 Response: 200 - Duration: 1.64s
+INFO 2025-10-25 03:27:44,766 middleware 9608 11656 Response: 200 - Duration: 1.64s
+INFO 2025-10-25 03:27:44,952 basehttp 9608 11656 "GET /api/v1/kmtc/campuses/ HTTP/1.1" 200 203
+INFO 2025-10-25 03:27:44,953 basehttp 9608 13400 "GET /api/v1/universities/universities/ HTTP/1.1" 200 522
+INFO 2025-10-25 03:27:44,990 middleware 9608 9896 Response: 200 - Duration: 1.84s
+INFO 2025-10-25 03:27:45,011 basehttp 9608 9896 "GET /api/v1/courses/courses/ HTTP/1.1" 200 1545
+INFO 2025-10-25 03:27:54,383 middleware 9608 13908 Request: GET /api/v1/universities/universities/
+INFO 2025-10-25 03:27:54,385 middleware 9608 7376 Request: GET /api/v1/universities/universities/
+INFO 2025-10-25 03:27:54,389 middleware 9608 10772 Request: GET /api/v1/universities/universities/
+INFO 2025-10-25 03:27:54,415 middleware 9608 10772 Response: 200 - Duration: 0.03s
+INFO 2025-10-25 03:27:54,418 middleware 9608 13908 Response: 200 - Duration: 0.04s
+INFO 2025-10-25 03:27:54,420 basehttp 9608 10772 "GET /api/v1/universities/universities/?code=maseno001 HTTP/1.1" 200 173
+INFO 2025-10-25 03:27:54,420 basehttp 9608 13908 "GET /api/v1/universities/universities/?code=ku01 HTTP/1.1" 200 177
+INFO 2025-10-25 03:27:54,440 middleware 9608 10772 Request: GET /api/v1/courses/courses/
+INFO 2025-10-25 03:27:54,445 middleware 9608 13908 Request: GET /api/v1/courses/courses/
+INFO 2025-10-25 03:27:54,465 middleware 9608 7376 Response: 200 - Duration: 0.08s
+INFO 2025-10-25 03:27:54,476 basehttp 9608 7376 "GET /api/v1/universities/universities/?code=kisii01 HTTP/1.1" 200 174
+INFO 2025-10-25 03:27:54,482 middleware 9608 10772 Response: 200 - Duration: 0.04s
+INFO 2025-10-25 03:27:54,485 middleware 9608 13908 Response: 200 - Duration: 0.04s
+INFO 2025-10-25 03:27:54,487 middleware 9608 7376 Request: GET /api/v1/courses/courses/
+INFO 2025-10-25 03:27:54,488 basehttp 9608 13908 "GET /api/v1/courses/courses/?university_code=ku01 HTTP/1.1" 200 849
+INFO 2025-10-25 03:27:54,488 basehttp 9608 10772 "GET /api/v1/courses/courses/?university_code=maseno001 HTTP/1.1" 200 458
+INFO 2025-10-25 03:27:54,534 middleware 9608 7376 Response: 200 - Duration: 0.05s
+INFO 2025-10-25 03:27:54,573 basehttp 9608 7376 "GET /api/v1/courses/courses/?university_code=kisii01 HTTP/1.1" 200 468
+INFO 2025-10-25 03:27:54,671 middleware 9608 7376 Request: GET /api/v1/courses/courses/1b5eab42-696d-48a0-ae37-cad9f8ea9968/
+INFO 2025-10-25 03:27:54,699 middleware 9608 13908 Request: GET /api/v1/courses/courses/2f326ea9-8461-4daa-834c-115bd4e463d7/
+INFO 2025-10-25 03:27:54,700 middleware 9608 10772 Request: GET /api/v1/courses/courses/f4ec7364-489c-40c9-8ac7-50f8e8cf8495/
+INFO 2025-10-25 03:27:54,808 middleware 9608 9504 Request: GET /api/v1/courses/courses/02184ab0-0663-4fe3-bb8a-b466921a4b6c/
+INFO 2025-10-25 03:27:54,911 middleware 9608 13908 Response: 200 - Duration: 0.21s
+INFO 2025-10-25 03:27:54,923 middleware 9608 7376 Response: 200 - Duration: 0.25s
+INFO 2025-10-25 03:27:54,926 middleware 9608 10772 Response: 200 - Duration: 0.23s
+INFO 2025-10-25 03:27:55,082 basehttp 9608 10772 "GET /api/v1/courses/courses/f4ec7364-489c-40c9-8ac7-50f8e8cf8495/ HTTP/1.1" 200 699
+INFO 2025-10-25 03:27:54,935 basehttp 9608 13908 "GET /api/v1/courses/courses/2f326ea9-8461-4daa-834c-115bd4e463d7/ HTTP/1.1" 200 681
+INFO 2025-10-25 03:27:55,074 basehttp 9608 7376 "GET /api/v1/courses/courses/1b5eab42-696d-48a0-ae37-cad9f8ea9968/ HTTP/1.1" 200 722
+INFO 2025-10-25 03:27:54,927 middleware 9608 9504 Response: 200 - Duration: 0.12s
+INFO 2025-10-25 03:27:55,183 basehttp 9608 9504 "GET /api/v1/courses/courses/02184ab0-0663-4fe3-bb8a-b466921a4b6c/ HTTP/1.1" 200 651
+INFO 2025-10-25 03:27:57,236 basehttp 9608 10772 - Broken pipe from ('127.0.0.1', 9939)
+INFO 2025-10-25 03:27:57,236 basehttp 9608 9504 - Broken pipe from ('127.0.0.1', 9941)
+INFO 2025-10-25 03:27:57,236 basehttp 9608 13908 - Broken pipe from ('127.0.0.1', 9937)
+INFO 2025-10-25 03:27:57,236 basehttp 9608 7376 - Broken pipe from ('127.0.0.1', 9938)
+INFO 2025-10-28 10:48:59,412 autoreload 17388 17528 Watching for file changes with StatReloader
+INFO 2025-10-28 13:18:49,601 middleware 17388 10492 Request: GET /api/docs/
+INFO 2025-10-28 13:18:50,000 middleware 17388 10492 Response: 200 - Duration: 0.40s
+INFO 2025-10-28 13:18:50,045 basehttp 17388 10492 "GET /api/docs/ HTTP/1.1" 200 4647
+INFO 2025-10-28 13:18:53,114 middleware 17388 10492 Request: GET /api/schema/
+INFO 2025-10-28 13:18:53,858 middleware 17388 10492 Response: 200 - Duration: 0.74s
+INFO 2025-10-28 13:18:53,862 basehttp 17388 10492 "GET /api/schema/ HTTP/1.1" 200 173620
