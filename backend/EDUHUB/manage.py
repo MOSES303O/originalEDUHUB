@@ -6,16 +6,21 @@ import sys
 
 def main():
     """Run administrative tasks."""
-    base_module="EDUHUB.settings.development" if "RENDER_EXTERNAL_HOSTNAME" in os.environ else "EDUHUB.settings.base"
-    os.environ.setdefault("DJANGO_SETTINGS_MODULE", base_module)
+    # Use lowercase module names
+    settings_module = (
+        "EDUHUB.settings.deployment"   # Production (Render)
+        if os.getenv("RENDER_EXTERNAL_HOSTNAME")
+        else "EDUHUB.settings.development"  # Local dev
+    )
+    os.environ.setdefault("DJANGO_SETTINGS_MODULE", settings_module)
+
     try:
         from django.core.management import execute_from_command_line
     except ImportError as exc:
         raise ImportError(
-            "Couldn't import Django. Are you sure it's installed and "
-            "available on your PYTHONPATH environment variable? Did you "
-            "forget to activate a virtual environment?"
+            "Couldn't import Django. Did you run `pip install -r requirements.txt`?"
         ) from exc
+
     execute_from_command_line(sys.argv)
 
 
