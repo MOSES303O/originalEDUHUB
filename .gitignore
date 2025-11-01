@@ -17,8 +17,9 @@ __pycache__/
 db.sqlite3
 media/
 staticfiles/
-settings/
 .DS_Store
+settings/base.py
+settings/development.py
 
 # Django specific
 .env

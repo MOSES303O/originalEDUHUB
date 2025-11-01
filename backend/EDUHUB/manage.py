@@ -8,9 +8,9 @@ def main():
     """Run administrative tasks."""
     # Use lowercase module names
     settings_module = (
-        "EDUHUB.settings.deployment"   # Production (Render)
+        "EDUHUB.settings.deploypment"   # Production (Render)
         if os.getenv("RENDER_EXTERNAL_HOSTNAME")
-        else "EDUHUB.settings.development"  # Local dev
+        else "EDUHUB.settings.base"  # Local dev
     )
     os.environ.setdefault("DJANGO_SETTINGS_MODULE", settings_module)
 
