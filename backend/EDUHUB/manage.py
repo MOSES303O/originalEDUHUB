@@ -8,7 +8,7 @@ def main():
     """Run administrative tasks."""
     # Use lowercase module names
     settings_module = (
-        "EDUHUB.settings.deploypment"   # Production (Render)
+        "EDUHUB.settings.deployment"  # Production (Render)
         if os.getenv("RENDER_EXTERNAL_HOSTNAME")
         else "EDUHUB.settings.base"  # Local dev
     )
