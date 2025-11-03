@@ -58,7 +58,7 @@ MIDDLEWARE = [
     'apps.core.middleware.RateLimitMiddleware',
 ]
 
-ROOT_URLCONF = 'EDUHUB.urls'
+ROOT_URLCONF = 'eduhubke.urls'
 
 TEMPLATES = [
     {
@@ -76,7 +76,7 @@ TEMPLATES = [
     },
 ]
 
-WSGI_APPLICATION = 'EDUHUB.wsgi.application'
+WSGI_APPLICATION = 'eduhubke.wsgi.application'
 
 # Database configuration (SQLite3 for development)
 DATABASES = {

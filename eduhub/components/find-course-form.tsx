@@ -236,7 +236,7 @@ export function FindCourseForm({ onClose, setShowFindCourseForm }: FindCourseFor
 
   return (
     <div className="fixed top-[80px] inset-x-0 bottom-0 flex items-center justify-center z-40 p-4 overflow-y-auto">
-      <div className="w-full max-w-2xl bg-[#1a2521] text-white rounded-lg my-4">
+      <div className="w-full max-w-2xl border-gray-200 dark:border-gray-750 dark:bg-gray-800 shadow-sm rounded-lg my-4">
         <div className="p-6 space-y-6 max-h-[80vh] overflow-y-auto">
           <div className="flex justify-between items-center">
             <div className="text-center space-y-2">

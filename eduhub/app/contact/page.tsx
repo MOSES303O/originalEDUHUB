@@ -80,10 +80,10 @@ export default function ContactPage() {
                         <div>
                           <h3 className="font-semibold text-gray-900 dark:text-white">Email Us</h3>
                           <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                            info@eduhubco.ke
+                            eduhub254@gmail.com
                           </p>
                           <p className="text-sm text-gray-500 dark:text-gray-400">
-                            support@eduhub.co.ke
+                            support@eduhub254@gmail.com
                           </p>
                         </div>
                       </div>
@@ -92,10 +92,10 @@ export default function ContactPage() {
                         <div>
                           <h3 className="font-semibold text-gray-900 dark:text-white">Call Us</h3>
                           <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                            +254 712 345 678
+                            +254 743898322
                           </p>
                           <p className="text-sm text-gray-500 dark:text-gray-400">
-                            +254 723 456 789
+                            +254 743808322
                           </p>
                         </div>
                       </div>
@@ -264,7 +264,7 @@ export default function ContactPage() {
                   size="lg"
                   asChild
                 >
-                  <Link href="/signup">Sign Up Now</Link>
+                  <Link href="/login">Get Started Now</Link>
                 </Button>
               </div>
             </div>
