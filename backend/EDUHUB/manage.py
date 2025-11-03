@@ -10,7 +10,7 @@ def main():
     settings_module = (
         "eduhubke.settings.deployment"  # Production (Render)
         if os.getenv("RENDER_EXTERNAL_HOSTNAME")
-        else "EDUHUB.settings.base"  # Local dev
+        else "eduhubke.settings.base"  # Local dev
     )
     os.environ.setdefault("DJANGO_SETTINGS_MODULE", settings_module)
 
