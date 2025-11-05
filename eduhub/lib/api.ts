@@ -1,6 +1,6 @@
 // frontend/lib/api.ts
 import axios, { AxiosError } from 'axios';
-import { University, Course, LoginResponse, SubjectGrades, KMTCCampus, KMTCCourse, Department, Faculty, SelectedCourseResponse } from '@/types';
+import { University,ContactFormData,ContactFormResponse, Course, LoginResponse, SubjectGrades, KMTCCampus, KMTCCourse, Department, Faculty, SelectedCourseResponse } from '@/types';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/v1';
 console.log('API_BASE_URL initialized:', API_BASE_URL);
@@ -1051,6 +1051,23 @@ export async function fetchCoursesByKMTCCampus(campusCode: string, params: Recor
     const errorDetails = extractErrorDetails(error);
     console.error('[fetchCoursesByKMTCCampus] Failed to fetch courses for campus', campusCode, ':', errorDetails);
     return [];
+  }
+}
+export async function submitContactForm(
+  data: ContactFormData
+): Promise<ContactFormResponse> {
+  try {
+    console.log('Submitting contact form:', data);
+    const response = await apiClient.post<ContactFormResponse>(
+      '/auth/contact/submit/',
+      data
+    );
+    console.log('Contact form submitted successfully:', response.data);
+    return response.data;
+  } catch (error: any) {
+    const errorDetails = extractErrorDetails(error);
+    console.error('Contact form submission failed:', errorDetails);
+    throw errorDetails;
   }
 }
 

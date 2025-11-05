@@ -1,0 +1,120 @@
+INFO 2025-11-05 02:22:28,802 autoreload 11504 16936 Watching for file changes with StatReloader
+INFO 2025-11-05 03:04:53,502 middleware 11504 12160 Request: GET /api/docs/
+INFO 2025-11-05 03:04:53,819 middleware 11504 12160 Response: 200 - Duration: 0.32s
+INFO 2025-11-05 03:04:53,822 basehttp 11504 12160 "GET /api/docs/ HTTP/1.1" 200 4647
+INFO 2025-11-05 03:04:55,428 middleware 11504 12160 Request: GET /api/schema/
+INFO 2025-11-05 03:04:56,251 middleware 11504 12160 Response: 200 - Duration: 0.82s
+INFO 2025-11-05 03:04:56,254 basehttp 11504 12160 "GET /api/schema/ HTTP/1.1" 200 173620
+INFO 2025-11-05 03:07:41,128 middleware 11504 16160 Request: GET /
+INFO 2025-11-05 03:07:41,183 middleware 11504 16160 Response: 404 - Duration: 0.05s
+WARNING 2025-11-05 03:07:41,183 log 11504 16160 Not Found: /
+WARNING 2025-11-05 03:07:41,185 basehttp 11504 16160 "GET / HTTP/1.1" 404 3681
+INFO 2025-11-05 03:08:05,289 middleware 11504 16160 Request: GET /api/v1/
+INFO 2025-11-05 03:08:05,301 middleware 11504 16160 Response: 404 - Duration: 0.01s
+WARNING 2025-11-05 03:08:05,302 log 11504 16160 Not Found: /api/v1/
+WARNING 2025-11-05 03:08:05,307 basehttp 11504 16160 "GET /api/v1/ HTTP/1.1" 404 5055
+INFO 2025-11-05 03:08:29,332 middleware 11504 16160 Request: GET /api/v1/auth/
+INFO 2025-11-05 03:08:29,335 middleware 11504 16160 Response: 200 - Duration: 0.00s
+INFO 2025-11-05 03:08:29,337 basehttp 11504 16160 "GET /api/v1/auth/ HTTP/1.1" 200 113
+INFO 2025-11-05 03:09:15,932 middleware 11504 16160 Request: GET /api/v1/
+INFO 2025-11-05 03:09:15,944 middleware 11504 16160 Response: 404 - Duration: 0.01s
+WARNING 2025-11-05 03:09:15,946 log 11504 16160 Not Found: /api/v1/
+WARNING 2025-11-05 03:09:15,947 basehttp 11504 16160 "GET /api/v1/ HTTP/1.1" 404 5055
+INFO 2025-11-05 03:28:27,872 autoreload 11504 16936 C:\Users\psi\Desktop\originalEDUHUB\backend\EDUHUB\apps\authentication\urls.py changed, reloading.
+INFO 2025-11-05 03:28:32,166 autoreload 11776 12048 Watching for file changes with StatReloader
+INFO 2025-11-05 03:29:34,097 middleware 11776 5296 Request: GET /api/v1/auth/contact/submit/
+INFO 2025-11-05 03:29:34,100 middleware 11776 5296 Response: 405 - Duration: 0.00s
+WARNING 2025-11-05 03:29:34,101 log 11776 5296 Method Not Allowed: /api/v1/auth/contact/submit/
+WARNING 2025-11-05 03:29:34,103 basehttp 11776 5296 "GET /api/v1/auth/contact/submit/ HTTP/1.1" 405 31
+INFO 2025-11-05 03:29:42,608 middleware 11776 5296 Request: GET /api/v1/auth/contact/
+INFO 2025-11-05 03:29:42,629 middleware 11776 5296 Response: 404 - Duration: 0.02s
+WARNING 2025-11-05 03:29:42,631 log 11776 5296 Not Found: /api/v1/auth/contact/
+WARNING 2025-11-05 03:29:42,634 basehttp 11776 5296 "GET /api/v1/auth/contact/ HTTP/1.1" 404 15334
+INFO 2025-11-05 03:30:14,982 middleware 11776 5296 Request: GET /api/v1/auth/
+INFO 2025-11-05 03:30:15,079 middleware 11776 5296 Response: 200 - Duration: 0.10s
+INFO 2025-11-05 03:30:15,081 basehttp 11776 5296 "GET /api/v1/auth/ HTTP/1.1" 200 113
+INFO 2025-11-05 03:30:40,744 middleware 11776 5296 Request: GET /api/v1/auth/contact/submit/
+INFO 2025-11-05 03:30:40,745 middleware 11776 5296 Response: 405 - Duration: 0.00s
+WARNING 2025-11-05 03:30:40,746 log 11776 5296 Method Not Allowed: /api/v1/auth/contact/submit/
+WARNING 2025-11-05 03:30:40,747 basehttp 11776 5296 "GET /api/v1/auth/contact/submit/ HTTP/1.1" 405 31
+INFO 2025-11-05 03:30:58,753 middleware 11776 2936 Request: GET /api/docs/
+INFO 2025-11-05 03:30:58,771 middleware 11776 2936 Response: 200 - Duration: 0.02s
+INFO 2025-11-05 03:30:58,776 basehttp 11776 2936 "GET /api/docs/ HTTP/1.1" 200 4647
+INFO 2025-11-05 03:30:59,185 middleware 11776 2936 Request: GET /api/schema/
+INFO 2025-11-05 03:30:59,574 middleware 11776 2936 Response: 200 - Duration: 0.39s
+INFO 2025-11-05 03:30:59,578 basehttp 11776 2936 "GET /api/schema/ HTTP/1.1" 200 173620
+INFO 2025-11-05 03:37:37,074 autoreload 11776 12048 C:\Users\psi\Desktop\originalEDUHUB\backend\EDUHUB\apps\authentication\user_views.py changed, reloading.
+INFO 2025-11-05 03:37:43,431 autoreload 7228 17120 Watching for file changes with StatReloader
+INFO 2025-11-05 03:37:50,474 autoreload 7228 17120 C:\Users\psi\Desktop\originalEDUHUB\backend\EDUHUB\apps\authentication\user_views.py changed, reloading.
+INFO 2025-11-05 03:37:56,976 autoreload 13504 6300 Watching for file changes with StatReloader
+INFO 2025-11-05 03:38:28,237 autoreload 13504 6300 C:\Users\psi\Desktop\originalEDUHUB\backend\EDUHUB\apps\authentication\urls.py changed, reloading.
+INFO 2025-11-05 03:38:32,107 autoreload 8520 14520 Watching for file changes with StatReloader
+INFO 2025-11-05 03:39:15,236 autoreload 8520 14520 C:\Users\psi\Desktop\originalEDUHUB\backend\EDUHUB\apps\authentication\urls.py changed, reloading.
+INFO 2025-11-05 03:39:19,425 autoreload 14572 16032 Watching for file changes with StatReloader
+INFO 2025-11-05 03:39:25,174 autoreload 14572 16032 C:\Users\psi\Desktop\originalEDUHUB\backend\EDUHUB\apps\authentication\urls.py changed, reloading.
+INFO 2025-11-05 03:39:30,003 autoreload 15432 2200 Watching for file changes with StatReloader
+INFO 2025-11-05 03:39:36,563 autoreload 15432 2200 C:\Users\psi\Desktop\originalEDUHUB\backend\EDUHUB\apps\authentication\urls.py changed, reloading.
+INFO 2025-11-05 03:39:41,075 autoreload 15440 11684 Watching for file changes with StatReloader
+INFO 2025-11-05 03:39:45,739 autoreload 15440 11684 C:\Users\psi\Desktop\originalEDUHUB\backend\EDUHUB\apps\authentication\urls.py changed, reloading.
+INFO 2025-11-05 03:39:50,931 autoreload 4208 6876 Watching for file changes with StatReloader
+INFO 2025-11-05 03:39:59,946 autoreload 4208 6876 C:\Users\psi\Desktop\originalEDUHUB\backend\EDUHUB\apps\authentication\urls.py changed, reloading.
+INFO 2025-11-05 03:40:03,305 autoreload 2944 14772 Watching for file changes with StatReloader
+INFO 2025-11-05 03:40:07,844 autoreload 2944 14772 C:\Users\psi\Desktop\originalEDUHUB\backend\EDUHUB\apps\authentication\urls.py changed, reloading.
+INFO 2025-11-05 03:40:12,499 autoreload 6096 16844 Watching for file changes with StatReloader
+INFO 2025-11-05 03:41:35,615 autoreload 6096 16844 C:\Users\psi\Desktop\originalEDUHUB\backend\EDUHUB\apps\authentication\urls.py changed, reloading.
+INFO 2025-11-05 03:41:39,252 autoreload 16228 17232 Watching for file changes with StatReloader
+INFO 2025-11-05 04:23:54,501 basehttp 16228 16788 "OPTIONS /api/v1/auth/contact/submit/ HTTP/1.1" 200 0
+INFO 2025-11-05 04:23:54,817 middleware 16228 16788 Request: POST /api/v1/auth/contact/submit/
+ERROR 2025-11-05 04:23:59,241 user_views 16228 16788 Contact form error: [WinError 10061] No connection could be made because the target machine actively refused it
+Traceback (most recent call last):
+  File "C:\Users\psi\Desktop\originalEDUHUB\backend\EDUHUB\apps\authentication\user_views.py", line 1008, in post
+    send_mail(
+    ~~~~~~~~~^
+        subject=admin_subject,
+        ^^^^^^^^^^^^^^^^^^^^^^
+    ...<3 lines>...
+        fail_silently=False,
+        ^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\psi\Desktop\originalEDUHUB\backend\myvach\Lib\site-packages\django\core\mail\__init__.py", line 92, in send_mail
+    return mail.send()
+           ~~~~~~~~~^^
+  File "C:\Users\psi\Desktop\originalEDUHUB\backend\myvach\Lib\site-packages\django\core\mail\message.py", line 307, in send
+    return self.get_connection(fail_silently).send_messages([self])
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^
+  File "C:\Users\psi\Desktop\originalEDUHUB\backend\myvach\Lib\site-packages\django\core\mail\backends\smtp.py", line 128, in send_messages
+    new_conn_created = self.open()
+  File "C:\Users\psi\Desktop\originalEDUHUB\backend\myvach\Lib\site-packages\django\core\mail\backends\smtp.py", line 86, in open
+    self.connection = self.connection_class(
+                      ~~~~~~~~~~~~~~~~~~~~~^
+        self.host, self.port, **connection_params
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Python313\Lib\smtplib.py", line 255, in __init__
+    (code, msg) = self.connect(host, port)
+                  ~~~~~~~~~~~~^^^^^^^^^^^^
+  File "C:\Python313\Lib\smtplib.py", line 341, in connect
+    self.sock = self._get_socket(host, port, self.timeout)
+                ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Python313\Lib\smtplib.py", line 312, in _get_socket
+    return socket.create_connection((host, port), timeout,
+           ~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
+                                    self.source_address)
+                                    ^^^^^^^^^^^^^^^^^^^^
+  File "C:\Python313\Lib\socket.py", line 864, in create_connection
+    raise exceptions[0]
+  File "C:\Python313\Lib\socket.py", line 849, in create_connection
+    sock.connect(sa)
+    ~~~~~~~~~~~~^^^^
+ConnectionRefusedError: [WinError 10061] No connection could be made because the target machine actively refused it
+INFO 2025-11-05 04:23:59,423 middleware 16228 16788 Response: 500 - Duration: 4.61s
+ERROR 2025-11-05 04:23:59,425 log 16228 16788 Internal Server Error: /api/v1/auth/contact/submit/
+ERROR 2025-11-05 04:23:59,426 basehttp 16228 16788 "POST /api/v1/auth/contact/submit/ HTTP/1.1" 500 223
+INFO 2025-11-05 04:28:02,356 autoreload 16228 17232 C:\Users\psi\Desktop\originalEDUHUB\backend\EDUHUB\eduhubke\settings\base.py changed, reloading.
+INFO 2025-11-05 04:28:15,479 autoreload 980 13336 Watching for file changes with StatReloader
+INFO 2025-11-05 04:35:48,284 middleware 980 13276 Request: POST /api/v1/auth/contact/submit/
+INFO 2025-11-05 04:35:48,374 user_views 980 13276 Contact form submitted – IP: 127.0.0.1 – Name: ochi musa – Email: ochiengmoses303@gmail.com
+INFO 2025-11-05 04:35:48,376 middleware 980 13276 Response: 200 - Duration: 0.09s
+INFO 2025-11-05 04:35:48,377 basehttp 980 13276 "POST /api/v1/auth/contact/submit/ HTTP/1.1" 200 126

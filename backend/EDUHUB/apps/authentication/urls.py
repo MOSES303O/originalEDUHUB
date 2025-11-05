@@ -14,6 +14,7 @@ from .user_views import (
     UserSubjectViewSet,
     UserSelectedCoursesView,
     UserApplicationsView,
+    ContactFormView,
 )
 from .views import (
     UserProfileViewSet,
@@ -31,6 +32,7 @@ urlpatterns = [
     path('logout/', UserLogoutView.as_view(), name='user_logout'),
     path('refresh/', TokenRefreshView.as_view(), name='token_refresh'),
     path('password/change/', PasswordChangeView.as_view(), name='password_change'),
+    path('contact/submit/', ContactFormView.as_view(),name='contact_submit'), # ← CHANGED
     
     # Profile and subjects endpoints
     path('', include(router.urls)),

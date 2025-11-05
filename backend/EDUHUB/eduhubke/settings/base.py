@@ -327,3 +327,4 @@ MPESA_SHORTCODE = config("MPESA_SHORTCODE", default="174379")
 MPESA_PASSKEY = config("MPESA_PASSKEY", default="")
 MPESA_ENVIRONMENT = config("MPESA_ENVIRONMENT", default="sandbox")
 MPESA_CALLBACK_URL='https://909f-105-27-235-39.ngrok-free.app/api/v1/payments/mpesa/callback/'
+EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'

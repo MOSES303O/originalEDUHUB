@@ -17,6 +17,8 @@ from django.contrib.auth import authenticate
 from django.core.mail import send_mail
 from django.template.loader import render_to_string
 from rest_framework.response import Response
+import json
+from django.http import JsonResponse
 from reportlab.lib.pagesizes import letter
 from django.conf import settings
 import traceback
@@ -36,11 +38,7 @@ from rest_framework.throttling import AnonRateThrottle, UserRateThrottle
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.exceptions import TokenError
 from rest_framework.decorators import action
-from reportlab.pdfgen import canvas
-from io import BytesIO
-import csv
 import logging
-from datetime import timedelta
 from apps.core.utils import standardize_phone_number, log_user_activity
 from .models import User, UserProfile, UserSession, UserSubject
 from .serializers import (
@@ -948,3 +946,112 @@ class UserApplicationsView(APIResponseMixin, APIView):
             data=serializer.data,
             status_code=status.HTTP_200_OK
         )
+
+# ----------------------------------------------------------------------
+#  CONTACT FORM – CLASS-BASED VIEW (replaces the old function)
+# ----------------------------------------------------------------------
+class ContactFormView(APIResponseMixin, RateLimitMixin, APIView):
+    """
+    Contact Form Submission
+
+    POST /api/v1/auth/contact/submit/
+    """
+    permission_classes = [AllowAny]
+    throttle_classes = [CustomAnonRateThrottle]   # same as registration/login
+
+    def post(self, request):
+        """
+        Expected JSON payload:
+        {
+            "name": "John Doe",
+            "email": "john@example.com",
+            "phone": "+254712345678",
+            "subject": "Need help",
+            "message": "I have a question..."
+        }
+        """
+        try:
+            ip_address = self.get_client_ip(request)
+
+            # ---- optional per-IP rate-limit (you already have the helper) ----
+            if not self.check_rate_limit(request, 'contact', limit=5, window=3600):
+                return self.error_response(
+                    message="Too many contact attempts. Try again later.",
+                    status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+                )
+
+            # ---- extract fields ------------------------------------------------
+            data = request.data
+            name    = data.get('name')
+            email   = data.get('email')
+            phone   = data.get('phone', '')
+            subject = data.get('subject')
+            message = data.get('message')
+
+            if not all([name, email, subject, message]):
+                return self.error_response(
+                    message="Missing required fields",
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                )
+
+            # ---- admin email ---------------------------------------------------
+            admin_subject = f"New Contact: {subject}"
+            admin_body = f"""
+            Name: {name}
+            Email: {email}
+            Phone: {phone}
+            Subject: {subject}
+
+            Message:
+            {message}
+            """
+            send_mail(
+                subject=admin_subject,
+                message=admin_body,
+                from_email=settings.DEFAULT_FROM_EMAIL,
+                recipient_list=['eduhub254@gmail.com'],
+                fail_silently=False,
+            )
+
+            # ---- auto-reply to the user ----------------------------------------
+            user_subject = "Thank you for contacting EduHub!"
+            user_body = (
+                f"Hi {name},\n\n"
+                "Thank you for reaching out! We'll get back to you soon.\n\n"
+                "Best,\nEduHub Team"
+            )
+            send_mail(
+                subject=user_subject,
+                message=user_body,
+                from_email=settings.DEFAULT_FROM_EMAIL,
+                recipient_list=[email],
+                fail_silently=True,
+            )
+
+            # ---- logging -------------------------------------------------------
+            logger.info(
+                f"Contact form submitted – IP: {ip_address} – Name: {name} – Email: {email}"
+            )
+
+            return self.success_response(
+                message="Message sent successfully",
+                data={"received": True},
+                status_code=status.HTTP_200_OK,
+            )
+
+        except Exception as e:
+            logger.error(f"Contact form error: {str(e)}", exc_info=True)
+            return self.error_response(
+                message="Failed to send message",
+                errors={"detail": str(e)},
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
+
+    # ----------------------------------------------------------------------
+    # Helper – same as in other views
+    # ----------------------------------------------------------------------
+    def get_client_ip(self, request):
+        x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
+        if x_forwarded_for:
+            return x_forwarded_for.split(',')[0]
+        return request.META.get('REMOTE_ADDR')

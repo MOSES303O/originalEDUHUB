@@ -29,6 +29,7 @@ myvach/
 *.local
 /secrets.json
 .python
+logs/
 
 # VSCode / IDE
 .vscode/
