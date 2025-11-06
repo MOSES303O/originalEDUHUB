@@ -13,6 +13,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent.parent
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = config('SECRET_KEY', default='django-insecure-change-me-in-production')
 DEBUG = True
+ADMIN_URL = 'admin/'  # or os.getenv('DJANGO_ADMIN_URL', 'admin/')
 
 # Application definition
 DJANGO_APPS = [
