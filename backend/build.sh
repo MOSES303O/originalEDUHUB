@@ -16,10 +16,10 @@ python manage.py migrate
 
 echo "Build complete!"
 
-if [[$CREATE_SUPERUSER]];
-then
-    python manage.py createsuperuser --no-input
-fi
+#if [[$CREATE_SUPERUSER]];"
+#then
+#    python manage.py createsuperuser --no-input
+#fi
 echo "Creating superuser..."
 python manage.py createsuperuser \
   --noinput \
