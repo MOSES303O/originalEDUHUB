@@ -62,6 +62,7 @@ build/
 # Logs
 logs
 *.log
+*/logs/*.log
 *.gz
 *.tgz
 
