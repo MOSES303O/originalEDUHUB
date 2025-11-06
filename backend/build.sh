@@ -20,13 +20,24 @@ echo "Build complete!"
 #then
 #    python manage.py createsuperuser --no-input
 #fi
-echo "Creating superuser..."
-python manage.py createsuperuser \
-  --noinput \
-  --phone_number "$DJANGO_SUPERUSER_PHONE_NUMBER" \
-  --email "$DJANGO_SUPERUSER_EMAIL" || true
+# Create superuser using CORRECT app path
+python manage.py shell << EOF
+from apps.authentication.models import User
+import os
 
-# Set password for the superuser
-echo "from authentication.models import User; user = User.objects.get(phone_number='$DJANGO_SUPERUSER_PHONE_NUMBER'); user.set_password('$DJANGO_SUPERUSER_PASSWORD'); user.save()" | python manage.py shell || true
+phone = os.environ.get('DJANGO_SUPERUSER_PHONE_NUMBER')
+email = os.environ.get('DJANGO_SUPERUSER_EMAIL')
+password = os.environ.get('DJANGO_SUPERUSER_PASSWORD')
+
+if phone and password and not User.objects.filter(phone_number=phone).exists():
+    User.objects.create_superuser(
+        phone_number=phone,
+        email=email or '',
+        password=password
+    )
+    print(f"Superuser created: {phone}")
+else:
+    print("Superuser already exists or missing env vars")
+EOF
 
 echo "Build complete!"
