@@ -118,3 +118,55 @@ INFO 2025-11-05 04:35:48,284 middleware 980 13276 Request: POST /api/v1/auth/con
 INFO 2025-11-05 04:35:48,374 user_views 980 13276 Contact form submitted – IP: 127.0.0.1 – Name: ochi musa – Email: ochiengmoses303@gmail.com
 INFO 2025-11-05 04:35:48,376 middleware 980 13276 Response: 200 - Duration: 0.09s
 INFO 2025-11-05 04:35:48,377 basehttp 980 13276 "POST /api/v1/auth/contact/submit/ HTTP/1.1" 200 126
+INFO 2025-11-06 12:50:37,324 autoreload 12532 12304 Watching for file changes with StatReloader
+INFO 2025-11-06 12:59:32,690 middleware 12532 3500 Request: GET /api/docs/
+INFO 2025-11-06 12:59:32,873 middleware 12532 3500 Response: 200 - Duration: 0.18s
+INFO 2025-11-06 12:59:32,874 basehttp 12532 3500 "GET /api/docs/ HTTP/1.1" 200 4647
+INFO 2025-11-06 12:59:46,829 middleware 12532 3500 Request: GET /api/schema/
+INFO 2025-11-06 12:59:47,551 middleware 12532 3500 Response: 200 - Duration: 0.72s
+INFO 2025-11-06 12:59:47,554 basehttp 12532 3500 "GET /api/schema/ HTTP/1.1" 200 174488
+INFO 2025-11-06 13:00:21,938 middleware 12532 3500 Request: GET /api/v1/courses/courses/
+INFO 2025-11-06 13:00:22,012 middleware 12532 3500 Response: 200 - Duration: 0.07s
+INFO 2025-11-06 13:00:22,014 basehttp 12532 3500 "GET /api/v1/courses/courses/ HTTP/1.1" 200 1545
+INFO 2025-11-06 13:00:22,352 middleware 12532 3500 Request: GET /favicon.ico
+INFO 2025-11-06 13:00:22,572 middleware 12532 3500 Response: 404 - Duration: 0.22s
+WARNING 2025-11-06 13:00:22,573 log 12532 3500 Not Found: /favicon.ico
+WARNING 2025-11-06 13:00:22,575 basehttp 12532 3500 "GET /favicon.ico HTTP/1.1" 404 3888
+INFO 2025-11-06 13:00:32,011 middleware 12532 3500 Request: GET /api/v1/
+INFO 2025-11-06 13:00:32,024 middleware 12532 3500 Response: 404 - Duration: 0.01s
+WARNING 2025-11-06 13:00:32,028 log 12532 3500 Not Found: /api/v1/
+WARNING 2025-11-06 13:00:32,031 basehttp 12532 3500 "GET /api/v1/ HTTP/1.1" 404 5211
+INFO 2025-11-06 13:00:39,565 middleware 12532 3500 Request: GET /
+INFO 2025-11-06 13:00:39,569 middleware 12532 3500 Response: 200 - Duration: 0.00s
+INFO 2025-11-06 13:00:39,570 basehttp 12532 3500 "GET / HTTP/1.1" 200 1677
+INFO 2025-11-06 13:00:47,966 middleware 12532 3500 Request: GET /admin/
+INFO 2025-11-06 13:00:48,077 middleware 12532 3500 Response: 302 - Duration: 0.10s
+INFO 2025-11-06 13:00:48,082 basehttp 12532 3500 "GET /admin/ HTTP/1.1" 302 0
+INFO 2025-11-06 13:00:48,091 middleware 12532 3500 Request: GET /admin/login/
+INFO 2025-11-06 13:00:48,590 middleware 12532 3500 Response: 200 - Duration: 0.50s
+INFO 2025-11-06 13:00:48,593 basehttp 12532 3500 "GET /admin/login/?next=/admin/ HTTP/1.1" 200 4186
+INFO 2025-11-06 13:00:49,441 basehttp 12532 13268 "GET /static/admin/css/dark_mode.css HTTP/1.1" 200 2808
+INFO 2025-11-06 13:00:49,478 basehttp 12532 3500 "GET /static/admin/css/base.css HTTP/1.1" 200 22120
+INFO 2025-11-06 13:00:49,549 basehttp 12532 14296 "GET /static/admin/css/nav_sidebar.css HTTP/1.1" 200 2810
+INFO 2025-11-06 13:00:49,765 basehttp 12532 11864 "GET /static/admin/css/responsive.css HTTP/1.1" 200 16565
+INFO 2025-11-06 13:00:49,769 basehttp 12532 13908 "GET /static/admin/css/login.css HTTP/1.1" 200 951
+INFO 2025-11-06 13:00:49,776 basehttp 12532 13580 "GET /static/admin/js/theme.js HTTP/1.1" 200 1653
+INFO 2025-11-06 13:00:49,846 basehttp 12532 13580 "GET /static/admin/js/nav_sidebar.js HTTP/1.1" 200 3063
+INFO 2025-11-06 13:01:16,521 middleware 12532 13440 Request: GET /api/v1/auth/register/
+INFO 2025-11-06 13:01:16,523 middleware 12532 13440 Response: 405 - Duration: 0.00s
+WARNING 2025-11-06 13:01:16,524 log 12532 13440 Method Not Allowed: /api/v1/auth/register/
+WARNING 2025-11-06 13:01:16,525 basehttp 12532 13440 "GET /api/v1/auth/register/ HTTP/1.1" 405 40
+INFO 2025-11-06 13:01:21,591 middleware 12532 13440 Request: GET /api/v1/auth/contact/submit/
+INFO 2025-11-06 13:01:21,593 middleware 12532 13440 Response: 405 - Duration: 0.00s
+WARNING 2025-11-06 13:01:21,594 log 12532 13440 Method Not Allowed: /api/v1/auth/contact/submit/
+WARNING 2025-11-06 13:01:21,595 basehttp 12532 13440 "GET /api/v1/auth/contact/submit/ HTTP/1.1" 405 40
+INFO 2025-11-06 13:01:25,623 middleware 12532 13440 Request: GET /health/
+INFO 2025-11-06 13:01:25,631 middleware 12532 13440 Response: 404 - Duration: 0.01s
+WARNING 2025-11-06 13:01:25,632 log 12532 13440 Not Found: /health/
+WARNING 2025-11-06 13:01:25,634 basehttp 12532 13440 "GET /health/ HTTP/1.1" 404 4278
+INFO 2025-11-06 13:01:41,769 middleware 12532 13440 Request: GET /api/docs/
+INFO 2025-11-06 13:01:41,773 middleware 12532 13440 Response: 200 - Duration: 0.00s
+INFO 2025-11-06 13:01:41,776 basehttp 12532 13440 "GET /api/docs/ HTTP/1.1" 200 4647
+INFO 2025-11-06 13:01:42,299 middleware 12532 13440 Request: GET /api/schema/
+INFO 2025-11-06 13:01:42,921 middleware 12532 13440 Response: 200 - Duration: 0.62s
+INFO 2025-11-06 13:01:42,924 basehttp 12532 13440 "GET /api/schema/ HTTP/1.1" 200 174488
