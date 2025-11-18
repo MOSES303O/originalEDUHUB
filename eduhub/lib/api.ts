@@ -2,12 +2,16 @@
 import axios, { AxiosError } from 'axios';
 import { University,ContactFormData,ContactFormResponse, Course, LoginResponse, SubjectGrades, KMTCCampus, KMTCCourse, Department, Faculty, SelectedCourseResponse } from '@/types';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/v1';
-console.log('API_BASE_URL initialized:', API_BASE_URL);
+const isDevelopment = process.env.NODE_ENV === 'development';
+const mybaseurl = isDevelopment
+  ? process.env.NEXT_PUBLIC_API_BASE_URL_LOCAL
+  : process.env.NEXT_PUBLIC_API_BASE_URL_DEPLOY;
+
+console.log('Base URL:', mybaseurl);
 
 // Create axios instance
 const apiClient = axios.create({
-  baseURL: API_BASE_URL,
+  baseURL: mybaseurl,
   headers: {
     'Content-Type': 'application/json',
   },
@@ -86,7 +90,7 @@ apiClient.interceptors.response.use(
           : JSON.stringify(responseData, null, 2)
         : 'Empty response body';
       console.error('Non-JSON or empty response received:', {
-        url: `${API_BASE_URL}${url}`,
+        url: `${mybaseurl}${url}`,
         status,
         headers: error.response?.headers,
         body,
@@ -166,7 +170,7 @@ apiClient.interceptors.response.use(
       data: responseData,
       errors: responseData && typeof responseData === 'object' ? (responseData as any).errors : undefined,
       code: error.code,
-      url: `${API_BASE_URL}${url}`,
+      url: `${mybaseurl}${url}`,
       body: typeof responseData === 'string' ? responseData.slice(0, 500) : JSON.stringify(responseData, null, 2),
     };
     console.error(`Response error for ${url}:`, JSON.stringify(errorDetails, null, 2));
@@ -268,7 +272,7 @@ export async function fetchCourseById(id: string | number): Promise<Course | nul
   try {
     const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
     console.log(`Preparing to fetch course with ID: ${id}, Token: ${token ? 'Present' : 'Missing'}`);
-    console.log(`Target URL: ${API_BASE_URL}/courses/courses/${id}/`);
+    console.log(`Target URL: ${mybaseurl}/courses/courses/${id}/`);
     const headers: Record<string, string> = {};
     if (token) {
       headers['Authorization'] = `Bearer ${token}`;
@@ -328,7 +332,7 @@ export async function fetchCourseById(id: string | number): Promise<Course | nul
 export async function fetchCourses(params: Record<string, any> = {}): Promise<Course[]> {
   try {
     console.log('Fetching courses with params:', JSON.stringify(params, null, 2));
-    console.log('Fetching courses from:', `${API_BASE_URL}/courses/courses/`);
+    console.log('Fetching courses from:', `${mybaseurl}/courses/courses/`);
     const headers: Record<string, string> = {};
     const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
     if (token) {
@@ -389,7 +393,7 @@ export async function fetchCourses(params: Record<string, any> = {}): Promise<Co
 // Unrelated functions remain unchanged as per your request
 export async function login(phone: string, password: string): Promise<LoginResponse['data']> {
   try {
-    console.log('Sending login request to:', `${API_BASE_URL}/auth/login/`);
+    console.log('Sending login request to:', `${mybaseurl}/auth/login/`);
     const response = await apiClient.post<LoginResponse>('/auth/login/', {
       phone_number: phone,
       password,

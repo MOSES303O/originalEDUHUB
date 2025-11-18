@@ -15,7 +15,7 @@ export const metadata: Metadata = {
   keywords: "education, university,Campuses,campus,eduhub.com,kuccps,kmtc, courses, career, high school, subjects,kcse,colleges,polytechnics Kenya, university courses",
   authors: [{ name: "EduHub Team" }],
   icons: {
-    icon: "/originalEDUHUB/favicon.ico",
+    icon: "/favicon.ico",
   },
 }
 // ✅ ADD this separately

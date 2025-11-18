@@ -4,7 +4,7 @@
 import './globals.css';
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { GraduationCap, ArrowRight, BookOpen, Users, Award, ChevronDown, Download } from "lucide-react";
+import {ArrowRight, BookOpen, Users, Award, ChevronDown, Download } from "lucide-react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { FindCourseForm } from "@/components/find-course-form";
@@ -91,7 +91,7 @@ export default function Home() {
               <Image
                 alt="Students studying"
                 className="mx-auto aspect-[4/3] overflow-hidden rounded-xl object-cover object-center w-full max-w-[600px] sm:max-w-[800px] lg:max-w-full"
-                src="/originalEDUHUB/image.png"
+                src="/image.png"
                 width={600}
                 height={450}
               />

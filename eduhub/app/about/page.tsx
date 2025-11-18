@@ -58,7 +58,7 @@ export default function AboutPage() {
             <div className="grid gap-8 sm:gap-12 lg:grid-cols-2 lg:gap-16 items-center mt-10 sm:mt-12">
               <div className="order-2 lg:order-1">
                 <Image
-                  src="/originalEDUHUB/images/boy.png"
+                  src="/images/boy.png"
                   width={600}
                   height={400}
                   alt="EduHub team"
@@ -104,7 +104,7 @@ export default function AboutPage() {
               </div>
               <div className="order-1 lg:order-2">
                 <Image
-                  src="/originalEDUHUB/images/about.png"
+                  src="/images/about.png"
                   width={600}
                   height={400}
                   alt="EduHub history"
@@ -246,7 +246,7 @@ export default function AboutPage() {
         </section>
 
         {/* CTA Section — BLUE gradient */}
-        <section className="w-full py-12 sm:py-16 md:py-24 lg:py-32 bg-gradient-to-r from-blue-600 to-blue-700">
+        <section className="w-full py-12 sm:py-16 md:py-24 lg:py-32 bg-gradient-to-r text-gray-900 dark:text-white">
           <div className="container px-4 sm:px-6 md:px-8 lg:px-12 max-w-7xl text-center">
             <div className="flex flex-col items-center justify-center space-y-4">
               <div className="space-y-2">
