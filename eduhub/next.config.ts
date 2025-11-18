@@ -31,10 +31,12 @@ const nextConfig = {
   basePath: "",
   assetPrefix: "",
   outputFileTracingRoot: path.join(__dirname, ".."),
+
+  //rember to set NEXT_PUBLIC_API_BASE_URL_GLOBAL and NEXT_PUBLIC_API_BASE_URL_LOCAL in your environment variables
   async rewrites() {
     const destination = isVercel
-      ?  process.env.NEXT_PUBLIC_API_BASE_URL_GLOBAL
-      : process.env.NEXT_PUBLIC_API_BASE_URL_LOCAL;
+      ?  'https://originaleduhub.onrender.com/API/v1'
+      : 'http://localhost:8000/api/v1'
     console.log('Next.js rewrite destination:', destination);
     return [
       {
