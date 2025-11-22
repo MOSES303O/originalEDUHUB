@@ -184,7 +184,7 @@ SIMPLE_JWT = {
 }
 # CORS Configuration
 CORS_ALLOWED_ORIGINS = [
-    "https://original-eduhub-eduhub-5diz2rikf-moses303os-projects.vercel.app",
+    "https://original-eduhub-eduhub-1vt72hwf3-moses303os-projects.vercel.app",
     "https://original-eduhub-eduhub.vercel.app",
     "http://127.0.0.1:3000",
     "http://localhost:3000",
@@ -328,5 +328,5 @@ MPESA_CONSUMER_SECRET = config("MPESA_CONSUMER_SECRET", default="")
 MPESA_SHORTCODE = config("MPESA_SHORTCODE", default="174379")
 MPESA_PASSKEY = config("MPESA_PASSKEY", default="")
 MPESA_ENVIRONMENT = config("MPESA_ENVIRONMENT", default="sandbox")
-MPESA_CALLBACK_URL='https://909f-105-27-235-39.ngrok-free.app/api/v1/payments/mpesa/callback/'
+MPESA_CALLBACK_URL='https://909f-105-27-235-39.ngrok-free.app/eduhub/payments/mpesa/callback/'
 EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'

@@ -330,7 +330,7 @@ class HealthCheckView(BaseAPIView):
     """
     Health check endpoint for monitoring.
     
-    GET /api/v1/health/
+    GET /eduhub/health/
     """
     
     authentication_required = False
@@ -393,7 +393,7 @@ class APIDocumentationView(BaseAPIView):
     """
     API documentation endpoint.
     
-    GET /api/v1/docs/
+    GET /eduhub/docs/
     """
     
     authentication_required = False
@@ -409,30 +409,30 @@ class APIDocumentationView(BaseAPIView):
             'title': 'EduHub API',
             'version': '1.0.0',
             'description': 'Educational platform API for course management and payments',
-            'base_url': request.build_absolute_uri('/api/v1/'),
+            'base_url': request.build_absolute_uri('/eduhub/'),
             'authentication': {
                 'type': 'JWT',
                 'header': 'Authorization: Bearer <token>',
                 'endpoints': {
-                    'login': '/api/v1/auth/login/',
-                    'register': '/api/v1/auth/register/',
-                    'refresh': '/api/v1/auth/refresh/',
-                    'logout': '/api/v1/auth/logout/'
+                    'login': '/eduhub/auth/login/',
+                    'register': '/eduhub/auth/register/',
+                    'refresh': '/eduhub/auth/refresh/',
+                    'logout': '/eduhub/auth/logout/'
                 }
             },
             'endpoints': {
                 'authentication': {
-                    'base_url': '/api/v1/auth/',
+                    'base_url': '/eduhub/auth/',
                     'methods': ['POST', 'GET', 'PUT', 'DELETE'],
                     'description': 'User authentication and profile management'
                 },
                 'payments': {
-                    'base_url': '/api/v1/payments/',
+                    'base_url': '/eduhub/payments/',
                     'methods': ['POST', 'GET'],
                     'description': 'Payment processing and subscription management'
                 },
                 'courses': {
-                    'base_url': '/api/v1/courses/',
+                    'base_url': '/eduhub/courses/',
                     'methods': ['GET', 'POST', 'PUT', 'DELETE'],
                     'description': 'Course and university management'
                 }

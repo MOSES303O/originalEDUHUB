@@ -87,7 +87,7 @@ class SubscriptionStatusView(BaseAPIView):
 
 class ActiveSubscriptionView(SubscriptionStatusView):
     def get(self, request):
-        print("Received request for /api/v1/payments/my-subscriptions/active/")
+        print("Received request for /eduhub/payments/my-subscriptions/active/")
         return self.active(request)
 class PaymentViewSet(BaseModelViewSet):
     """

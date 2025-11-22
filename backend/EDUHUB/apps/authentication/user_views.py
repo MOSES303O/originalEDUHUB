@@ -84,7 +84,7 @@ class UserRegistrationView(RateLimitMixin, APIView):
     Handles user registration with phone number validation, subject submission, and optional email.
     Creates user profile and sends welcome email (if email provided).
     
-    POST /api/v1/auth/register/
+    POST /eduhub/auth/register/
     """
     permission_classes = [AllowAny]
     throttle_classes = [CustomAnonRateThrottle]
@@ -234,7 +234,7 @@ class UserLoginView(APIResponseMixin, RateLimitMixin, APIView):
     
     Authenticates users using phone number and password (default: 'moses123').
     
-    POST /api/v1/auth/login/
+    POST /eduhub/auth/login/
     """
     permission_classes = [AllowAny]
     throttle_classes = [CustomAnonRateThrottle]
@@ -371,7 +371,7 @@ class UserLogoutView(APIResponseMixin, APIView):
     
     Logs out user by blacklisting their refresh token and deactivating session.
     
-    POST /api/v1/auth/logout/
+    POST /eduhub/auth/logout/
     """
     permission_classes = [IsAuthenticated]
     throttle_classes = [CustomUserRateThrottle]
@@ -442,8 +442,8 @@ class UserProfileView(APIResponseMixin, APIView):
     
     Handles user profile retrieval and updates.
     
-    GET /api/v1/auth/profile/
-    PUT /api/v1/auth/profile/
+    GET /eduhub/auth/profile/
+    PUT /eduhub/auth/profile/
     """
     permission_classes = [IsAuthenticated]
     throttle_classes = [CustomUserRateThrottle]
@@ -560,7 +560,7 @@ class PasswordChangeView(APIResponseMixin, APIView):
     
     Allows authenticated users to change their password.
     
-    POST /api/v1/auth/change-password/
+    POST /eduhub/auth/change-password/
     """
     permission_classes = [IsAuthenticated]
     throttle_classes = [CustomUserRateThrottle]
@@ -639,7 +639,7 @@ class TokenRefreshView(APIResponseMixin, APIView):
     
     Refreshes access token using refresh token.
     
-    POST /api/v1/auth/refresh/
+    POST /eduhub/auth/refresh/
     """
     permission_classes = [AllowAny]
     throttle_classes = [CustomUserRateThrottle]
@@ -733,9 +733,9 @@ class UserSubjectViewSet(APIResponseMixin, viewsets.ModelViewSet):
     """
     ViewSet to manage user subjects.
     
-    GET /api/v1/auth/subjects/
-    POST /api/v1/auth/subjects/
-    POST /api/v1/auth/subjects/bulk_create/
+    GET /eduhub/auth/subjects/
+    POST /eduhub/auth/subjects/
+    POST /eduhub/auth/subjects/bulk_create/
     """
     queryset = UserSubject.objects.all()
     serializer_class = UserSubjectSerializer
@@ -932,7 +932,7 @@ class UserApplicationsView(APIResponseMixin, APIView):
     """
     View applications submitted by the user
     
-    GET /api/v1/user/applications/
+    GET /eduhub/user/applications/
     """
     permission_classes = [IsAuthenticated]
     throttle_classes = [CustomUserRateThrottle]
@@ -954,7 +954,7 @@ class ContactFormView(APIResponseMixin, RateLimitMixin, APIView):
     """
     Contact Form Submission
 
-    POST /api/v1/auth/contact/submit/
+    POST /eduhub/auth/contact/submit/
     """
     permission_classes = [AllowAny]
     throttle_classes = [CustomAnonRateThrottle]   # same as registration/login

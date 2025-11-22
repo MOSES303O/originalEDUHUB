@@ -26,9 +26,9 @@ class UserProfileViewSet(BaseModelViewSet):
     """
     User profile management viewset.
     
-    GET /api/v1/auth/profile/ - Get user profile
-    PUT /api/v1/auth/profile/ - Update user profile
-    PATCH /api/v1/auth/profile/ - Partial update user profile
+    GET /eduhub/auth/profile/ - Get user profile
+    PUT /eduhub/auth/profile/ - Update user profile
+    PATCH /eduhub/auth/profile/ - Partial update user profile
     """
     serializer_class = UserProfileSerializer
     rate_limit_scope = 'profile'
@@ -47,7 +47,7 @@ class UserProfileViewSet(BaseModelViewSet):
         """
         Get current user's detailed profile.
         
-        GET /api/v1/auth/profile/me/
+        GET /eduhub/auth/profile/me/
         """
         try:
             user = request.user
@@ -86,11 +86,11 @@ class UserSubjectViewSet(BaseModelViewSet):
     """
     User subjects management viewset.
     
-    GET /api/v1/auth/subjects/ - List user subjects
-    POST /api/v1/auth/subjects/ - Add new subject
-    PUT /api/v1/auth/subjects/{id}/ - Update subject
-    DELETE /api/v1/auth/subjects/{id}/ - Delete subject
-    POST /api/v1/auth/subjects/bulk_create/ - Bulk create subjects
+    GET /eduhub/auth/subjects/ - List user subjects
+    POST /eduhub/auth/subjects/ - Add new subject
+    PUT /eduhub/auth/subjects/{id}/ - Update subject
+    DELETE /eduhub/auth/subjects/{id}/ - Delete subject
+    POST /eduhub/auth/subjects/bulk_create/ - Bulk create subjects
     """
     authentication_classes = [JWTAuthentication]
     serializer_class = UserSubjectSerializer
@@ -192,8 +192,8 @@ class UserSessionsView(BaseAPIView):
     """
     User sessions management.
     
-    GET /api/v1/auth/sessions/ - List active sessions
-    DELETE /api/v1/auth/sessions/{session_id}/ - Revoke session
+    GET /eduhub/auth/sessions/ - List active sessions
+    DELETE /eduhub/auth/sessions/{session_id}/ - Revoke session
     """
     rate_limit_scope = 'sessions'
     rate_limit_count = 30

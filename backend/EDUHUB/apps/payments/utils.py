@@ -24,7 +24,7 @@ class MpesaService:
         self.passkey = settings.MPESA_PASSKEY
         self.environment = settings.MPESA_ENVIRONMENT or 'sandbox'
         self.access_token = None
-        self.callback_url = f"{settings.BASE_URL}/api/v1/payments/mpesa/callback/"
+        self.callback_url = f"{settings.BASE_URL}/eduhub/payments/mpesa/callback/"
 
         self.base_url = (
             "https://api.safaricom.co.ke"

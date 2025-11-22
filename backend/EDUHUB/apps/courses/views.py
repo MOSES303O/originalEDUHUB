@@ -26,7 +26,7 @@ class SubjectViewSet(BaseModelViewSet):
     """
     Read-only endpoint to list all active subjects.
     
-    GET /api/v1/subjects/ - List all subjects
+    GET /eduhub/subjects/ - List all subjects
     """
     serializer_class = SubjectSerializer
     permission_classes = [AllowAny]  # Public access for subject listing
@@ -48,7 +48,7 @@ class SubjectViewSet(BaseModelViewSet):
 
 class CourseListView(generics.ListCreateAPIView):
     """
-    GET /api/v1/courses/
+    GET /eduhub/courses/
     List courses with filtering, searching, and pagination
     Supports filtering by university_code, university name, category, minimum_grade, tuition fees, and duration
     """
@@ -122,7 +122,7 @@ class CourseListView(generics.ListCreateAPIView):
         )
 class CourseDetailView(generics.RetrieveAPIView):
     """
-    GET /api/v1/courses/{id}/
+    GET /eduhub/courses/{id}/
     Get detailed information about a specific course
     """
     queryset = Course.objects.filter(is_active=True)
@@ -135,8 +135,8 @@ class CourseDetailView(generics.RetrieveAPIView):
         )
 class CourseReviewListView(generics.ListCreateAPIView):
     """
-    GET /api/v1/courses/{course_id}/reviews/
-    POST /api/v1/courses/{course_id}/reviews/
+    GET /eduhub/courses/{course_id}/reviews/
+    POST /eduhub/courses/{course_id}/reviews/
     List and create course reviews
     """
     serializer_class = CourseReviewSerializer
@@ -158,8 +158,8 @@ class CourseReviewListView(generics.ListCreateAPIView):
 
 class CourseApplicationListView(generics.ListCreateAPIView):
     """
-    GET /api/v1/user/applications/
-    POST /api/v1/user/applications/
+    GET /eduhub/user/applications/
+    POST /eduhub/user/applications/
     List and create course applications
     """
     serializer_class = CourseApplicationSerializer
@@ -208,7 +208,7 @@ class CourseStatisticsAPIView(GenericAPIView):
         return Response(StandardAPIResponse.success("Course statistics", stats))
 class CourseSearchAPIView(generics.CreateAPIView):
     """
-    POST /api/v1/courses/search/
+    POST /eduhub/courses/search/
     Search courses using a JSON payload
     """
     serializer_class = CourseSearchFilterSerializer

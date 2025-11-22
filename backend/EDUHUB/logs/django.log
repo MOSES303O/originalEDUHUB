@@ -1,0 +1,14 @@
+INFO 2025-11-22 13:45:14,246 autoreload 12592 11320 C:\Users\psi\Desktop\originalEDUHUB\backend\EDUHUB\eduhubke\settings\base.py changed, reloading.
+INFO 2025-11-22 13:45:25,983 autoreload 6424 7008 Watching for file changes with StatReloader
+INFO 2025-11-22 13:45:52,103 autoreload 6424 7008 C:\Users\psi\Desktop\originalEDUHUB\backend\EDUHUB\eduhubke\settings\base.py changed, reloading.
+INFO 2025-11-22 13:45:56,045 autoreload 7672 8448 Watching for file changes with StatReloader
+INFO 2025-11-22 13:46:02,341 autoreload 7672 8448 C:\Users\psi\Desktop\originalEDUHUB\backend\EDUHUB\eduhubke\settings\base.py changed, reloading.
+INFO 2025-11-22 13:46:05,711 autoreload 4028 12776 Watching for file changes with StatReloader
+INFO 2025-11-22 13:47:07,862 autoreload 4028 12776 C:\Users\psi\Desktop\originalEDUHUB\backend\EDUHUB\eduhubke\settings\base.py changed, reloading.
+INFO 2025-11-22 13:47:25,024 autoreload 8564 14748 Watching for file changes with StatReloader
+INFO 2025-11-22 13:49:07,554 autoreload 8564 14748 C:\Users\psi\Desktop\originalEDUHUB\backend\EDUHUB\eduhubke\settings\base.py changed, reloading.
+INFO 2025-11-22 13:49:11,677 autoreload 6132 14864 Watching for file changes with StatReloader
+INFO 2025-11-22 13:49:17,062 autoreload 6132 14864 C:\Users\psi\Desktop\originalEDUHUB\backend\EDUHUB\eduhubke\settings\base.py changed, reloading.
+INFO 2025-11-22 13:49:20,173 autoreload 5428 14380 Watching for file changes with StatReloader
+INFO 2025-11-22 13:49:33,950 autoreload 5428 14380 C:\Users\psi\Desktop\originalEDUHUB\backend\EDUHUB\eduhubke\settings\base.py changed, reloading.
+INFO 2025-11-22 13:49:50,929 autoreload 10092 13348 Watching for file changes with StatReloader
