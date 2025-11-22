@@ -5,6 +5,8 @@ Production settings for EDUHUB backend.
 from .base import *
 
 # SECURITY WARNING: don't run with debug turned on in production!
+import dj_database_url
+import os
 DEBUG = False
 
 ALLOWED_HOSTS = os.environ.get("ALLOWED_HOSTS", "").split(",")
@@ -29,3 +31,10 @@ EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD', default='')
 
 # Logging for production
 LOGGING['handlers']['file']['filename'] = '/var/log/django/django.log'
+# Database
+DATABASES = {
+    "default": dj_database_url.config(
+        default=os.environ.get("DATABASE_URL"),
+        conn_max_age=600
+    )
+}

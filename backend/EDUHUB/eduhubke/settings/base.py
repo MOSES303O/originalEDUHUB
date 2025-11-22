@@ -186,6 +186,8 @@ SIMPLE_JWT = {
 CORS_ALLOWED_ORIGINS = [
     "https://original-eduhub-eduhub-5diz2rikf-moses303os-projects.vercel.app",
     "https://original-eduhub-eduhub.vercel.app",
+    "http://127.0.0.1:3000",
+    "http://localhost:3000",
 ]
 
 CORS_ALLOW_CREDENTIALS = True

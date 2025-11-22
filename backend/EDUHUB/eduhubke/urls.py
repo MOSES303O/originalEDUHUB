@@ -26,8 +26,8 @@ def root_view(request):
             <ul style="list-style: none; padding: 0; font-size: 1.1rem;">
                 <li style="margin: 0.8rem 0;"><a href="/admin/" style="color: #fff; text-decoration: underline;">Admin Panel</a></li>
                 <li style="margin: 0.8rem 0;"><a href="/api/docs/" style="color: #fff; text-decoration: underline;">API Documentation (Swagger)</a></li>
-                <li style="margin: 0.8rem 0;"><a href="/api/v1/auth/register/" style="color: #fff; text-decoration: underline;">Register User</a></li>
-                <li style="margin: 0.8rem 0;"><a href="/api/v1/auth/contact/submit/" style="color: #fff; text-decoration: underline;">Contact Form Test</a></li>
+                <li style="margin: 0.8rem 0;"><a href="/eduhub/auth/register/" style="color: #fff; text-decoration: underline;">Register User</a></li>
+                <li style="margin: 0.8rem 0;"><a href="/eduhub/auth/contact/submit/" style="color: #fff; text-decoration: underline;">Contact Form Test</a></li>
                 <li style="margin: 0.8rem 0;"><a href="/health/" style="color: #fff; text-decoration: underline;">Health Check</a></li>
             </ul>
         </div>
@@ -56,7 +56,7 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     
     # API endpoints
-    path('api/v1/', include(api_v1_patterns)),
+    path('eduhub/', include(api_v1_patterns)),
     
     # API documentation
     path('api/schema/', SpectacularAPIView.as_view(), name='schema'),
