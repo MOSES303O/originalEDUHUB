@@ -61,7 +61,7 @@ async function fetchInitialData(universityCode: string): Promise<{
 
     // Fetch courses
     console.log("[fetchInitialData] Fetching courses for universityCode:", universityCode);
-    const courses = await fetchCoursesByUniversity(universityCode, {});
+    const courses = await fetchCoursesByUniversity(universityCode);
     console.log("[fetchInitialData] Fetched courses:", courses);
 
     if (!Array.isArray(courses)) {

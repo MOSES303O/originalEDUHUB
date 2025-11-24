@@ -20,6 +20,16 @@ interface TokenResponse {
   access: string;
   refresh: string;
 }
+// UNIVERSAL DATA EXTRACTOR — works on localhost AND Render
+const getResponseData = (data: any): any[] => {
+  if (!data) return [];
+  if (Array.isArray(data)) return data;
+  if (data && typeof data === 'object') {
+    if ('data' in data) return Array.isArray(data.data) ? data.data : [];
+    if ('results' in data) return Array.isArray(data.results) ? data.results : [];
+  }
+  return [];
+};
 
 // Consolidated request interceptor
 apiClient.interceptors.request.use(
@@ -331,8 +341,7 @@ export async function fetchCourseById(id: string | number): Promise<Course | nul
 
 export async function fetchCourses(params: Record<string, any> = {}): Promise<Course[]> {
   try {
-    console.log('Fetching courses with params:', JSON.stringify(params, null, 2));
-    console.log('Fetching courses from:', `${mybaseurl}/courses/courses/`);
+    const response = await apiClient.get('/courses/courses/', { params });
     const headers: Record<string, string> = {};
     const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
     if (token) {
@@ -340,52 +349,42 @@ export async function fetchCourses(params: Record<string, any> = {}): Promise<Co
     } else {
       console.warn('No token found, proceeding without authentication');
     }
-    const response = await apiClient.get<{ success: boolean; message: string; data: Course[] }>(
-      '/courses/courses/',
-      { params, headers, timeout: 15000 }
-    );
-    console.log('Raw courses response:', JSON.stringify(response.data, null, 2));
-    if (!response.data.success || !Array.isArray(response.data.data)) {
-      console.warn('Invalid courses data received:', JSON.stringify(response.data, null, 2));
-      return [];
-    }
-    console.log('Courses received:', JSON.stringify(response.data.data, null, 2));
-    return response.data.data.map((course) => ({
+    const list = getResponseData(response.data);
+    return list.map((course: any) => ({
       id: course.id.toString(),
       name: course.name || 'Unknown',
       code: course.code || 'N/A',
       university: {
         id: course.university?.id || course.universityId || 'unknown',
         name: course.university?.name || course.university_name || 'Unknown',
-        slug: course.university?.slug || (course.university_name?.toLowerCase().replace(/\s+/g, '-') || 'unknown'),
-        code: course.university?.code || course.university_code || undefined,
+        slug: (course.university?.name || course.university_name || '').toLowerCase().replace(/\s+/g, '-') || 'unknown',
+        code: course.university?.code || course.university_code,
         logo: course.university?.logo || null,
-        city: course.university?.city || undefined,
-        campus: course.university?.campus || undefined,
+        city: course.university?.city,
+        campus: course.university?.campus,
         ranking: course.university?.ranking || null,
-        accreditation: course.university?.accreditation || undefined,
+        accreditation: course.university?.accreditation,
       },
-      universityId: course.university?.id || course.universityId || undefined,
-      university_name: course.university?.name || course.university_name || undefined,
-      minimum_grade: course.minimum_grade || undefined,
-      required_subjects: course.required_subjects || undefined,
-      description: course.description || undefined,
-      duration_years: course.duration_years || undefined,
-      startDate: course.startDate || undefined,
-      applicationDeadline: course.applicationDeadline || undefined,
-      career_prospects: course.career_prospects || undefined,
+      universityId: course.university?.id || course.universityId,
+      university_name: course.university?.name || course.university_name,
+      minimum_grade: course.minimum_grade,
+      required_subjects: course.required_subjects,
+      description: course.description,
+      duration_years: course.duration_years,
+      startDate: course.startDate,
+      applicationDeadline: course.applicationDeadline,
+      career_prospects: course.career_prospects,
       tuition_fee_per_year: course.tuition_fee_per_year != null ? Number(course.tuition_fee_per_year) : undefined,
       application_fee: course.application_fee != null ? Number(course.application_fee) : undefined,
-      category: course.category || undefined,
-      is_selected: course.is_selected || false,
-      is_applied: course.is_applied || false,
+      category: course.category,
+      is_selected: !!course.is_selected,
+      is_applied: !!course.is_applied,
       user_application: course.user_application || null,
-      created_at: course.created_at || undefined,
-      updated_at: course.updated_at || undefined,
+      created_at: course.created_at,
+      updated_at: course.updated_at,
     }));
-  } catch (error: any) {
-    const errorDetails = extractErrorDetails(error);
-    console.error('Failed to fetch courses:', JSON.stringify(errorDetails, null, 2));
+  } catch (error) {
+    console.error('Failed to fetch courses:', extractErrorDetails(error));
     return [];
   }
 }
@@ -427,60 +426,34 @@ export async function login(phone: string, password: string): Promise<LoginRespo
 
 export async function fetchSubjects(): Promise<Array<{ id: string; name: string }>> {
   try {
-    console.log('Fetching subjects...');
-    const response = await apiClient.get<{
-      success: boolean;
-      message: string;
-      data: Array<{ value: string; label: string; code: string }>;
-    }>('/courses/subjects/');
-    console.log('Raw API response:', response.data);
-    if (!response.data.success || !Array.isArray(response.data.data)) {
-      console.warn('Invalid subjects data received:', response.data);
-      return [];
-    }
-    console.log('Subjects received:', response.data.data);
-    return response.data.data.map((s) => ({
-      id: s.value,
-      name: s.label,
+    const response = await apiClient.get('/courses/subjects/');
+    const list = getResponseData(response.data);
+    return list.map((s: any) => ({
+      id: s.value || s.id || '',
+      name: s.label || s.name || 'Unknown',
     }));
-  } catch (error: unknown) {
-    const errorDetails = extractErrorDetails(error);
-    console.error('Failed to fetch subjects:', errorDetails);
-    throw new Error(`Failed to fetch subjects: ${JSON.stringify(errorDetails)}`);
+  } catch (error) {
+    console.error('Failed to fetch subjects:', extractErrorDetails(error));
+    return [];
   }
 }
 
 export async function fetchFaculties(universityCode: string): Promise<Faculty[]> {
   try {
-    const response = await apiClient.get<{ status: string; message: string; data: Faculty[] }>(
-      '/universities/faculties/',
-      { params: { university_code: universityCode } }
-    );
-    if (response.data.status !== 'success' || !Array.isArray(response.data.data)) {
-      console.warn('Invalid faculties data received:', response.data);
-      return [];
-    }
-    return response.data.data;
-  } catch (error: unknown) {
-    const errorDetails = extractErrorDetails(error);
-    console.error(`Failed to fetch faculties for university ${universityCode}:`, errorDetails);
+    const response = await apiClient.get('/universities/faculties/', { params: { university_code: universityCode } });
+    return getResponseData(response.data);
+  } catch (error) {
+    console.error('Failed to fetch faculties:', extractErrorDetails(error));
     return [];
   }
 }
 
 export async function fetchDepartments(facultyId: number): Promise<Department[]> {
   try {
-    const response = await apiClient.get<{ status: string; message: string; data: Department[] }>(
-      `/universities/faculties/${facultyId}/departments/`
-    );
-    if (response.data.status !== 'success' || !Array.isArray(response.data.data)) {
-      console.warn('Invalid departments data received:', response.data);
-      return [];
-    }
-    return response.data.data;
-  } catch (error: unknown) {
-    const errorDetails = extractErrorDetails(error);
-    console.error(`Failed to fetch departments for faculty ${facultyId}:`, errorDetails);
+    const response = await apiClient.get(`/universities/faculties/${facultyId}/departments/`);
+    return getResponseData(response.data);
+  } catch (error) {
+    console.error('Failed to fetch departments:', extractErrorDetails(error));
     return [];
   }
 }
@@ -504,30 +477,10 @@ export async function fetchCourseCountByFaculty(facultyId: number): Promise<numb
 
 export async function fetchCourseCount(universityCode: string): Promise<number> {
   try {
-    if (!universityCode || typeof universityCode !== 'string') {
-      console.warn('[fetchCourseCount] Invalid or missing universityCode:', universityCode);
-      return 0;
-    }
-    console.log('[fetchCourseCount] Fetching course count for universityCode:', universityCode);
-    const response = await apiClient.get<{
-      success: boolean;
-      message: string;
-      timestamp: string;
-      data: Course[];
-    }>('/courses/courses/', { params: { university_code: universityCode } });
-    console.log('[fetchCourseCount] Raw API response:', JSON.stringify(response.data, null, 2));
-    if (!response.data.success || !Array.isArray(response.data.data)) {
-      console.warn('[fetchCourseCount] Invalid courses data received:', response.data);
-      return 0;
-    }
-    const validCourses = response.data.data.filter(
-      (course) => course.university_code === universityCode
-    );
-    console.log(`[fetchCourseCount] Filtered course count for ${universityCode}:`, validCourses.length);
-    return validCourses.length;
-  } catch (error: unknown) {
-    const errorDetails = extractErrorDetails(error);
-    console.error('[fetchCourseCount] Failed to fetch course count for university', universityCode, ':', errorDetails);
+    const response = await apiClient.get('/courses/courses/', { params: { university_code: universityCode } });
+    const list = getResponseData(response.data);
+    return list.filter((c: any) => c.university_code === universityCode).length;
+  } catch {
     return 0;
   }
 }
@@ -621,71 +574,27 @@ export async function fetchUniversities(params: Record<string, any> = {}): Promi
   }
 }
 
-export async function fetchCoursesByUniversity(universityCode: string, params: Record<string, string> = {}): Promise<Course[]> {
+export async function fetchCoursesByUniversity(universityCode: string): Promise<Course[]> {
   try {
-    if (!universityCode || typeof universityCode !== 'string') {
-      console.warn('[fetchCoursesByUniversity] Invalid or missing universityCode:', universityCode);
-      return [];
-    }
-    console.log('[fetchCoursesByUniversity] Fetching courses for universityCode:', universityCode, 'with params:', params);
-    const headers: Record<string, string> = {};
-    const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
-    if (token) {
-      headers['Authorization'] = `Bearer ${token}`;
-    } else {
-      console.warn('No token found, proceeding without authentication');
-    }
-    const response = await apiClient.get<{
-      success: boolean;
-      message: string;
-      timestamp: string;
-      data: Course[];
-    }>('/courses/courses/', { params: { university_code: universityCode, ...params }, headers, timeout: 15000 });
-    console.log('[fetchCoursesByUniversity] Raw API response:', JSON.stringify(response.data, null, 2));
-    if (!response.data.success || !Array.isArray(response.data.data)) {
-      console.warn('[fetchCoursesByUniversity] Invalid courses data received:', response.data);
-      return [];
-    }
-    const validCourses = response.data.data.filter(
-      (course) => course.university_code === universityCode
-    ).map((course) => ({
+    const response = await apiClient.get('/courses/courses/', { params: { university_code: universityCode } });
+    const list = getResponseData(response.data);
+    return list.map((course: any) => ({
       id: course.id.toString(),
       name: course.name || 'Unknown',
       code: course.code || 'N/A',
       university: {
-        id: course.university?.id || course.universityId || 'unknown',
+        id: course.university?.id || 'unknown',
         name: course.university?.name || course.university_name || 'Unknown',
-        slug: course.university?.slug || (course.university_name?.toLowerCase().replace(/\s+/g, '-') || 'unknown'),
-        code: course.university?.code || course.university_code || undefined,
+        slug: (course.university?.name || course.university_name || '').toLowerCase().replace(/\s+/g, '-') || 'unknown',
+        code: course.university?.code || course.university_code,
         logo: course.university?.logo || null,
-        city: course.university?.city || undefined,
-        campus: course.university?.campus || undefined,
-        ranking: course.university?.ranking || null,
-        accreditation: course.university?.accreditation || undefined,
       },
-      universityId: course.university?.id || course.universityId || undefined,
-      university_name: course.university?.name || course.university_name || undefined,
-      minimum_grade: course.minimum_grade || undefined,
-      required_subjects: course.required_subjects || undefined,
-      description: course.description || undefined,
-      duration_years: course.duration_years || undefined,
-      startDate: course.startDate ||  undefined,
-      applicationDeadline: course.applicationDeadline || undefined,
-      career_prospects: course.career_prospects || undefined,
-      tuition_fee_per_year: course.tuition_fee_per_year != null ? Number(course.tuition_fee_per_year) : undefined,
-      application_fee: course.application_fee != null ? Number(course.application_fee) : undefined,
-      category: course.category || undefined,
-      is_selected: course.is_selected || false,
-      is_applied: course.is_applied || false,
-      user_application: course.user_application || null,
-      created_at: course.created_at || undefined,
-      updated_at: course.updated_at || undefined,
+      minimum_grade: course.minimum_grade,
+      category: course.category,
+      is_selected: !!course.is_selected,
+      is_applied: !!course.is_applied,
     }));
-    console.log(`[fetchCoursesByUniversity] Filtered courses for ${universityCode}:`, JSON.stringify(validCourses, null, 2));
-    return validCourses;
-  } catch (error: any) {
-    const errorDetails = extractErrorDetails(error);
-    console.error('[fetchCoursesByUniversity] Failed to fetch courses for university', universityCode, ':', errorDetails);
+  } catch {
     return [];
   }
 }
@@ -840,74 +749,35 @@ export async function removeSelectedCourse(selectionId: string): Promise<void> {
 
 export async function fetchSelectedCourses(): Promise<Course[]> {
   try {
-    const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
-    if (!token) {
-      console.log('No authentication token found in localStorage, returning empty array');
-      return [];
-    }
-    console.log('Sending fetch selected courses request to:', `${apiClient.defaults.baseURL}/user/selected-courses/`);
-    const response = await apiClient.get<SelectedCourseResponse>('/user/selected-courses/', {
+    const token = localStorage.getItem('token');
+    if (!token) return [];
+
+    const response = await apiClient.get('/user/selected-courses/', {
       headers: { Authorization: `Bearer ${token}` },
-      timeout: 10000,
     });
-    console.log('Fetch selected courses response:', JSON.stringify(response.data, null, 2));
-    const data = response.data;
 
-    if (!data || typeof data !== 'object' || Object.keys(data).length === 0) {
-      console.log('Empty or invalid response received for selected courses, returning empty array');
-      return [];
-    }
+    const list = getResponseData(response.data);
+    if (!Array.isArray(list)) return [];
 
-    if (!data.success) {
-      console.warn('Invalid response success status for selected courses:', JSON.stringify(data, null, 2));
-      return [];
-    }
-
-    if (!data.data || data.data === null) {
-      console.log('No data field in response or data is null, returning empty array');
-      return [];
-    }
-    const items = Array.isArray(data.data) ? data.data : [data.data];
-    return items.map((item) => ({
-      id: item.course.id.toString(),
-      name: item.course.name || 'Unknown',
-      code: item.course.code || 'N/A',
-      university: {
-        id: item.course.id || 'unknown',
-        name: item.course.university_name || 'Unknown',
-        slug: item.course.university_name?.toLowerCase().replace(/\s+/g, '-') || 'unknown',
-        code: item.course.university_code || undefined,
-        logo: null,
-        city: undefined,
-        campus: undefined,
-        ranking: null,
-        accreditation: undefined,
-      },
-      universityId: item.course.id || undefined,
-      university_name: item.course.university_name || undefined,
-      minimum_grade: item.course.minimum_grade || undefined,
-      description: item.course.description || undefined,
-      duration_years: item.course.duration_years || undefined,
-      startDate: item.course.start_date || undefined,
-      applicationDeadline: item.course.application_deadline || undefined,
-      career_prospects: item.course.career_prospects || undefined,
-      tuition_fee_per_year: item.course.tuition_fee_per_year != null ? Number(item.course.tuition_fee_per_year) : undefined,
-      application_fee: item.course.application_fee != null ? Number(item.course.application_fee) : undefined,
-      category: item.course.category || undefined,
-      is_selected: true,
-      is_applied: item.is_applied || false,
-      user_application: item.is_applied ? {
-        id: item.id,
-        status: item.is_applied ? 'applied' : 'pending',
-        application_number: `APP-${item.id}`,
-        submitted_at: item.application_date || null,
-      } : null,
-      created_at: item.created_at || undefined,
-      updated_at: item.course.updated_at || undefined,
-    }));
-  } catch (error: any) {
-    const errorDetails = extractErrorDetails(error);
-    console.log('Empty, 404, or expected error response received for selected courses, returning empty array');
+    return list.map((item: any) => {
+      const course = item.course || item;
+      return {
+        id: course.id.toString(),
+        name: course.name || 'Unknown',
+        code: course.code || 'N/A',
+        university: {
+          id: course.id || 'unknown',
+          name: course.university_name || 'Unknown',
+          slug: (course.university_name || '').toLowerCase().replace(/\s+/g, '-') || 'unknown',
+          code: course.university_code,
+          logo: null,
+        },
+        is_selected: true,
+        is_applied: !!item.is_applied,
+        selectionId: item.id,
+      };
+    });
+  } catch {
     return [];
   }
 }
@@ -974,32 +844,20 @@ export async function verifyPayment(reference: string) {
   }
 }
 
-export async function fetchKMTCCampuses(params: Record<string, string> = {}): Promise<KMTCCampus[]> {
+export async function fetchKMTCCampuses(params = {}): Promise<KMTCCampus[]> {
   try {
-    console.log('[fetchKMTCCampuses] Fetching with params:', params);
-    const response = await apiClient.get<{ success: boolean; message: string; data: KMTCCampus[] }>(
-      '/kmtc/campuses/',
-      { params }
-    );
-    console.log('[fetchKMTCCampuses] Raw API response:', JSON.stringify(response.data, null, 2));
-    const data = Array.isArray(response.data) ? response.data : response.data.data || [];
-    if (!Array.isArray(data)) {
-      console.warn('[fetchKMTCCampuses] Invalid campuses data received:', response.data);
-      return [];
-    }
-    console.log('[fetchKMTCCampuses] Campuses received:', data);
-    return data.map(campus => ({
-      id: campus.id,
-      name: campus.name,
-      slug: campus.slug,
-      code: campus.code,
-      city: campus.city,
-      description: campus.description,
+    const response = await apiClient.get('/kmtc/campuses/', { params });
+    const list = getResponseData(response.data);
+    return list.map((c: any) => ({
+      id: c.id,
+      name: c.name,
+      slug: c.slug,
+      code: c.code,
+      city: c.city,
+      description: c.description,
     }));
-  } catch (error: any) {
-    const errorDetails = extractErrorDetails(error);
-    console.error('[fetchKMTCCampuses] Failed to fetch campuses:', errorDetails);
-    throw new Error(`Failed to fetch KMTC campuses: ${JSON.stringify(errorDetails)}`);
+  } catch {
+    return [];
   }
 }
 
