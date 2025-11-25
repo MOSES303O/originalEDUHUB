@@ -378,7 +378,11 @@ export function FindCourseForm({ onClose, setShowFindCourseForm }: FindCourseFor
               type="button"
               variant="outline"
               className="w-full"
-              onClick={() => setShowFindCourseForm(false)}
+              onClick={() => {
+                setShowFindCourseForm(false);
+                // This triggers the AuthenticationModal from app/page.tsx
+                document.dispatchEvent(new CustomEvent("open-auth-modal"));
+              }}
               disabled={isSubmitting}
             >
               Switch to Login

@@ -44,11 +44,11 @@ export function Header({ onGetStarted, user }: HeaderProps) {
 
   const navItems = [
     { name: "Home", path: "/" },
-    { name: "About", path: "/about" },
     { name: "Courses", path: "/courses" },
     { name: "KMTC", path: "/kmtc" },
     { name: "Universities", path: "/university" },
     { name: "Contact", path: "/contact" },
+    { name: "About", path: "/about" },
   ];
 
   return (
@@ -60,9 +60,11 @@ export function Header({ onGetStarted, user }: HeaderProps) {
       }`}
     >
       <div className="container px-4 sm:px-6 md:px-8 lg:px-12 max-w-7xl flex h-14 sm:h-16 items-center justify-between">
-        <div className="flex items-center gap-2">
-          <GraduationCap className="h-6 w-6 sm:h-7 sm:w-7 text-emerald-500" />
-          <span className="text-base sm:text-lg md:text-xl font-bold gradient-text">EduHub</span>
+        <div className="flex items-center">
+          <Link href="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity cursor-pointer">
+            <GraduationCap className="h-6 w-6 sm:h-7 sm:w-7 text-emerald-500" />
+            <span className="text-base sm:text-lg md:text-xl font-bold gradient-text">EduHub</span>
+          </Link>
         </div>
         <nav className="hidden lg:flex items-center gap-4 sm:gap-6">
           {navItems.map((item) => (

@@ -2,7 +2,7 @@
 "use client";
 
 import './globals.css';
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import {ArrowRight, BookOpen, Users, Award, ChevronDown, Download } from "lucide-react";
 import Image from "next/image";
@@ -54,6 +54,20 @@ export default function Home() {
       setIsFormOpen(true);
     }
   };
+  // ADD THIS useEffect in app/page.tsx
+useEffect(() => {
+  const handleOpenAuthModal = () => {
+    console.log("Opening AuthenticationModal from event");
+    setIsFormOpen(false);
+    setIsAuthModalOpen(true);
+  };
+
+  document.addEventListener("open-auth-modal", handleOpenAuthModal);
+
+  return () => {
+    document.removeEventListener("open-auth-modal", handleOpenAuthModal);
+  };
+}, []);
 
   return (
     <div className="flex min-h-screen flex-col bg-gradient-to-b from-blue-50 to-white dark:from-gray-900 dark:to-gray-800">
