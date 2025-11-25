@@ -7,8 +7,6 @@ from .base import *
 # SECURITY WARNING: don't run with debug turned on in production!
 import dj_database_url
 import os
-DEBUG = False
-
 ALLOWED_HOSTS = os.environ.get("ALLOWED_HOSTS", "").split(",")
 SECRET_KEY = os.environ.get("SECRET_KEY")
 
@@ -30,7 +28,7 @@ EMAIL_HOST_USER = config('EMAIL_HOST_USER', default='')
 EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD', default='')
 
 # Logging for production
-LOGGING['handlers']['file']['filename'] = '/var/log/django/django.log'
+#LOGGING['handlers']['file']['filename'] = '/var/log/django/django.log'
 # Database
 DATABASES = {
     "default": dj_database_url.config(

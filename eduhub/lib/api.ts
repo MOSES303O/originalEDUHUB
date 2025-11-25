@@ -12,6 +12,7 @@ console.log('Base URL:', mybaseurl);
 // Create axios instance
 const apiClient = axios.create({
   baseURL: mybaseurl,
+  withCredentials: true,
   headers: {
     'Content-Type': 'application/json',
   },
