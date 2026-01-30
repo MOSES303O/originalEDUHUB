@@ -1,0 +1,30 @@
+# robots.txt for https://eduhub254.com
+# This file tells Google, Bing, and all crawlers what they can and cannot index
+# You want Google to crawl EVERYTHING → you get ranked faster
+
+User-agent: *
+Allow: /
+
+# Allow all important folders
+Allow: /courses/
+Allow: /kmtc/
+Allow: /university/
+Allow: /selected-courses/
+Allow: /login/
+Allow: /about/
+Allow: /contact/
+Allow: /selected-courses/
+Allow: /faculties/
+Allow: /department/
+
+# Block nothing (you want maximum indexing)
+# Disallow: /admin/        ← only if you have private pages
+
+# Sitemap — THIS IS CRITICAL FOR #1 RANKING
+Sitemap: https://eduhub254.com/sitemap.xml
+
+# Crawl delay (optional — be nice to servers)
+Crawl-delay: 2
+
+# Host (for mirror sites — not needed now)
+# Host: https://eduhub254.com

@@ -93,7 +93,7 @@ export default function ContactPage() {
                 Contact Us
               </h1>
               <p className="max-w-[700px] text-gray-600 dark:text-gray-300 md:text-xl">
-                Have questions or feedback? We'd love to hear from you.
+                Have questions,complaints or feedback? We'd love to hear from you.
               </p>
             </div>
 

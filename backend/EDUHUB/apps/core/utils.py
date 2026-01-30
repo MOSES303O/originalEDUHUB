@@ -7,20 +7,13 @@ to be consistent across authentication, payments, and other apps.
 """
 
 import logging
-import json
 import re
 import uuid
-from datetime import datetime, timedelta
-from typing import Dict, Any, Optional, Union
-from decimal import Decimal
+from typing import Dict, Any, Optional
 import phonenumbers
 from phonenumbers import NumberParseException
-
-from django.http import JsonResponse
 from django.core.cache import cache
 from django.utils import timezone
-from django.conf import settings
-from django.core.exceptions import ValidationError
 from rest_framework import status
 from rest_framework.response import Response
 

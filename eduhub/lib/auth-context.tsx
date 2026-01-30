@@ -1,3 +1,4 @@
+// frontend/lib/auth-context.tsx — FINAL WITH 6-HOUR LOGIC
 "use client";
 
 import React, { createContext, useContext, useState, useEffect } from "react";
@@ -13,159 +14,228 @@ interface AuthContextType {
   requirePayment: boolean;
   setRequirePayment: (value: boolean) => void;
   validateToken: () => Promise<void>;
+  renewSubscription: () => Promise<void>;
+  isPremiumActive: boolean;
+  renewalEligible: boolean;
+  setUser: React.Dispatch<React.SetStateAction<any | null>>;
 }
-
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-interface AuthProviderProps {
-  children: React.ReactNode;
-}
-
-export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
+export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<any | null>(null);
   const [loading, setLoading] = useState(true);
   const [requirePayment, setRequirePayment] = useState(false);
+  const [isPremiumActive, setIsPremiumActive] = useState(false);
+  const [renewalEligible, setRenewalEligible] = useState(false);
   const { toast } = useToast();
   const router = useRouter();
 
+  const renewSubscription = async () => {
+    try {
+      const response = await apiClient.post("/payments/renew/");
+      console.log("Renewal success:", response.data);
+
+      // Refresh auth state
+      await validateToken();
+
+      toast({
+        title: "Renewal Successful",
+        description: "Premium access renewed for another 6 hours!",
+      });
+
+      setRequirePayment(false);
+      setIsPremiumActive(true);
+
+    } catch (error: any) {
+      console.error("Renewal failed:", extractErrorDetails(error));
+      toast({
+        title: "Renewal Failed",
+        description: error.response?.data?.error || "Could not renew subscription",
+        variant: "destructive",
+      });
+    }
+  };
+  const checkActiveSubscription = async () => {
+    try {
+      const response = await apiClient.get("/payments/my-subscriptions/active");
+      console.log("[checkActiveSubscription] Raw response:", response.data);
+  
+      if (response.data.success === true) {
+        const data = response.data.data || {};
+        return {
+          active: true,
+          renewal_eligible: false,
+        };
+      }
+  
+      // Handle 402 (Payment Required)
+      if (response.status === 402) {
+        if (response.data.data?.renewal_eligible) {
+          return {
+            active: false,
+            renewal_eligible: true,
+          };
+        }
+        return {
+          active: false,
+          renewal_eligible: false,
+        };
+      }
+  
+      return { active: false, renewal_eligible: false };
+    } catch (error: any) {
+      console.error("[checkActiveSubscription] Failed:", extractErrorDetails(error));
+      return { active: false, renewal_eligible: false };
+    }
+  };
+
+  const checkUserHasSubjects = async (): Promise<boolean> => {
+    try {
+      const response = await apiClient.get("/auth/subjects/");
+      return Array.isArray(response.data) && response.data.length > 0;
+    } catch {
+      return false;
+    }
+  };
+
   const validateToken = async () => {
     const storedToken = localStorage.getItem("token");
-    console.log("[AuthProvider] Validating token:", storedToken ? `Token: ${storedToken.substring(0, 20)}...` : "No token");
+
     if (!storedToken) {
-      console.log("[AuthProvider] No token found, clearing session");
       setUser(null);
       setRequirePayment(true);
+      setIsPremiumActive(false);
+      setRenewalEligible(false);
       setLoading(false);
       return;
     }
 
     try {
-      console.log("[AuthProvider] Fetching profile for user with token");
       const profileResponse = await apiClient.get("/auth/profile/me/");
-      console.log("[AuthProvider] Profile response:", JSON.stringify(profileResponse.data, null, 2));
       const userData = profileResponse.data.data?.user || profileResponse.data.user || profileResponse.data;
       setUser(userData);
 
-      try {
-        console.log("[AuthProvider] Fetching subscription status for user:", userData.phone_number || "unknown");
-        const subscriptionResponse = await apiClient.get("/payments/my-subscriptions/active/");
-        console.log("[AuthProvider] Subscription response:", JSON.stringify(subscriptionResponse.data, null, 2));
-        const hasActiveSubscription = subscriptionResponse.data?.success === true && !!subscriptionResponse.data?.data;
-        console.log("[AuthProvider] hasActiveSubscription:", hasActiveSubscription);
-        setRequirePayment(!hasActiveSubscription);
-      } catch (subError: any) {
-        console.error("[AuthProvider] Subscription check failed:", extractErrorDetails(subError));
-        setRequirePayment(true);
-      }
-    } catch (error: any) {
-      console.error("[AuthProvider] Token validation error:", extractErrorDetails(error));
-      if (error.response?.status === 401) {
-        console.log("[AuthProvider] 401 detected, handled by apiClient interceptor");
+      const { active, renewal_eligible } = await checkActiveSubscription();
+      setIsPremiumActive(active);
+      setRenewalEligible(renewal_eligible);
+      setRequirePayment(!active && !renewal_eligible);
+
+      if (active) {
+        const hasSubjects = await checkUserHasSubjects();
+        if (!hasSubjects) {
+          window.dispatchEvent(new Event("require-subjects"));
+        }
       } else {
-        localStorage.removeItem("token");
-        localStorage.removeItem("refreshToken");
-        localStorage.removeItem("phone_number");
-        setUser(null);
-        setRequirePayment(true);
-        toast({
-          title: "Session Error",
-          description: error.response?.data?.message || "An error occurred. Please log in again.",
-          variant: "destructive",
-          duration: 3000,
-        });
+        // Not active → show form (either new or renewal)
+        window.dispatchEvent(new Event("require-subjects"));
       }
+
+    } catch (error: any) {
+      console.error("Auth validation failed:", extractErrorDetails(error));
+      localStorage.clear();
+      setUser(null);
+      setRequirePayment(true);
+      setIsPremiumActive(false);
+      setRenewalEligible(false);
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   useEffect(() => {
     validateToken();
-  }, [toast]);
+
+    const handleStorage = () => validateToken();
+    const handleAuthChange = () => validateToken();
+
+    window.addEventListener("storage", handleStorage);
+    window.addEventListener("auth-change", handleAuthChange);
+
+    return () => {
+      window.removeEventListener("storage", handleStorage);
+      window.removeEventListener("auth-change", handleAuthChange);
+    };
+  }, []);
 
   const signIn = async (phoneNumber: string, password: string) => {
-    console.log("[AuthProvider] signIn called with phoneNumber:", phoneNumber);
     try {
-      const response = await apiClient.post("/auth/login/", { phone_number: phoneNumber, password });
-      console.log("[AuthProvider] Login response:", JSON.stringify(response.data, null, 2));
+      console.log("[AuthProvider] Signing in:", phoneNumber);
+      const response = await apiClient.post("/auth/login/", {
+        phone_number: phoneNumber,
+        password,
+      });
+  
       const { access: token, refresh: refreshToken, user: userData } = response.data;
+  
       localStorage.setItem("token", token);
-      localStorage.setItem("refreshToken", refreshToken);
+      if (refreshToken) localStorage.setItem("refreshToken", refreshToken);
       localStorage.setItem("phone_number", userData.phone_number || phoneNumber);
+  
       setUser(userData);
-
-      try {
-        console.log("[AuthProvider] Fetching subscription status for user:", userData.phone_number || phoneNumber);
-        const subscriptionResponse = await apiClient.get("/payments/my-subscriptions/active/");
-        console.log("[AuthProvider] signIn subscription response:", JSON.stringify(subscriptionResponse.data, null, 2));
-        const hasActiveSubscription = subscriptionResponse.data?.success === true && !!subscriptionResponse.data?.data;
-        console.log("[AuthProvider] signIn hasActiveSubscription:", hasActiveSubscription);
-        setRequirePayment(!hasActiveSubscription);
-      } catch (subError: any) {
-        console.error("[AuthProvider] Subscription check failed in signIn:", extractErrorDetails(subError));
-        setRequirePayment(true);
-      }
-
+  
+      // Check subscription after login
+      const hasActiveSub = await checkActiveSubscription();
+      setRequirePayment(!hasActiveSub);
+  
       toast({
         title: "Login Successful",
-        description: "You are now logged in.",
+        description: hasActiveSub 
+          ? "Welcome back! Premium access active." 
+          : "Please subscribe to access premium features.",
       });
+  
     } catch (error: any) {
-      console.error("[AuthProvider] signIn error:", extractErrorDetails(error));
+      console.error("[AuthProvider] Login failed:", extractErrorDetails(error));
+      
+      // Clean state
       localStorage.removeItem("token");
       localStorage.removeItem("refreshToken");
       localStorage.removeItem("phone_number");
       setUser(null);
       setRequirePayment(true);
-      const errorMessage = error.response?.data?.detail || error.response?.data?.message || "Could not validate credentials.";
+  
+      const msg = error.response?.data?.message || error.response?.data?.detail || "Invalid phone or password";
       toast({
-        title: "Authentication Failed",
-        description: errorMessage,
+        title: "Login Failed",
+        description: msg,
         variant: "destructive",
       });
-      throw new Error(errorMessage);
+      throw error;
     }
   };
 
   const signOut = async () => {
-    try {
-      const token = localStorage.getItem("token");
-      const refreshToken = localStorage.getItem("refreshToken");
-      if (token && refreshToken) {
-        console.log("[AuthProvider] Logging out user");
-        await apiClient.post("/auth/logout/", { refresh: refreshToken });
-      }
-    } catch (error) {
-      console.error("[AuthProvider] Error during logout:", extractErrorDetails(error));
-    }
-    localStorage.removeItem("token");
-    localStorage.removeItem("refreshToken");
-    localStorage.removeItem("phone_number");
+    localStorage.clear();
     setUser(null);
     setRequirePayment(true);
-    toast({
-      title: "Logged Out",
-      description: "You have been successfully logged out.",
-    });
+    setIsPremiumActive(false);
+    setRenewalEligible(false);
     router.push("/login");
   };
 
-  const value: AuthContextType = {
-    user,
-    loading,
-    signIn,
-    signOut,
-    requirePayment,
-    setRequirePayment,
-    validateToken,
-  };
-
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+  return (
+    <AuthContext.Provider
+      value={{
+        user,
+        loading,
+        signIn,
+        signOut,
+        requirePayment,
+        renewSubscription,
+        setRequirePayment,
+        validateToken,
+        isPremiumActive,
+        renewalEligible,
+        setUser,
+      }}
+    >
+      {children}
+    </AuthContext.Provider>
+  );
 };
 
 export const useAuth = () => {
   const context = useContext(AuthContext);
-  if (!context) {
-    throw new Error("useAuth must be used within an AuthProvider");
-  }
+  if (!context) throw new Error("useAuth must be used within AuthProvider");
   return context;
 };

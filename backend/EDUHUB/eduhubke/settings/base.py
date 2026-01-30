@@ -1,21 +1,37 @@
 """
 Base Django settings for EduPathway backend.
-This file contains common settings shared across all environments.
+All sensitive/MPesa config loaded from .env
 """
+
 import os
 from pathlib import Path
 from decouple import config
 from datetime import timedelta
+from dotenv import load_dotenv
 
-# Build paths inside the project like this: BASE_DIR / 'subdir'.
+load_dotenv()  # ← Load .env file
+
+# Build paths
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
 
-# SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = config('SECRET_KEY', default='django-insecure-change-me-in-production')
-DEBUG = True
-ADMIN_URL = 'admin/'  # or os.getenv('DJANGO_ADMIN_URL', 'admin/')
+# SECURITY
+SECRET_KEY = config('SECRET_KEY')
+DEBUG = config('DEBUG', default=True, cast=bool)
 
-# Application definition
+# Celery - FULLY SYNCHRONOUS MODE (NO BROKER, NO QUEUE)
+CELERY_BROKER_URL = None
+CELERY_RESULT_BACKEND = None
+CELERY_TASK_ALWAYS_EAGER = True
+CELERY_TASK_EAGER_PROPAGATES = True
+CELERY_ACCEPT_CONTENT = ['json']
+CELERY_TASK_SERIALIZER = 'json'
+CELERY_RESULT_SERIALIZER = 'json'
+CELERY_TIMEZONE = 'Africa/Nairobi'
+
+# Windows fixes: solo pool + low concurrency
+CELERY_WORKER_POOL = 'solo'
+CELERY_WORKER_CONCURRENCY = 1
+CELERYD_MAX_TASKS_PER_CHILD = 1 # Application definition
 DJANGO_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
@@ -23,6 +39,7 @@ DJANGO_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'django_daraja',
 ]
 
 THIRD_PARTY_APPS = [
@@ -31,7 +48,8 @@ THIRD_PARTY_APPS = [
     'corsheaders',
     'django_filters',
     'phonenumber_field',
-    'drf_spectacular',
+    'django_celery_beat',
+    'django_extensions',   
 ]
 
 LOCAL_APPS = [
@@ -42,7 +60,7 @@ LOCAL_APPS = [
     'apps.core',
     'apps.universities',
 ]
-# 'apps.universities'
+
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
 
 MIDDLEWARE = [
@@ -57,7 +75,11 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'apps.core.middleware.RequestLoggingMiddleware',
     'apps.core.middleware.RateLimitMiddleware',
+    'apps.core.middleware.PremiumAccessMiddleware',
+    'apps.core.middleware.SubscriptionExpirationMiddleware',
 ]
+USE_X_FORWARDED_HOST = True
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 
 ROOT_URLCONF = 'eduhubke.urls'
 
@@ -78,36 +100,23 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = 'eduhubke.wsgi.application'
-
-# Database configuration (SQLite3 for development)
+# Database
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',  # Or use 'django.db.backends.postgresql', 'mysql', etc.
-        'NAME': BASE_DIR / 'db.sqlite3',         # Use BASE_DIR if already defined
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': BASE_DIR / 'db.sqlite3',
     }
 }
-
 
 # Custom User Model
 AUTH_USER_MODEL = 'authentication.User'
 
 # Password validation
 AUTH_PASSWORD_VALIDATORS = [
-    {
-        'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
-    },
-    {
-        'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',
-        'OPTIONS': {
-            'min_length': 8,
-        }
-    },
-    {
-        'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator',
-    },
-    {
-        'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
-    },
+    {'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator'},
+    {'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator', 'OPTIONS': {'min_length': 8}},
+    {'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator'},
+    {'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator'},
 ]
 
 # Internationalization
@@ -115,51 +124,37 @@ LANGUAGE_CODE = 'en-us'
 TIME_ZONE = 'Africa/Nairobi'
 USE_I18N = True
 USE_TZ = True
-# Static files (CSS, JavaScript, Images)
+
+# Static & Media
 STATIC_URL = '/static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'
-STATICFILES_DIRS = [
-    BASE_DIR / 'static',
-]
-
-# Media files
+STATICFILES_DIRS = [BASE_DIR / 'static']
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 
-# Default primary key field type
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-# Django REST Framework configuration
+# REST Framework
 REST_FRAMEWORK = {
-    'DEFAULT_THROTTLE_CLASSES': [
-        'rest_framework.throttling.UserRateThrottle',
-    ],#added this rate limiter
-    'DEFAULT_THROTTLE_RATES': {
-        'user': '100/minute',  # or any rate you prefer
-    },
+    'DEFAULT_THROTTLE_CLASSES': ['rest_framework.throttling.UserRateThrottle'],
     'DEFAULT_AUTHENTICATION_CLASSES': [
         'rest_framework_simplejwt.authentication.JWTAuthentication',
         'rest_framework.authentication.SessionAuthentication',
     ],
-    'DEFAULT_PERMISSION_CLASSES': [
-        'rest_framework.permissions.AllowAny',
-    ],
-    'DEFAULT_RENDERER_CLASSES': [
-        'rest_framework.renderers.JSONRenderer',
-    ],
+    'DEFAULT_PERMISSION_CLASSES': ['rest_framework.permissions.AllowAny'],
+    'DEFAULT_RENDERER_CLASSES': ['rest_framework.renderers.JSONRenderer'],
     'DEFAULT_PARSER_CLASSES': [
         'rest_framework.parsers.JSONParser',
         'rest_framework.parsers.MultiPartParser',
         'rest_framework.parsers.FormParser',
     ],
     'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
-    'DEFAULT_PAGINATION_CLASS': None,  # removes `page`
-    'DEFAULT_FILTER_BACKENDS': ['django_filters.rest_framework.DjangoFilterBackend',
-        ],
+    'DEFAULT_FILTER_BACKENDS': ['django_filters.rest_framework.DjangoFilterBackend'],
     'PAGE_SIZE': 10,
 }
+RATE_LIMIT_ENABLE = False
 
-# JWT Configuration
+# JWT
 SIMPLE_JWT = {
     'ACCESS_TOKEN_LIFETIME': timedelta(minutes=60),
     'REFRESH_TOKEN_LIFETIME': timedelta(days=7),
@@ -168,21 +163,14 @@ SIMPLE_JWT = {
     'UPDATE_LAST_LOGIN': True,
     'ALGORITHM': 'HS256',
     'SIGNING_KEY': SECRET_KEY,
-    'VERIFYING_KEY': None,
-    'AUDIENCE': None,
-    'ISSUER': None,
-    'JWK_URL': None,
-    'LEEWAY': 0,
     'AUTH_HEADER_TYPES': ('Bearer',),
-    'AUTH_HEADER_NAME': 'HTTP_AUTHORIZATION',
-    'USER_ID_FIELD': 'id',
-    'USER_ID_CLAIM': 'user_id',
-    'USER_AUTHENTICATION_RULE': 'rest_framework_simplejwt.authentication.default_user_authentication_rule',
-    'AUTH_TOKEN_CLASSES': ('rest_framework_simplejwt.tokens.AccessToken',),
-    'TOKEN_TYPE_CLAIM': 'token_type',
-    'JTI_CLAIM': 'jti',
 }
-# CORS Configuration
+ALLOWED_HOSTS = [
+    'localhost',
+    '127.0.0.1',
+    '.ngrok-free.dev',
+]
+# CORS
 CORS_ALLOWED_ORIGINS = [
     "https://original-eduhub-eduhub-gvmsd9o5y-moses303os-projects.vercel.app",
     "https://original-eduhub-eduhub-git-main-moses303os-projects.vercel.app",
@@ -190,145 +178,62 @@ CORS_ALLOWED_ORIGINS = [
     "https://ochiengsenterprise.co.ke",
     "http://127.0.0.1:3000",
     "http://localhost:3000",
+    "https://eduhub254.com",
 ]
 CORS_ALLOW_ALL_ORIGINS = True
 CORS_ALLOW_CREDENTIALS = True
-
-CORS_ALLOW_HEADERS = [
-    'accept',
-    'accept-encoding',
-    'authorization',
-    'content-type',
-    'dnt',
-    'origin',
-    'user-agent',
-    'x-csrftoken',
-    'x-requested-with',
+CSRF_TRUSTED_ORIGINS = [
+    "http://localhost:3000",
+    "http://127.0.0.1:3000",
+    "https://localhost:3000", 
+    "https://original-eduhub-eduhub-gvmsd9o5y-moses303os-projects.vercel.app",
+    "https://original-eduhub-eduhub-git-main-moses303os-projects.vercel.app",
+    "https://originaleduhub.onrender.com",
+    "https://ochiengsenterprise.co.ke",
+    "https://eduhub254.com",
 ]
-
-# Phone number field configuration
+# Phone field
 PHONENUMBER_DEFAULT_REGION = 'KE'
 
-# API Documentation
-SPECTACULAR_SETTINGS = {
-    'TITLE': 'EduPathway API',
-    'DESCRIPTION': 'Educational platform API for course discovery and university applications',
-    'VERSION': '1.0.0',
-    'SERVE_INCLUDE_SCHEMA': False,
-    'COMPONENT_SPLIT_REQUEST': True,
-}
-
-# Caching configuration
-CACHES = {
-    'default': {
-        'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
-        'LOCATION': 'unique-snowflake',
-        'TIMEOUT': 300,
-        'OPTIONS': {
-            'MAX_ENTRIES': 1000,
-        }
-    }
-}
+# Logging
 LOG_DIR = BASE_DIR / 'logs'
 os.makedirs(LOG_DIR, exist_ok=True)
-# Logging configuration
+
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
     'formatters': {
-        'verbose': {
-            'format': '{levelname} {asctime} {module} {process:d} {thread:d} {message}',
-            'style': '{',
-        },
-        'simple': {
-            'format': '{levelname} {message}',
-            'style': '{',
-        },
+        'verbose': {'format': '{levelname} {asctime} {module} {message}', 'style': '{'},
+        'simple': {'format': '{levelname} {message}', 'style': '{'},
     },
     'handlers': {
         'file': {
             'level': 'INFO',
             'class': 'logging.FileHandler',
-            'filename': BASE_DIR / 'logs' / 'django.log',
+            'filename': LOG_DIR / 'django.log',
             'formatter': 'verbose',
         },
-        'console': {
-            'level': 'INFO',
-            'class': 'logging.StreamHandler',
-            'formatter': 'simple',
-        },
+        'console': {'level': 'INFO', 'class': 'logging.StreamHandler', 'formatter': 'simple'},
     },
-    'root': {
-        'handlers': ['console', 'file'],
-        'level': 'INFO',
-    },
+    'root': {'handlers': ['console', 'file'], 'level': 'INFO'},
     'loggers': {
-        'django': {
-            'handlers': ['console', 'file'],
-            'level': 'INFO',
-            'propagate': False,
-        },
-        'apps': {
-            'handlers': ['console', 'file'],
-            'level': 'DEBUG',
-            'propagate': False,
-        },
+        'django': {'handlers': ['console', 'file'], 'level': 'INFO', 'propagate': False},
+        'apps': {'handlers': ['console', 'file'], 'level': 'DEBUG', 'propagate': False},
     },
 }
 
-# Security settings
+# === ALL MPESA CONFIG FROM .env ===
+MPESA_ENVIRONMENT = config('MPESA_ENVIRONMENT', default='sandbox')
+MPESA_CONSUMER_KEY = config('MPESA_CONSUMER_KEY')
+MPESA_CONSUMER_SECRET = config('MPESA_CONSUMER_SECRET')
+MPESA_SHORTCODE = config('MPESA_SHORTCODE')
+MPESA_PASSKEY = config('MPESA_PASSKEY')
+CALLBACK_URL = config('CALLBACK_URL')  # Full URL from .env
+
+# Optional: extract base URL
+BASE_URL = CALLBACK_URL.replace('/eduhub/payments/mpesa/callback/', '').rstrip('/')
+
+# Security
 SECURE_BROWSER_XSS_FILTER = True
 SECURE_CONTENT_TYPE_NOSNIFF = True
 X_FRAME_OPTIONS = 'DENY'
-
-# Rate limiting settings
-RATE_LIMIT_ENABLE = True
-RATE_LIMIT_PER_IP = 100  # requests per minute
-RATE_LIMIT_PER_USER = 200  # requests per minute
-# MPESA Configuration
-MPESA_ENVIRONMENT = 'sandbox'
-
-# Credentials for the daraja app
-
-MPESA_CONSUMER_KEY = 'LA1GkIysksA71cFCLeVqW7Uq0Qg0n071FelIuAbY6zrtxF9j'
-MPESA_CONSUMER_SECRET = 'O3fK17Y5rUsJ3ZGCdju90xgYBdVp6LNapALEAdctoPgLKrc1Xs7eYJaFSFWjpGTu'
-
-#Shortcode to use for transactions. For sandbox  use the Shortcode 1 provided on test credentials page
-
-MPESA_SHORTCODE = '174379'
-
-# Shortcode to use for Lipa na MPESA Online (MPESA Express) transactions
-# This is only used on sandbox, do not set this variable in production
-# For sandbox use the Lipa na MPESA Online Shorcode provided on test credentials page
-
-MPESA_EXPRESS_SHORTCODE = '174379'
-
-# Type of shortcode
-# Possible values:
-# - paybill (For Paybill)
-# - till_number (For Buy Goods Till Number)
-
-MPESA_SHORTCODE_TYPE = 'till'
-
-# Lipa na MPESA Online passkey
-# Sandbox passkey is available on test credentials page
-# Production passkey is sent via email once you go live
-
-MPESA_PASSKEY = 'bfb279f9aa9bdbcf158e97dd71a467cd2e0c893059b10f78e6b72ada1ed2c919'
-
-# Username for initiator (to be used in B2C, B2B, AccountBalance and TransactionStatusQuery Transactions)
-
-MPESA_INITIATOR_USERNAME = 'testapi'
-
-# Plaintext password for initiator (to be used in B2C, B2B, AccountBalance and TransactionStatusQuery Transactions)
-
-MPESA_INITIATOR_SECURITY_CREDENTIAL = 'Safaricom123!!'
-
-# M-PESA CONFIG (using environment variables)
-MPESA_CONSUMER_KEY = config("MPESA_CONSUMER_KEY", default="")
-MPESA_CONSUMER_SECRET = config("MPESA_CONSUMER_SECRET", default="")
-MPESA_SHORTCODE = config("MPESA_SHORTCODE", default="174379")
-MPESA_PASSKEY = config("MPESA_PASSKEY", default="")
-MPESA_ENVIRONMENT = config("MPESA_ENVIRONMENT", default="sandbox")
-MPESA_CALLBACK_URL='https://909f-105-27-235-39.ngrok-free.app/eduhub/payments/mpesa/callback/'
-EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'

@@ -82,7 +82,7 @@ useEffect(() => {
                     Find Your Perfect Campus Course
                   </h1>
                   <p className="max-w-[600px] text-gray-700 dark:text-gray-200 text-sm sm:text-base md:text-lg">
-                    Discover university and college courses that match your high school subjects and interests. Get personalized recommendations based on your grades.
+                    Discover University,Colleges,KMTCs,Tvets,Polytechnics courses that match your high school subjects and interests. Get personalized recommendations based on your grades and KUCCPs portal.
                   </p>
                 </div>
                 <div className="flex flex-col gap-2 sm:flex-row sm:gap-4">
@@ -133,9 +133,9 @@ useEffect(() => {
                   <BookOpen className="h-5 w-5 sm:h-6 sm:w-6 text-emerald-600 dark:text-emerald-400" />
                 </div>
                 <div className="space-y-2">
-                  <h3 className="text-lg sm:text-xl font-bold text-gray-900 dark:text-gray-100">Enter Your Subjects</h3>
+                  <h3 className="text-lg sm:text-xl font-bold text-gray-900 dark:text-gray-100">Enter Your Subjects And Grades</h3>
                   <p className="text-gray-700 dark:text-gray-200 text-xs sm:text-sm">
-                    Tell us about your high school subjects and the grades you achieved.
+                    Tell us about your high school subjects,Cluster points and the grades you achieved.
                   </p>
                 </div>
               </div>
@@ -146,7 +146,7 @@ useEffect(() => {
                 <div className="space-y-2">
                   <h3 className="text-lg sm:text-xl font-bold text-gray-900 dark:text-gray-100">Get Matched</h3>
                   <p className="text-gray-700 dark:text-gray-200 text-xs sm:text-sm">
-                    Our algorithm matches you with campus courses that align with your academic profile.
+                    Our algorithm matches you with campus courses that align with your academic profile,remember that once you LOGIN/REGISTER EDIT YOUR CLUSTER POINTS AS PER KUCCPS RECORDS in your portal ,for specific course matching optimization.
                   </p>
                 </div>
               </div>
@@ -258,7 +258,7 @@ useEffect(() => {
                   </summary>
                   <div className="mt-3 text-gray-700 dark:text-gray-200 text-xs sm:text-sm">
                     <p>
-                      Our course matches are based on the official entry requirements published by universities. We consider your subjects, grades, and the specific requirements for each course to provide accurate recommendations.
+                      Our course matches are based on the official entry requirements published by KUCCPs,KMTCs, universities and compiled by EduHub254. We consider your subjects, grades, and the specific requirements for each course to provide accurate recommendations.
                     </p>
                   </div>
                 </details>
@@ -273,7 +273,22 @@ useEffect(() => {
                   </summary>
                   <div className="mt-3 text-gray-700 dark:text-gray-200 text-xs sm:text-sm">
                     <p>
-                      We offer a basic free service that provides general course matches. For more detailed recommendations, personalized guidance, and application support, we offer a premium service for a small fee.
+                      Eduhub254 kenya offer a basic free service that provides general course matches. For more detailed recommendations, personalized guidance, and application support, we offer a premium service for a small fee that is a one-time payment of kes.210 with a flexible renewal of kes.50 ONLY.
+                    </p>
+                  </div>
+                </details>
+              </div>
+              <div className="rounded-lg border card-hover">
+                <details className="group p-4 sm:p-6">
+                  <summary className="flex cursor-pointer items-center justify-between">
+                    <h3 className="text-sm sm:text-base md:text-lg font-medium text-gray-900 dark:text-gray-100">
+                      Which colleges are included in your databases?
+                    </h3>
+                    <ChevronDown className="h-4 w-4 sm:h-5 sm:w-5 text-gray-900 dark:text-gray-100 transition-transform group-open:rotate-180" />
+                  </summary>
+                  <div className="mt-3 text-gray-700 dark:text-gray-200 text-xs sm:text-sm">
+                    <p>
+                      Eduhub254 kenya has close to nearly all colleges present in kenya ,from which you get an opportunity to search their course base inside here from KMTCs,TVETs and many more.
                     </p>
                   </div>
                 </details>

@@ -2,7 +2,7 @@
 
 import React, { Suspense, useState, useEffect, useMemo } from "react";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Search } from "lucide-react";
+import { ArrowLeft, Heart, Search } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Table, TableBody, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -19,6 +19,8 @@ import { fetchUniversities, fetchCourseCount } from "@/lib/api";
 import { UniversityWithCourses } from "@/types";
 import { debounce } from "lodash";
 import { UniversityRow } from "@/components/university-row";
+import { UserInfoPanel } from "@/components/panel";
+import { useSelectedCourses } from "@/lib/course-store";
 
 function UniversitiesPageContent() {
   const [universities, setUniversities] = useState<UniversityWithCourses[]>([]);
@@ -31,7 +33,8 @@ function UniversitiesPageContent() {
 
   const router = useRouter();
   const { toast } = useToast();
-  const { user, loading: authLoading } = useAuth();
+  const { user, loading: authLoading, requirePayment } = useAuth();
+  const { selectedCourses } = useSelectedCourses();
 
   // Debounced search
   const setSearchTermDebounced = useMemo(
@@ -39,30 +42,33 @@ function UniversitiesPageContent() {
     []
   );
 
-  // Handle Get Started
+  // AUTO-SHOW AUTH MODAL IF NO ACTIVE SUBSCRIPTION OR NOT LOGGED IN
+  useEffect(() => {
+    if (!authLoading) {
+      if (!user || requirePayment) {
+        setShowAuthModal(true);
+        toast({
+          title: !user ? "Login Required" : "Subscription Expired",
+          description: !user
+            ? "Please log in to view universities."
+            : "Your subscription has expired. Please login or renew to continue.",
+          variant: "destructive",
+          duration: 5000,
+        });
+      } else {
+        setShowAuthModal(false);
+      }
+    }
+  }, [authLoading, user, requirePayment, toast]);
+
+  // Handle Get Started (only used in header — keep as is)
   const handleGetStarted = () => {
-    if (!user) {
+    if (!user || requirePayment) {
       setShowAuthModal(true);
-      toast({
-        title: "Authentication Required",
-        description: "Please log in to find courses.",
-        variant: "destructive",
-        duration: 3000,
-      });
     } else {
       setShowFindCourseForm(true);
     }
   };
-
-  // Auto-show auth modal after 2 mins
-  useEffect(() => {
-    if (!authLoading && !user) {
-      const timer = setTimeout(() => setShowAuthModal(true), 120_000);
-      return () => clearTimeout(timer);
-    } else {
-      setShowAuthModal(false);
-    }
-  }, [authLoading, user]);
 
   // Load universities with search + city filter
   useEffect(() => {
@@ -191,6 +197,32 @@ function UniversitiesPageContent() {
                     Browse through our comprehensive list of accredited universities
                   </p>
                 </div>
+
+                {/* Right: User Info Panel + Selected Courses Button */}
+                <div className="flex flex-col gap-4 md:items-end">
+                  {user && <UserInfoPanel className="w-full md:w-auto" />}
+
+                  <Button
+                    variant="outline"
+                    className="flex items-center gap-2 w-full md:w-auto"
+                    onClick={() => {
+                      if (!user || requirePayment) {
+                        setShowAuthModal(true);
+                        toast({
+                          title: "Authentication Required",
+                          description: "Please log in to view your selected courses.",
+                          variant: "destructive",
+                          duration: 3000,
+                        });
+                      } else {
+                        router.push("/selected-courses");
+                      }
+                    }}
+                  >
+                    <Heart className="h-4 w-4" />
+                    {user ? `Selected Courses (${selectedCourses.length})` : "My Selected Courses"}
+                  </Button>
+                </div>
               </div>
 
               {/* Search + Filter */}
@@ -260,7 +292,6 @@ function UniversitiesPageContent() {
                       <UniversityRow
                         key={university.code}
                         university={university}
-                        onViewCourses={() => router.push(`/university/${university.code}/courses`)}
                       />
                     ))}
                   </TableBody>

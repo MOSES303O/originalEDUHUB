@@ -1,141 +1,97 @@
-from rest_framework import viewsets, permissions, filters
-from rest_framework.decorators import action
-from rest_framework.response import Response
-from .models import campus, Faculty,programmes
+# kmtc/views.py — ADD THESE EXTRA VIEWS
+from rest_framework import viewsets, generics, filters
+from rest_framework.exceptions import NotFound
+from django.db.models import Prefetch
+from django.db import models
+from django.shortcuts import get_object_or_404
+from .models import Campus, Faculty, Department, Programme, OfferedAt
 from .serializers import (
-    CampusListSerializer,
-    FacultySerializer,
-    DepartmentSerializer,
-    CampusRequirementSerializer,    
-    programmesSerializer
+    CampusListSerializer, CampusDetailSerializer,
+    FacultySerializer, DepartmentSerializer,
+    ProgrammeSerializer, OfferedAtSerializer
 )
+
 class CampusViewSet(viewsets.ReadOnlyModelViewSet):
-    """
-    API endpoint for viewing campus information.
-    
-    list:
-    Return a paginated list of all active campuses.
-    
-    retrieve:
-    Return the details of a specific campus by ID or slug.
-    
-    faculties:
-    Return all faculties for a specific campus.
-    
-    departments:
-    Return all departments for a specific faculty within a campus.
-    
-    requirements:
-    Return all requirements for a specific campus.
-    
-    search:
-    Search campuses by name, code, or city.
-    """
-    queryset = campus.objects.all()  # ← Just fetch all campuses
-    permission_classes = [permissions.AllowAny]
-    filterset_fields = ['city', 'code', 'name']
-    search_fields = ['name', 'code', 'city', 'description']
-    ordering_fields = ['name', 'ranking', 'established_year']
+    queryset = Campus.objects.filter(is_active=True).prefetch_related('programmes_offered__programme')
     lookup_field = 'code'
 
     def get_serializer_class(self):
         if self.action == 'list':
             return CampusListSerializer
-        return CampusRequirementSerializer
+        return CampusDetailSerializer
 
-    def list(self, request, *args, **kwargs):
-        queryset = self.get_queryset()
 
-        # Manually handle filtering
-        city = request.query_params.get('city')
-        code = request.query_params.get('code')
-        name = request.query_params.get('name')
+class FacultyViewSet(viewsets.ReadOnlyModelViewSet):
+    queryset = Faculty.objects.all().prefetch_related('departments__programmes')
+    serializer_class = FacultySerializer
+    lookup_field = 'slug'
 
-        if city:
-            queryset = queryset.filter(city__icontains=city)
-        if code:
-            queryset = queryset.filter(code__icontains=code)
-        if name:
-            queryset = queryset.filter(name__icontains=name)
 
-        serializer = self.get_serializer(queryset, many=True)
-        return Response(serializer.data)
+class DepartmentViewSet(viewsets.ReadOnlyModelViewSet):
+    queryset = Department.objects.all().prefetch_related('programmes')
+    serializer_class = DepartmentSerializer
+    lookup_field = 'slug'
 
-    @action(detail=True, methods=['get'])
-    def faculties(self, request, *args, **kwargs):
-        campus_instance = self.get_object()
-        faculties = campus_instance.faculties.all()
-        serializer = FacultySerializer(faculties, many=True)
-        return Response(serializer.data)
 
-    @action(detail=True, methods=['get'])
-    def departments(self, request, *args, **kwargs):
-        faculty_slug = request.query_params.get('faculty')
-        if not faculty_slug:
-            return Response({"detail": "Faculty slug is required."}, status=400)
+class ProgrammeViewSet(viewsets.ReadOnlyModelViewSet):
+    """
+    GET /eduhub/kmtc/programmes/ → list all active KMTC programmes
+    GET /eduhub/kmtc/programmes/{code}/ → detail of one programme with all campuses
+    """
+    serializer_class = ProgrammeSerializer
+    lookup_field = 'code'
+    lookup_value_regex = '[^/]+'
+
+    def get_queryset(self):
+        # We cannot use select_related('campus') because campuses is ManyToMany
+        # Instead, we prefetch the OfferedAt and let the serializer handle campus fields via source=
+        offered_prefetch = Prefetch(
+            'offered_at',
+            queryset=OfferedAt.objects.prefetch_related('campuses'),  # ← prefetch the m2m
+            to_attr='campuses_offered'
+        )
+
+        return Programme.objects.filter(is_active=True)\
+            .select_related('department__faculty')\
+            .prefetch_related(offered_prefetch)
+
+
+# Extra: Get all programmes in a campus
+class CampusProgrammesView(generics.ListAPIView):
+    serializer_class = ProgrammeSerializer
+
+    def get_queryset(self):
+        code = self.kwargs['code']
 
         try:
-            faculty_instance = Faculty.objects.get(slug=faculty_slug, campo=self.get_object())
-            departments = faculty_instance.departments.all()
-            serializer = DepartmentSerializer(departments, many=True)
-            return Response(serializer.data)
-        except Faculty.DoesNotExist:
-            return Response({"detail": "Faculty not found."}, status=404)
-class facultyViewSet(viewsets.ReadOnlyModelViewSet):
-    """
-    API endpoint for viewing faculty information.
-    
-    list:
-    Return a list of all faculties, optionally filtered by campus.
-    
-    retrieve:
-    Return the details of a specific faculty.
-    
-    departments:
-    Return all departments for a specific faculty.
-    """
-    queryset = Faculty.objects.all()
-    serializer_class = FacultySerializer
-    permission_classes = [permissions.AllowAny]
-    search_fields = ['name', 'description']
+            campus = Campus.objects.get(code__iexact=code)
+        except Campus.DoesNotExist:
+            raise NotFound(detail=f"Campus with code '{code}' not found")
+
+        # NEW CORRECT QUERY FOR ManyToMany
+        # Find OfferedAt entries that include this campus OR are offered everywhere
+        offered_entries = OfferedAt.objects.filter(
+            models.Q(campuses=campus) | models.Q(offered_everywhere=True)
+        ).select_related('programme__department__faculty')
+
+        # Extract distinct programmes
+        programmes = [entry.programme for entry in offered_entries]
+        return programmes
+# Extra: Get all campuses offering a programme
+class ProgrammeCampusesView(generics.ListAPIView):
+    serializer_class = OfferedAtSerializer
 
     def get_queryset(self):
-        queryset = self.queryset
-        campus_code = self.request.query_params.get('campus_code')
-        if campus_code:
-            queryset = queryset.filter(campo__code=campus_code)
-        return queryset
+        code = self.kwargs['code']
+        programme = get_object_or_404(Programme, code__iexact=code)
+        return OfferedAt.objects.filter(programme=programme)
 
-    @action(detail=True, methods=['get'])
-    def departments(self, request, *args, **kwargs):
-        faculty_instance = self.get_object()
-        departments = faculty_instance.departments.all()
-        serializer = DepartmentSerializer(departments, many=True)
-        return Response(serializer.data) 
-class programmesViewSet(viewsets.ReadOnlyModelViewSet):
-    """
-    API endpoint for viewing programmes offered by a campus.
-    
-    list:
-    Return a list of all programmes, optionally filtered by campus or faculty.
-    
-    retrieve:
-    Return the details of a specific programme.
-    """
-    queryset = programmes.objects.all()
-    serializer_class = programmesSerializer
-    permission_classes = [permissions.AllowAny]
-    filterset_fields = ['faculty__slug', 'campo__code']
-    search_fields = ['name', 'description']
-    
+
+# Global search across all KMTC data
+class KMTCSearchView(generics.ListAPIView):
+    serializer_class = ProgrammeSerializer
+    filter_backends = [filters.SearchFilter]
+    search_fields = ['name', 'code', 'description', 'department__name', 'department__faculty__name']
+
     def get_queryset(self):
-        queryset = self.queryset
-        campus_code = self.request.query_params.get('campus_code')
-        faculty_slug = self.request.query_params.get('faculty_slug')
-        
-        if campus_code:
-            queryset = queryset.filter(campo__code=campus_code)
-        if faculty_slug:
-            queryset = queryset.filter(faculty__slug=faculty_slug)
-        
-        return queryset
+        return Programme.objects.filter(is_active=True)

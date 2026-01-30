@@ -3,9 +3,9 @@ from rest_framework import serializers
 from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError
 from django.contrib.auth import authenticate
-from django.utils import timezone
-from apps.courses.models import Subject, Course
-from apps.courses.serializers import CourseListSerializer
+from django.contrib.contenttypes.models import ContentType
+from apps.kmtc.models import Programme
+from apps.courses.models import Subject, CourseOffering  # ← CHANGED: CourseOffering instead of Course
 from .models import User, UserProfile, UserSubject, UserSelectedCourse
 from apps.core.utils import validate_kenyan_phone, standardize_phone_number
 
@@ -39,12 +39,11 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = [
-            'phone_number', 'email', 'password', 'password_confirm',
+            'phone_number', 'password', 'password_confirm',
             'subjects'
         ]
         extra_kwargs = {
             'phone_number': {'required': True},
-            'email': {'required': False, 'allow_null': True, 'allow_blank': True}
         }
 
     def validate_phone_number(self, value):
@@ -58,13 +57,6 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
                 "A user with this phone number already exists."
             )
         return standardized_phone
-
-    def validate_email(self, value):
-        if value and User.objects.filter(email=value.lower()).exists():
-            raise serializers.ValidationError(
-                "A user with this email already exists."
-            )
-        return value.lower() if value else None
 
     def validate_subjects(self, value):
         if not (7 <= len(value) <= 9):
@@ -90,7 +82,6 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
         validated_data.pop('password_confirm', None)
         user = User.objects.create_user(
             phone_number=validated_data['phone_number'],
-            email=validated_data.get('email'),
             password=validated_data.get('password'),
         )
         UserProfile.objects.create(user=user)
@@ -137,16 +128,15 @@ class UserLoginSerializer(serializers.Serializer):
 
 class UserProfileSerializer(serializers.ModelSerializer):
     phone_number = serializers.CharField(source='user.phone_number', read_only=True)
-    email = serializers.EmailField(source='user.email', read_only=True)
 
     class Meta:
         model = UserProfile
         fields = [
-            'email', 'phone_number',
-             'created_at', 'updated_at'
+            'phone_number',
+            'created_at',
+            'updated_at',
         ]
         read_only_fields = ['created_at', 'updated_at']
-
 class UserSubjectModelSerializer(serializers.ModelSerializer):
     subject_name = serializers.CharField(source='subject.name', read_only=True)
     subject = serializers.PrimaryKeyRelatedField(queryset=Subject.objects.all())
@@ -169,19 +159,9 @@ class UserSubjectModelSerializer(serializers.ModelSerializer):
         return attrs
 
 class PasswordChangeSerializer(serializers.Serializer):
-    old_password = serializers.CharField(
-        required=True,
-        style={'input_type': 'password'}
-    )
-    new_password = serializers.CharField(
-        required=True,
-        min_length=8,
-        style={'input_type': 'password'}
-    )
-    new_password_confirm = serializers.CharField(
-        required=True,
-        style={'input_type': 'password'}
-    )
+    old_password = serializers.CharField(required=True, style={'input_type': 'password'})
+    new_password = serializers.CharField(required=True, min_length=8, style={'input_type': 'password'})
+    new_password_confirm = serializers.CharField(required=True, style={'input_type': 'password'})
 
     def validate_new_password(self, value):
         try:
@@ -196,22 +176,33 @@ class PasswordChangeSerializer(serializers.Serializer):
                 'new_password_confirm': "Password confirmation doesn't match."
             })
         return attrs
+    
+class UserClusterPointsSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ['cluster_points']
+        extra_kwargs = {
+            'cluster_points': {'required': False, 'allow_null': True}
+        }
 
 class UserDetailSerializer(serializers.ModelSerializer):
     profile = UserProfileSerializer(read_only=True)
     subjects = UserSubjectModelSerializer(many=True, read_only=True)
     masked_phone = serializers.SerializerMethodField()
+    cluster_points = serializers.DecimalField(
+        max_digits=6,
+        decimal_places=3,
+        read_only=False,
+        required=False
+    )
 
     class Meta:
         model = User
         fields = [
-            'id', 'email',
-            'phone_number', 'masked_phone', 'is_active', 'is_verified',
-            'date_joined', 'last_login', 'profile', 'subjects'
+            'id', 'phone_number', 'masked_phone', 'is_active', 'is_verified',
+            'date_joined', 'cluster_points', 'last_login', 'profile', 'subjects'
         ]
-        read_only_fields = [
-            'id', 'date_joined', 'last_login', 'is_verified'
-        ]
+        read_only_fields = ['id', 'date_joined', 'last_login', 'is_verified']
 
     def get_masked_phone(self, obj):
         from apps.core.utils import mask_phone_number
@@ -219,52 +210,98 @@ class UserDetailSerializer(serializers.ModelSerializer):
 
 class UserSelectedCourseSerializer(serializers.ModelSerializer):
     course_code = serializers.CharField(write_only=True)
-    course = CourseListSerializer(read_only=True)
+    course_name = serializers.CharField(read_only=True)
+    institution = serializers.CharField(read_only=True)
 
     class Meta:
         model = UserSelectedCourse
-        fields = ['id', 'course', 'course_code', 'is_applied', 'application_date', 'created_at']
-        read_only_fields = ['id', 'course', 'created_at', 'is_applied', 'application_date']
+        fields = [
+            'id', 'course_code', 'course_name', 'institution',
+            'is_applied', 'application_date', 'created_at'
+        ]
+        read_only_fields = ['id', 'course_name', 'institution', 'created_at']
 
     def validate_course_code(self, value):
-        """
-        Validate that the course code exists and corresponds to an active course.
-        """
-        print(f"[UserSelectedCourseSerializer] Validating course_code: {value}")
+        """Find course in University (CourseOffering) OR KMTC (Programme)"""
+        print(f"[Serializer] Validating course_code: {value} (type: {type(value)})")
+
+        # 1. Try University CourseOffering (code is integer, but we accept string if numeric)
         try:
-            course = Course.objects.get(code=value, is_active=True)
-            return course
-        except Course.DoesNotExist:
-            raise serializers.ValidationError(f"Course with code {value} does not exist or is inactive.")
+            # Safe: only attempt int() if the value looks numeric
+            if str(value).isdigit():
+                offering = CourseOffering.objects.filter(
+                    code=int(value),
+                    is_active=True
+                ).select_related('program').first()
+                if offering:
+                    print(f"[Serializer] Found regular university course: {offering.program.name}")
+                    return {
+                        'content_type': ContentType.objects.get_for_model(CourseOffering),
+                        'object_id': offering.id,
+                        'course_name': offering.program.name,
+                        'institution': offering.university.name
+                    }
+        except (ValueError, TypeError):
+            # Silently skip if value can't be converted to int (e.g. "die")
+            pass
+
+        # 2. Try KMTC Programme (string code)
+        try:
+            prog = Programme.objects.get(code=value)
+            print(f"[Serializer] Found KMTC programme: {prog.name}")
+            return {
+                'content_type': ContentType.objects.get_for_model(Programme),
+                'object_id': prog.id,
+                'course_name': prog.name,
+                'institution': "KMTC"
+            }
+        except Programme.DoesNotExist:
+            pass
+
+        # 3. Final failure
+        raise serializers.ValidationError(
+            f"Course with code '{value}' not found in University offerings or KMTC programmes"
+        )
 
     def validate(self, data):
-        """
-        Ensure the course is not already selected by the user.
-        """
-        print(f"[UserSelectedCourseSerializer] Validating data: {data}")
         user = self.context['request'].user
-        course = data.get('course_code')  # This is the Course object from validate_course_code
-        if self.instance is None:
-            if UserSelectedCourse.objects.filter(user=user, course=course).exists():
-                raise serializers.ValidationError(f"Course {course.code} already selected.")
+        course_info = data.get('course_code')  # This is now the dict from validate_course_code
+
+        if not course_info:
+            raise serializers.ValidationError("Invalid course_code")
+
+        # Check if already selected
+        exists = UserSelectedCourse.objects.filter(
+            user=user,
+            content_type=course_info['content_type'],
+            object_id=course_info['object_id']
+        ).exists()
+
+        if exists and not self.instance:
+            raise serializers.ValidationError(
+                f"You have already selected: {course_info['course_name']} ({course_info['institution']})"
+            )
+
+        data['course_info'] = course_info
         return data
 
     def create(self, validated_data):
-        """
-        Create a UserSelectedCourse instance with the authenticated user.
-        """
-        print(f"[UserSelectedCourseSerializer] Creating with validated_data: {validated_data}")
-        user = self.context['request'].user
-        course = validated_data.pop('course_code')  # Course object from validate_course_code
-        try:
-            selected_course = UserSelectedCourse.objects.create(
-                user=user,
-                course=course,
-                is_applied=validated_data.get('is_applied', False),
-                application_date=validated_data.get('application_date', None)
-            )
-            print(f"[UserSelectedCourseSerializer] Created UserSelectedCourse: {selected_course.id}")
-            return selected_course
-        except Exception as e:
-            print(f"[UserSelectedCourseSerializer] Error creating UserSelectedCourse: {str(e)}")
-            raise serializers.ValidationError(f"Failed to create selected course: {str(e)}")
+        course_info = validated_data.pop('course_info')
+
+        selected = UserSelectedCourse.objects.create(
+            user=self.context['request'].user,
+            content_type=course_info['content_type'],
+            object_id=course_info['object_id'],
+            course_name=course_info['course_name'],
+            institution=course_info['institution'],
+            is_applied=False
+        )
+
+        print(f"SUCCESS: {selected.course_name} ({selected.institution}) saved for {selected.user}")
+        return selected
+
+    def to_representation(self, instance):
+        ret = super().to_representation(instance)
+        ret['course_name'] = instance.course_name
+        ret['institution'] = instance.institution
+        return ret

@@ -48,10 +48,10 @@ export default function AboutPage() {
           <div className="container px-4 sm:px-6 md:px-8 lg:px-12 max-w-7xl">
             <div className="flex flex-col items-center gap-4 text-center">
               <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold tracking-tighter">
-                About EduHub
+                About EduHub Kenya
               </h1>
               <p className="max-w-[700px] text-gray-600 dark:text-gray-300 text-sm sm:text-base md:text-xl">
-                Helping students find their perfect Campus courses since 2020
+                Kenya’s most trusted Premium KCSE course finder since 2020 — helping thousands of students discover the best university, KMTC, TVET & polytechnic courses
               </p>
             </div>
 
@@ -61,22 +61,17 @@ export default function AboutPage() {
                   src="/images/boy.png"
                   width={600}
                   height={400}
-                  alt="EduHub team"
+                  alt="Kenyan student using EduHub to find best KCSE courses"
                   className="rounded-lg object-cover w-full h-auto shadow-lg border border-gray-200 dark:border-gray-700"
                 />
               </div>
               <div className="space-y-4 order-1 lg:order-2">
                 <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">Our Mission</h2>
                 <p className="text-gray-600 dark:text-gray-300 text-sm sm:text-base">
-                  At EduHub, we believe that every student deserves access to quality education that aligns with
-                  their interests, strengths, and career aspirations. Our mission is to bridge the gap between high
-                  school education and Campus courses by providing personalized recommendations based on students'
-                  academic profiles.
+                  We believe every KCSE student in Kenya deserves to know exactly which university, KMTC, TVET or polytechnic course they qualify for — and which one is truly right for them.
                 </p>
                 <p className="text-gray-600 dark:text-gray-300 text-sm sm:text-base">
-                  We understand that choosing a Campus course is one of the most important decisions in a student's
-                  life. That's why we've developed a comprehensive platform that analyzes students' high school subjects
-                  and grades to match them with suitable Campus programs.
+                  That’s why we built EduHub — a Premium platform that analyzes your KCSE subjects and grades to give you accurate, personalized course recommendations from all public and private institutions in Kenya.
                 </p>
               </div>
             </div>
@@ -88,18 +83,15 @@ export default function AboutPage() {
           <div className="container px-4 sm:px-6 md:px-8 lg:px-12 max-w-7xl">
             <div className="grid gap-8 sm:gap-12 lg:grid-cols-2 lg:gap-16 items-center">
               <div className="space-y-4 order-2 lg:order-1">
-                <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">Our Story</h2>
+                <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">Our Journey</h2>
                 <p className="text-gray-600 dark:text-gray-300 text-sm sm:text-base">
-                  EduHub was founded in 2020 by a group of education enthusiasts who recognized the challenges that
-                  students face when transitioning from high school to Campus. Many students were selecting courses
-                  based on limited information, peer pressure, or societal expectations rather than their own strengths
-                  and interests.
+                  EduHub Kenya started in 2020 when a group of former KCSE students realized how hard it was to get clear, honest advice about university and college courses.
                 </p>
                 <p className="text-gray-600 dark:text-gray-300 text-sm sm:text-base">
-                  What started as a small project to help local students in Nairobi has now grown into a comprehensive
-                  platform serving thousands of students across Kenya. Our team has expanded to include education
-                  specialists, career counselors, and technology experts who are passionate about transforming education
-                  and career guidance.
+                  Many students were choosing courses based on what their friends,parents,relatives picked, what sounded “prestigious,” or what parents wanted — not what they were good at or passionate about.
+                </p>
+                <p className="text-gray-600 dark:text-gray-300 text-sm sm:text-base">
+                  Today, EduHub is used by over 100,000 students across Kenya — from Nairobi to Kisumu, Mombasa to Eldoret — and we believe career guidance should never have a price tag and a decision that touches and impact ones future derectly should be made with the right guidance data.
                 </p>
               </div>
               <div className="order-1 lg:order-2">
@@ -107,7 +99,7 @@ export default function AboutPage() {
                   src="/images/about.png"
                   width={600}
                   height={400}
-                  alt="EduHub history"
+                  alt="EduHub Kenya team helping students find the right course"
                   className="rounded-lg object-cover w-full h-auto shadow-lg border border-gray-200 dark:border-gray-700"
                 />
               </div>
@@ -123,85 +115,49 @@ export default function AboutPage() {
                 Our Values
               </h2>
               <p className="max-w-[700px] text-gray-600 dark:text-gray-300 text-sm sm:text-base md:text-xl">
-                The principles that guide our work and decisions
+                What we stand for — every single day
               </p>
             </div>
 
             <div className="grid gap-6 sm:gap-8 md:grid-cols-3">
               <div className="flex flex-col items-center text-center p-6 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 shadow-sm">
                 <div className="rounded-full bg-blue-100 dark:bg-blue-900 p-4 mb-4">
-                  <svg
-                    className="h-6 w-6 text-blue-600 dark:text-blue-400"
-                    fill="none"
-                    height="24"
-                    stroke="currentColor"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth="2"
-                    viewBox="0 0 24 24"
-                    width="24"
-                    xmlns="http://www.w3.org/2000/svg"
-                  >
+                  <svg className="h-6 w-6 text-blue-600 dark:text-blue-400" fill="none" height="24" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" viewBox="0 0 24 24" width="24" xmlns="http://www.w3.org/2000/svg">
                     <path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z" />
                     <path d="m7 10 3 3 7-7" />
                   </svg>
                 </div>
-                <h3 className="text-lg sm:text-xl font-bold mb-2 text-gray-900 dark:text-white">Integrity</h3>
+                <h3 className="text-lg sm:text-xl font-bold mb-2 text-gray-900 dark:text-white">Honesty & Accuracy</h3>
                 <p className="text-gray-600 dark:text-gray-300 text-sm">
-                  We are committed to providing honest, unbiased information to help students make informed decisions
-                  about their education and future careers.
+                  We give you real data from KUCCPS, universities and KMTCs — no fake promises,accurate and precise recommendations.
                 </p>
               </div>
 
               <div className="flex flex-col items-center text-center p-6 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 shadow-sm">
                 <div className="rounded-full bg-blue-100 dark:bg-blue-900 p-4 mb-4">
-                  <svg
-                    className="h-6 w-6 text-blue-600 dark:text-blue-400"
-                    fill="none"
-                    height="24"
-                    stroke="currentColor"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth="2"
-                    viewBox="0 0 24 24"
-                    width="24"
-                    xmlns="http://www.w3.org/2000/svg"
-                  >
+                  <svg className="h-6 w-6 text-blue-600 dark:text-blue-400" fill="none" height="24" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" viewBox="0 0 24 24" width="24" xmlns="http://www.w3.org/2000/svg">
                     <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
                     <path d="M13.73 21a2 2 0 0 1-3.46 0" />
                   </svg>
                 </div>
-                <h3 className="text-lg sm:text-xl font-bold mb-2 text-gray-900 dark:text-white">Innovation</h3>
+                <h3 className="text-lg sm:text-xl font-bold mb-2 text-gray-900 dark:text-white">Free Forever</h3>
                 <p className="text-gray-600 dark:text-gray-300 text-sm">
-                  We continuously improve our platform and services by embracing new technologies and educational
-                  methodologies to better serve our users.
+                  No subscriptions. No hidden fees. Every Kenyan student deserves access — and we’ll keep it that way.
                 </p>
               </div>
 
               <div className="flex flex-col items-center text-center p-6 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 shadow-sm">
                 <div className="rounded-full bg-blue-100 dark:bg-blue-900 p-4 mb-4">
-                  <svg
-                    className="h-6 w-6 text-blue-600 dark:text-blue-400"
-                    fill="none"
-                    height="24"
-                    stroke="currentColor"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth="2"
-                    viewBox="0 0 24 24"
-                    width="24"
-                    xmlns="http://www.w3.org/2000/svg"
-                  >
+                  <svg className="h-6 w-6 text-blue-600 dark:text-blue-400" fill="none" height="24" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" viewBox="0 0 24 24" width="24" xmlns="http://www.w3.org/2000/svg">
                     <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
                     <circle cx="9" cy="7" r="4" />
                     <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
                     <path d="M16 3.13a4 4 0 0 1 0 7.75" />
                   </svg>
                 </div>
-                <h3 className="text-lg sm:text-xl font-bold mb-2 text-gray-900 dark:text-white">Inclusivity</h3>
+                <h3 className="text-lg sm:text-xl font-bold mb-2 text-gray-900 dark:text-white">Student-First</h3>
                 <p className="text-gray-600 dark:text-gray-300 text-sm">
-                  We believe in equal access to educational opportunities for all students, regardless of their
-                  background, location, or economic status.
+                  We are students and former students — we know what you’re going through. This platform was built for you.
                 </p>
               </div>
             </div>
@@ -213,18 +169,18 @@ export default function AboutPage() {
           <div className="container px-4 sm:px-6 md:px-8 lg:px-12 max-w-7xl">
             <div className="flex flex-col items-center gap-4 text-center mb-10 sm:mb-12">
               <h2 className="text-3xl sm:text-4xl font-bold tracking-tighter text-gray-900 dark:text-white">
-                Our Team
+                Meet the EduHub Kenya Team
               </h2>
               <p className="max-w-[700px] text-gray-600 dark:text-gray-300 text-sm sm:text-base md:text-xl">
-                Meet the dedicated professionals behind EduHub
+                Passionate Kenyans dedicated to helping the next generation find their path
               </p>
             </div>
 
             <div className="grid gap-6 sm:gap-8 sm:grid-cols-2 lg:grid-cols-4">
               {[
-                { name: "John Kamau", role: "Founder & CEO" },
-                { name: "Mary Wanjiku", role: "Education Director" },
-                { name: "David Ochieng", role: "Chief Technology Officer" },
+                { name: "ochieng moses", role: "Founder & CEO" },
+                { name: "victor ochieng", role: "Education Director" },
+                { name: "jackline atieno", role: "Chief Technology Officer" },
                 { name: "Sarah Njeri", role: "Career Counselor" },
               ].map((member) => (
                 <div key={member.name} className="flex flex-col items-center text-center">
@@ -251,10 +207,10 @@ export default function AboutPage() {
             <div className="flex flex-col items-center justify-center space-y-4">
               <div className="space-y-2">
                 <h2 className="text-3xl sm:text-4xl font-bold tracking-tighter text-white">
-                  Join Our Community
+                  Ready to Find Your Perfect Course?
                 </h2>
                 <p className="max-w-[700px] text-blue-100 text-sm sm:text-base md:text-xl mx-auto">
-                  Start your educational journey with EduHub today
+                  Join over 100,000 Kenyan students who found their dream course with EduHub
                 </p>
               </div>
               <div className="w-full max-w-xs sm:max-w-sm space-y-2">
@@ -263,7 +219,7 @@ export default function AboutPage() {
                   size="lg"
                   asChild
                 >
-                  <Link href="/login">Get Started Now</Link>
+                  <Link href="/courses">Start Now</Link>
                 </Button>
               </div>
             </div>

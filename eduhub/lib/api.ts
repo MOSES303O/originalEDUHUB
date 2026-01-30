@@ -1,15 +1,18 @@
-// frontend/lib/api.ts
-import axios, { AxiosError } from 'axios';
-import { University,ContactFormData,ContactFormResponse, Course, LoginResponse, SubjectGrades, KMTCCampus, KMTCCourse, Department, Faculty, SelectedCourseResponse } from '@/types';
+// frontend/lib/api.ts — FINAL VERSION
+import axios, { AxiosError, InternalAxiosRequestConfig } from 'axios';
+import {
+  University, ContactFormData, ContactFormResponse, Course,
+  SubjectGrades, KMTCCampus, KMTCCourse, Department, Programme
+} from '@/types';
 
 const isDevelopment = process.env.NODE_ENV === 'development';
 const mybaseurl = isDevelopment
   ? process.env.NEXT_PUBLIC_API_BASE_URL_LOCAL
   : process.env.NEXT_PUBLIC_API_BASE_URL_DEPLOY;
 
-console.log('Base URL:', mybaseurl);
+console.log('API Base URL:', mybaseurl);
 
-// Create axios instance
+// Axios instance
 const apiClient = axios.create({
   baseURL: mybaseurl,
   withCredentials: true,
@@ -17,11 +20,8 @@ const apiClient = axios.create({
     'Content-Type': 'application/json',
   },
 });
-interface TokenResponse {
-  access: string;
-  refresh: string;
-}
-// UNIVERSAL DATA EXTRACTOR — works on localhost AND Render
+
+// UNIVERSAL DATA EXTRACTOR
 const getResponseData = (data: any): any[] => {
   if (!data) return [];
   if (Array.isArray(data)) return data;
@@ -32,399 +32,190 @@ const getResponseData = (data: any): any[] => {
   return [];
 };
 
-// Consolidated request interceptor
-apiClient.interceptors.request.use(
-  async (config) => {
-    console.log('Axios Request:', {
-      url: config.url,
-      fullUrl: `${config.baseURL}${config.url}`,
-      method: config.method,
-      headers: config.headers,
-      params: config.params,
-      data: JSON.stringify(config.data, null, 2),
-    });
-    const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
-    const publicEndpoints = ['/auth/register/', '/auth/login/', '/get-csrf-token/'];
-    const isPublicEndpoint = publicEndpoints.some((pattern) =>
-      new RegExp(pattern).test(config.url || '')
-    );
-    if (token && !isPublicEndpoint) {
-      config.headers.Authorization = `Bearer ${token}`;
-      console.log(`Adding Authorization header for ${config.url}: Bearer ${token?.substring(0, 20)}...`);
-    } else {
-      console.log(`No Authorization header for ${config.url}: ${isPublicEndpoint ? 'Public endpoint' : 'No token'}`);
+// GET CSRF TOKEN
+const getCsrfToken = (): string | null => {
+  if (typeof window === "undefined") return null;
+  const name = "csrftoken=";
+  const cookies = document.cookie.split("; ");
+  for (const cookie of cookies) {
+    if (cookie.startsWith(name)) {
+      return decodeURIComponent(cookie.substring(name.length));
     }
-    if (['post', 'put', 'patch', 'delete'].includes(config.method?.toLowerCase() || '')) {
-      const csrfToken = typeof window !== 'undefined'
-        ? document.cookie
-            .split('; ')
-            .find((row) => row.startsWith('csrftoken='))
-            ?.split('=')[1] || (await fetchCsrfToken())
-        : await fetchCsrfToken();
+  }
+  return null;
+};
+
+// REQUEST INTERCEPTOR
+apiClient.interceptors.request.use(
+  (config: InternalAxiosRequestConfig<any>): InternalAxiosRequestConfig<any> => {
+    const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
+    const publicEndpoints = ["/auth/register/", "/auth/login/", "/get-csrf-token/"];
+    const isPublic = publicEndpoints.some(ep => config.url?.includes(ep));
+
+    if (token && !isPublic) {
+      config.headers.set("Authorization", `Bearer ${token}`);
+      console.log(`[Axios Request] Adding Bearer token to ${config.url} (token length: ${token.length})`);
+    }
+
+    if (["post", "put", "patch", "delete"].includes(config.method?.toLowerCase() || "")) {
+      const csrfToken = getCsrfToken();
       if (csrfToken) {
-        config.headers['X-CSRFTOKEN'] = csrfToken;
-        console.log(`Adding CSRF token for ${config.url}: ${csrfToken.substring(0, 20)}...`);
-      } else {
-        console.warn(`No CSRF token available for ${config.url}`);
+        config.headers.set("X-CSRFToken", csrfToken);
       }
     }
+
     return config;
   },
-  (error) => {
-    console.error('Request interceptor error:', extractErrorDetails(error));
+  (error) => Promise.reject(error)
+);
+
+// RESPONSE INTERCEPTOR
+apiClient.interceptors.response.use(
+  (response) => response,
+  (error: AxiosError) => {
+    const status = error.response?.status;
+    const contentType = error.response?.headers?.["content-type"] || "";
+    const url = error.config?.url || "";
+
+    if (status === 401 || status === 403) {
+      const isJson = contentType.includes("application/json");
+      const data = error.response?.data as any;
+
+      if (isJson && (data?.detail?.includes("authenticated") || data?.message?.includes("login"))) {
+        console.warn("Auth failed → logging out", { url, status });
+        localStorage.clear();
+        if (typeof window !== "undefined") {
+          window.location.href = "/login";
+        }
+        return new Promise(() => {});
+      }
+    }
+
+    if (status === 204) {
+      return Promise.resolve({ data: null, status: 204, statusText: "No Content", headers: {}, config: error.config! });
+    }
+
     return Promise.reject(error);
   }
 );
 
-// Consolidated response interceptor
-apiClient.interceptors.response.use(
-  (response) => {
-    console.log(`Axios Response for ${response.config.url}:`, {
-      status: response.status,
-      data: JSON.stringify(response.data, null, 2),
-    });
-    return response;
-  },
-  async (error: AxiosError) => {
-    const config = error.config;
-    const url = config?.url || 'unknown';
-    const status = error.response?.status;
-    const contentType = error.response?.headers['content-type'];
-    let errorMessage = error.message || 'Unknown error';
-    let responseData = error.response?.data;
-
-    // Handle non-JSON or empty response
-    if (!contentType?.includes('application/json') || !responseData) {
-      const body = responseData
-        ? typeof responseData === 'string'
-          ? responseData.slice(0, 500)
-          : JSON.stringify(responseData, null, 2)
-        : 'Empty response body';
-      console.error('Non-JSON or empty response received:', {
-        url: `${mybaseurl}${url}`,
-        status,
-        headers: error.response?.headers,
-        body,
-      });
-      errorMessage = `Server returned non-JSON or empty response (status ${status || 'unknown'})`;
-      if (status === 204) {
-        errorMessage = 'No content returned from server';
-      } else if (status === 404 && url.includes('/auth/profile/me/')) {
-        errorMessage = 'Profile endpoint not found. Please check if the server is running or contact support.';
-      }
-      return Promise.reject({
-        ...error,
-        message: errorMessage,
-        response: {
-          ...error.response,
-          data: { message: errorMessage, body },
-        } as any,
-      });
-    }
-
-    // Handle JSON error responses
-    if (responseData && typeof responseData === 'object' && responseData !== null) {
-      if ('errors' in responseData && responseData.errors && typeof responseData.errors === 'object') {
-        const errors = responseData.errors as Record<string, string[]>;
-        errorMessage =
-          errors.phone_number?.[0] ||
-          errors.password?.[0] ||
-          errors.non_field_errors?.[0] ||
-          (responseData as any).message ||
-          errorMessage;
-      } else if ('message' in responseData) {
-        errorMessage = (responseData as any).message || errorMessage;
-      }
-    }
-
-    // Specific status code handling
-    if (status === 404 && url.includes('/payments/my-subscriptions/active/')) {
-      console.log(`No active subscription for ${url}:`, JSON.stringify(responseData, null, 2));
-      return Promise.resolve({
-        ...error,
-        response: {
-          ...error.response,
-          data: { success: false, message: 'No active subscription found', data: {} },
-        },
-      });
-    } else if (status === 401) {
-      errorMessage = 'Invalid or expired token';
-      if (!url.includes('/auth/login/') && !url.includes('/auth/profile/me/')) {
-        console.log('401 Unauthorized, attempting token refresh');
-        try {
-          const newToken = await refreshToken();
-          if (config) {
-            config.headers.Authorization = `Bearer ${newToken}`;
-            return apiClient(config);
-          }
-        } catch (refreshError) {
-          console.error('Token refresh failed:', extractErrorDetails(refreshError));
-          if (typeof window !== 'undefined') {
-            localStorage.removeItem('token');
-            localStorage.removeItem('refreshToken');
-            localStorage.removeItem('phone_number');
-            window.location.href = '/login';
-          }
-        }
-      }
-    } else if (status === 429) {
-      errorMessage = 'Too many requests. Please wait a few minutes and try again.';
-    } else if (status === 404 && url.includes('/auth/profile/me/')) {
-      errorMessage = 'Profile endpoint not found. Please check if the server is running or contact support.';
-    } else if (!status) {
-      errorMessage = 'Network error: Unable to connect to the server';
-    }
-
-    const errorDetails = {
-      message: errorMessage,
-      status,
-      data: responseData,
-      errors: responseData && typeof responseData === 'object' ? (responseData as any).errors : undefined,
-      code: error.code,
-      url: `${mybaseurl}${url}`,
-      body: typeof responseData === 'string' ? responseData.slice(0, 500) : JSON.stringify(responseData, null, 2),
-    };
-    console.error(`Response error for ${url}:`, JSON.stringify(errorDetails, null, 2));
-
-    return Promise.reject({
-      ...error,
-      message: errorMessage,
-      response: {
-        ...error.response,
-        data: typeof responseData === 'object' && responseData !== null
-          ? { ...responseData, message: errorMessage }
-          : { message: errorMessage, body: errorDetails.body },
-      } as any,
-    });
-  }
-);
-
-interface ErrorResponse {
-  message?: string;
-  errors?: Record<string, string[]>;
-  [key: string]: any;
-}
-
-interface ApiError {
-  status?: number;
-  data?: ErrorResponse | string | null;
-  errors?: Record<string, string[]>;
-  error_details?: string;
-  code?: string;
-  url?: string;
-  message: string;
-  isAxiosError?: boolean;
-}
-
-// Utility to extract error details
-// ... (rest of the imports and existing code remain unchanged)
-
-// Utility to extract error details
-export const extractErrorDetails = (error: any): ApiError => { // Added export
-  const axiosError = error as AxiosError<ErrorResponse>;
-  let message = axiosError.message || 'Unknown error';
-  let data = axiosError.response?.data;
-  let status = axiosError.response?.status;
-  let url = axiosError.config ? `${axiosError.config.baseURL}${axiosError.config.url || ''}` : 'unknown';
-
-  if (axiosError.response) {
-    const headers = axiosError.response.headers as Record<string, string> | undefined;
-    const contentType = headers?.['content-type'] || '';
-    if (!contentType.includes('application/json') || data == null) {
-      message = `Non-JSON response or empty data (status ${status || 'unknown'})`;
-      console.error('Non-JSON or empty response received:', {
-        url,
-        status,
-        headers,
-        body: typeof data === 'string' ? data : data ?? 'Empty response body',
-      });
-      data = { message, body: typeof data === 'string' ? data : data ?? 'Empty response body' };
-    } else if (typeof data === 'object' && data !== null && 'message' in data) {
-      message = data.message || message;
-    }
-  } else {
-    message = axiosError.code === 'ERR_NETWORK'
-      ? 'Network error: Unable to connect to the server'
-      : 'No response received from the server';
-    console.error('No response received:', {
-      url,
-      code: axiosError.code,
-      message,
-    });
-    data = { message };
-  }
-
-  return {
-    message,
-    status,
-    data,
-    errors: typeof data === 'object' && data !== null && 'errors' in data ? data.errors : undefined,
-    code: axiosError.code,
-    url,
-    isAxiosError: axiosError.isAxiosError,
-  };
-};
-
-// ... (rest of api.ts, including insertSelectedCourse, remains unchanged)
-// Fetch CSRF token
-const fetchCsrfToken = async () => {
-  try {
-    const response = await apiClient.get('/get-csrf-token/');
-    const csrfToken = response.data.csrfToken;
-    console.log('Fetched CSRF token:', csrfToken?.substring(0, 20) + '...');
-    return csrfToken;
-  } catch (error) {
-    console.error('Failed to fetch CSRF token:', extractErrorDetails(error));
-    return null;
-  }
-};
-
-export async function fetchCourseById(id: string | number): Promise<Course | null> {
-  try {
-    const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
-    console.log(`Preparing to fetch course with ID: ${id}, Token: ${token ? 'Present' : 'Missing'}`);
-    console.log(`Target URL: ${mybaseurl}/courses/courses/${id}/`);
-    const headers: Record<string, string> = {};
-    if (token) {
-      headers['Authorization'] = `Bearer ${token}`;
-    } else {
-      console.warn('No token found, proceeding without authentication');
-    }
-    const response = await apiClient.get<Course>(`/courses/courses/${id}/`, {
-      headers,
-      timeout: 15000,
-    });
-    console.log('Raw course response:', JSON.stringify(response.data, null, 2));
-    if (!response.data?.id) {
-      console.warn('Invalid course data received: missing id', response.data);
-      return null;
-    }
-    const courseData = response.data;
+// ERROR EXTRACTOR
+export const extractErrorDetails = (error: any) => {
+  const axiosError = error as AxiosError<any>;
+  if (axiosError.response?.data) {
     return {
-      id: courseData.id.toString(),
-      name: courseData.name || 'Unknown',
-      code: courseData.code || 'N/A',
-      university: {
-        id: courseData.university?.id || courseData.universityId || 'unknown',
-        name: courseData.university?.name || courseData.university_name || 'Unknown',
-        slug: courseData.university?.slug || (courseData.university_name?.toLowerCase().replace(/\s+/g, '-') || 'unknown'),
-        code: courseData.university?.code || courseData.university_code || undefined,
-        logo: courseData.university?.logo || null,
-        city: courseData.university?.city || undefined,
-        campus: courseData.university?.campus || undefined,
-        ranking: courseData.university?.ranking || null,
-        accreditation: courseData.university?.accreditation || undefined,
-      },
-      universityId: courseData.university?.id || courseData.universityId || undefined,
-      university_name: courseData.university?.name || courseData.university_name || undefined,
-      minimum_grade: courseData.minimum_grade || undefined,
-      required_subjects: courseData.required_subjects || undefined,
-      description: courseData.description || undefined,
-      duration_years: courseData.duration_years || undefined,
-      startDate: courseData.startDate ||undefined,
-      applicationDeadline: courseData.applicationDeadline || undefined,
-      career_prospects: courseData.career_prospects || undefined,
-      tuition_fee_per_year: courseData.tuition_fee_per_year != null ? Number(courseData.tuition_fee_per_year) : undefined,
-      application_fee: courseData.application_fee != null ? Number(courseData.application_fee) : undefined,
-      category: courseData.category || undefined,
-      is_selected: courseData.is_selected || false,
-      is_applied: courseData.is_applied || false,
-      user_application: courseData.user_application || null,
-      created_at: courseData.created_at || undefined,
-      updated_at: courseData.updated_at || undefined,
+      message: axiosError.response.data.message || axiosError.response.data.detail || "Request failed",
+      status: axiosError.response.status,
+      data: axiosError.response.data,
     };
-  } catch (error: any) {
-    const errorDetails = extractErrorDetails(error);
-    console.error('Failed to fetch course:', JSON.stringify(errorDetails, null, 2));
-    return null;
   }
+  return { message: axiosError.message || "Network error" };
+};
+
+// REFRESH TOKEN
+export const refreshToken = async (): Promise<string> => {
+  const refreshToken = localStorage.getItem("refreshToken");
+  if (!refreshToken) throw new Error("No refresh token");
+
+  const response = await apiClient.post("/auth/token/refresh/", { refresh: refreshToken });
+  const newAccess = response.data.access;
+  localStorage.setItem("token", newAccess);
+  return newAccess;
 }
 
-export async function fetchCourses(params: Record<string, any> = {}): Promise<Course[]> {
-  try {
-    const response = await apiClient.get('/courses/courses/', { params });
-    const headers: Record<string, string> = {};
-    const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
-    if (token) {
-      headers['Authorization'] = `Bearer ${token}`;
-    } else {
-      console.warn('No token found, proceeding without authentication');
-    }
-    const list = getResponseData(response.data);
-    return list.map((course: any) => ({
-      id: course.id.toString(),
-      name: course.name || 'Unknown',
-      code: course.code || 'N/A',
-      university: {
-        id: course.university?.id || course.universityId || 'unknown',
-        name: course.university?.name || course.university_name || 'Unknown',
-        slug: (course.university?.name || course.university_name || '').toLowerCase().replace(/\s+/g, '-') || 'unknown',
-        code: course.university?.code || course.university_code,
-        logo: course.university?.logo || null,
-        city: course.university?.city,
-        campus: course.university?.campus,
-        ranking: course.university?.ranking || null,
-        accreditation: course.university?.accreditation,
-      },
-      universityId: course.university?.id || course.universityId,
-      university_name: course.university?.name || course.university_name,
-      minimum_grade: course.minimum_grade,
-      required_subjects: course.required_subjects,
-      description: course.description,
-      duration_years: course.duration_years,
-      startDate: course.startDate,
-      applicationDeadline: course.applicationDeadline,
-      career_prospects: course.career_prospects,
-      tuition_fee_per_year: course.tuition_fee_per_year != null ? Number(course.tuition_fee_per_year) : undefined,
-      application_fee: course.application_fee != null ? Number(course.application_fee) : undefined,
-      category: course.category,
-      is_selected: !!course.is_selected,
-      is_applied: !!course.is_applied,
-      user_application: course.user_application || null,
-      created_at: course.created_at,
-      updated_at: course.updated_at,
-    }));
-  } catch (error) {
-    console.error('Failed to fetch courses:', extractErrorDetails(error));
-    return [];
-  }
-}
+// AUTH
+export const login = async (phone: string, password: string) => {
+  const cleanPhone = phone.replace(/^\+/, "");
 
-// Unrelated functions remain unchanged as per your request
-export async function login(phone: string, password: string): Promise<LoginResponse['data']> {
   try {
-    console.log('Sending login request to:', `${mybaseurl}/auth/login/`);
-    const response = await apiClient.post<LoginResponse>('/auth/login/', {
-      phone_number: phone,
+    const response = await apiClient.post("/auth/login/", {
+      phone_number: cleanPhone,
       password,
-    }, {
-      timeout: 10000,
     });
 
-    console.log('Login response:', JSON.stringify(response.data, null, 2));
-    const data = response.data;
+    console.log("RAW LOGIN RESPONSE:", JSON.stringify(response.data, null, 2));
 
-    if (!data.success || !data.data || !data.data.tokens) {
-      const errorMessage =
-        data.errors?.phone_number?.[0] ||
-        data.errors?.password?.[0] ||
-        data.errors?.non_field_errors?.[0] ||
-        data.message ||
-        'Login failed: Invalid response structure';
-      throw new Error(errorMessage);
+    const payload = response.data;
+
+    // Be more flexible — try all common locations for token
+    let accessToken =
+      payload.access ||
+      payload.data?.access ||
+      payload.tokens?.access ||
+      payload.data?.tokens?.access;
+
+    let refreshToken =
+      payload.refresh ||
+      payload.data?.refresh ||
+      payload.tokens?.refresh ||
+      payload.data?.tokens?.refresh;
+
+    let user = payload.user || payload.data?.user || payload.data;
+
+    if (!accessToken) {
+      throw new Error("No access token found in login response");
     }
 
-    localStorage.setItem('token', data.data.tokens.access);
-    localStorage.setItem('refreshToken', data.data.tokens.refresh);
-    localStorage.setItem('phone_number', data.data.user.phone_number);
-    return data.data;
-  } catch (error: any) {
-    const errorDetails = extractErrorDetails(error);
-    console.error('Login API error:', JSON.stringify(errorDetails, null, 2));
-    throw new Error(errorDetails.message || 'Login failed due to network error');
-  }
-}
+    localStorage.setItem("token", accessToken);
+    if (refreshToken) localStorage.setItem("refreshToken", refreshToken);
 
+    // Debug: confirm it's saved
+    console.log("TOKEN SAVED:", localStorage.getItem("token")?.substring(0, 20) + "...");
+
+    return { tokens: { access: accessToken, refresh: refreshToken }, user };
+  } catch (error: any) {
+    const msg =
+      error.response?.data?.message ||
+      error.response?.data?.detail ||
+      error.message ||
+      "Invalid phone number or password";
+
+    console.error("LOGIN FAILED:", msg);
+    throw new Error(msg);
+  }
+};
+export const register = async (data: {
+  phone_number: string;
+  password: string;
+  password_confirm: string;
+  subjects: Array<{ subject_id: string; grade: string }>;
+}) => {
+  try {
+    const response = await apiClient.post('/auth/register/', data);
+    console.log("FULL REGISTER RESPONSE:", JSON.stringify(response.data, null, 2));
+
+    const res = response.data;
+
+    if (res.status !== "success" || !res.data) {
+      console.error("Server returned error:", res);
+      throw new Error(res.message || "Registration failed");
+    }
+
+    const payload = res.data;
+    const accessToken = payload.tokens?.access;
+    const refreshToken = payload.tokens?.refresh;
+    const user = payload.user;
+
+    if (!accessToken || !user?.phone_number) {
+      console.error("Missing tokens or user in payload:", payload);
+      throw new Error("Invalid registration response from server");
+    }
+
+    localStorage.setItem("token", accessToken);
+    if (refreshToken) localStorage.setItem("refreshToken", refreshToken);
+    localStorage.setItem("phone_number", user.phone_number.replace("+", ""));
+
+    return {
+      tokens: { access: accessToken, refresh: refreshToken },
+      user: { phone_number: user.phone_number, is_premium: user.is_premium || false },
+    };
+  } catch (error: any) {
+    console.error("REGISTRATION FAILED WITH SERVER RESPONSE:", error.response?.data || error.message);
+    throw error;
+  }
+};
+
+// SUBJECTS
 export async function fetchSubjects(): Promise<Array<{ id: string; name: string }>> {
   try {
     const response = await apiClient.get('/courses/subjects/');
@@ -438,31 +229,11 @@ export async function fetchSubjects(): Promise<Array<{ id: string; name: string 
     return [];
   }
 }
-
-export async function fetchFaculties(universityCode: string): Promise<Faculty[]> {
-  try {
-    const response = await apiClient.get('/universities/faculties/', { params: { university_code: universityCode } });
-    return getResponseData(response.data);
-  } catch (error) {
-    console.error('Failed to fetch faculties:', extractErrorDetails(error));
-    return [];
-  }
-}
-
-export async function fetchDepartments(facultyId: number): Promise<Department[]> {
-  try {
-    const response = await apiClient.get(`/universities/faculties/${facultyId}/departments/`);
-    return getResponseData(response.data);
-  } catch (error) {
-    console.error('Failed to fetch departments:', extractErrorDetails(error));
-    return [];
-  }
-}
-
+//fetch course count by faculties
 export async function fetchCourseCountByFaculty(facultyId: number): Promise<number> {
   try {
     const response = await apiClient.get<{ status: string; message: string; data: Course[] }>(
-      '/courses/courses/',
+      '/courses/offerings/',
       { params: { faculty_id: facultyId } }
     );
     if (response.data.status !== 'success' || !Array.isArray(response.data.data)) {
@@ -475,44 +246,49 @@ export async function fetchCourseCountByFaculty(facultyId: number): Promise<numb
     return 0;
   }
 }
-
-export async function fetchCourseCount(universityCode: string): Promise<number> {
+//faculties
+export async function fetchDepartments(facultyId: number): Promise<Department[]> {
   try {
-    const response = await apiClient.get('/courses/courses/', { params: { university_code: universityCode } });
-    const list = getResponseData(response.data);
-    return list.filter((c: any) => c.university_code === universityCode).length;
-  } catch {
-    return 0;
+    const response = await apiClient.get(`/universities/faculties/${facultyId}/departments/`);
+    return getResponseData(response.data);
+  } catch (error) {
+    console.error('Failed to fetch departments:', extractErrorDetails(error));
+    return [];
   }
 }
 
-export async function fetchkmtCourseCount(KmtcCode: string): Promise<number> {
+// UNIVERSITIES
+export async function fetchUniversities(params: Record<string, any> = {}): Promise<University[]> {
   try {
-    if (!KmtcCode || typeof KmtcCode !== 'string') {
-      console.warn('[fetchCourseCount] Invalid or missing universityCode:', KmtcCode);
-      return 0;
-    }
-    console.log('[fetchCourseCount] Fetching course count for universityCode:', KmtcCode);
-    const response = await apiClient.get<{
-      success: boolean;
-      message: string;
-      timestamp: string;
-      data: Course[];
-    }>('/courses/courses/', { params: { university_code: KmtcCode } });
-    console.log('[fetchCourseCount] Raw API response:', JSON.stringify(response.data, null, 2));
-    if (!response.data.success || !Array.isArray(response.data.data)) {
-      console.warn('[fetchCourseCount] Invalid courses data received:', response.data);
-      return 0;
-    }
-    const validCourses = response.data.data.filter(
-      (course) => course.university_code === KmtcCode
-    );
-    console.log(`[fetchCourseCount] Filtered course count for ${KmtcCode}:`, validCourses.length);
-    return validCourses.length;
-  } catch (error: unknown) {
-    const errorDetails = extractErrorDetails(error);
-    console.error('[fetchCourseCount] Failed to fetch course count for university', KmtcCode, ':', errorDetails);
-    return 0;
+    const response = await apiClient.get('/universities/universities/', { params });
+    const data = getResponseData(response.data);
+
+    if (!Array.isArray(data)) {
+        console.warn("[fetchUniversities] Invalid universities data received:", response.data);
+        return [];
+      }
+  
+    return data.map((item: any) => ({
+      id: item.id,
+      name: item.name,
+      slug: item.slug,
+      code: item.code,
+      logo: item.logo || null,
+      city: item.city || "Unknown City",
+      campus: item.campus || "Main Campus",
+      faculties: [],
+      established_year: "N/A",
+      type: item.type || "N/A",
+      ranking: item.ranking,
+      available_courses: 0,
+      accreditation: item.accreditation || "N/A",
+      description: item.description || "No description available",
+      is_applied: false,
+      selectionId: undefined,
+    }));
+  } catch (error) {
+    console.error('Failed to fetch universities:', extractErrorDetails(error));
+    return [];
   }
 }
 
@@ -521,11 +297,11 @@ export async function fetchUniversityDetails(code: string): Promise<University> 
     console.log(`Fetching details for university: ${code}`);
     const response = await apiClient.get<University>(`/universities/universities/${code}/`);
     const data = response.data;
-    const courseCount = await fetchCourseCount(code);
+    const count = await fetchCourseCount(code);
     console.log(`Details for ${code}:`, data);
     return {
       ...data,
-      available_courses: courseCount,
+      courses_count: count,
       faculties: data.faculties ?? [],
       established_year: data.established_year?.toString() ?? "Unknown",
       accreditation: data.accreditation ?? "N/A",
@@ -536,71 +312,8 @@ export async function fetchUniversityDetails(code: string): Promise<University> 
     throw new Error(`Failed to fetch university details: ${JSON.stringify(errorDetails)}`);
   }
 }
-export async function fetchUniversities(params: Record<string, any> = {}): Promise<University[]> {
-  try {
-    console.log("[fetchUniversities] Fetching with params:", params);
-    const response = await apiClient.get<University[]>('/universities/universities/', { params });
-    console.log("[fetchUniversities] Raw response:", JSON.stringify(response.data, null, 2));
-    const data = response.data;
 
-    if (!Array.isArray(data)) {
-      console.warn("[fetchUniversities] Invalid universities data received:", response.data);
-      return [];
-    }
-
-    const universities: University[] = data.map((item) => ({
-      id: item.id,
-      name: item.name,
-      slug: item.slug,
-      code: item.code,
-      logo: item.logo || null,
-      city: item.city || "Unknown City",
-      campus: item.campus || "Main Campus",
-      faculties: [],
-      established_year: "N/A",
-      ranking: item.ranking,
-      available_courses: 0,
-      accreditation: item.accreditation || "N/A",
-      description: "No description available",
-      is_applied: false,
-      selectionId: undefined,
-    }));
-
-    console.log("[fetchUniversities] Universities received:", universities);
-    return universities;
-  } catch (error: unknown) {
-    const errorDetails = extractErrorDetails(error);
-    console.error("[fetchUniversities] Failed to fetch universities:", errorDetails);
-    throw new Error(`Failed to fetch universities: ${JSON.stringify(errorDetails)}`);
-  }
-}
-
-export async function fetchCoursesByUniversity(universityCode: string): Promise<Course[]> {
-  try {
-    const response = await apiClient.get('/courses/courses/', { params: { university_code: universityCode } });
-    const list = getResponseData(response.data);
-    return list.map((course: any) => ({
-      id: course.id.toString(),
-      name: course.name || 'Unknown',
-      code: course.code || 'N/A',
-      university: {
-        id: course.university?.id || 'unknown',
-        name: course.university?.name || course.university_name || 'Unknown',
-        slug: (course.university?.name || course.university_name || '').toLowerCase().replace(/\s+/g, '-') || 'unknown',
-        code: course.university?.code || course.university_code,
-        logo: course.university?.logo || null,
-      },
-      minimum_grade: course.minimum_grade,
-      category: course.category,
-      is_selected: !!course.is_selected,
-      is_applied: !!course.is_applied,
-    }));
-  } catch {
-    return [];
-  }
-}
-
-export async function matchUniversityCampus(courseId: string | number): Promise<string> {
+export async function matchUniversityCampus(courseId: string ): Promise<string> {
   try {
     const course = await fetchCourseById(courseId);
     const universities = await fetchUniversities();
@@ -632,186 +345,432 @@ export async function matchCourses(subjectGrades: SubjectGrades, totalPoints: nu
     throw new Error(`Failed to match courses: ${JSON.stringify(errorDetails)}`);
   }
 }
-
-export async function register(data: {
-  phone_number: string;
-  first_name?: string;
-  last_name?: string;
-  email?: string | null;
-  password: string;
-  password_confirm?: string;
-  subjects: { subject_id: string; grade: string }[];
-}) {
+export async function fetchCoursesByUniversity(universityCode: string): Promise<Course[]> {
   try {
-    const response = await apiClient.post('/auth/register/', data);
-    console.log("Register API response:", response.data);
-    localStorage.setItem('refreshToken', response.data.data.tokens.refresh);
-    return response.data.data;
-  } catch (error: unknown) {
-    const errorDetails = extractErrorDetails(error);
-    console.error("Register error:", errorDetails);
-    throw new Error(JSON.stringify(errorDetails));
+    const response = await apiClient.get('/courses/offerings/', {
+      params: { university_code: universityCode }
+    });
+    const res = response.data;
+
+    if (!res.success || !Array.isArray(res.data)) return [];
+
+    const list = res.data;
+
+    return list.map((offering: any) => {
+      const program = offering.program || {};
+
+      return {
+        id: offering.id.toString(),
+        name: program.name || "Unknown Program",
+        code: offering.code?.toString() || "N/A",  // ← USE offering.code HERE TOO
+        category: program.category || "General",
+        university: {
+          name: offering.university_name || "Unknown",
+          code: offering.university_code,
+        },
+        minimum_grade: offering.minimum_grade,
+        duration_years: offering.duration_years || program.typical_duration_years,
+        tuition_fee_per_year: offering.tuition_fee_per_year != null 
+          ? Number(offering.tuition_fee_per_year) 
+          : undefined,
+        career_prospects: offering.career_prospects || "",
+        required_subjects: (offering.subject_requirements || []).map((req: any) => ({
+          subject: { name: req.subject?.label || "Unknown" },
+          minimum_grade: req.minimum_grade || "",
+          is_mandatory: req.is_mandatory || false,
+        })),
+        is_selected: !!offering.is_selected,
+      };
+    });
+  } catch (error) {
+    console.error("Failed to fetch courses for university:", extractErrorDetails(error));
+    return [];
+  }
+}
+//using ourses/courses for the count
+export async function fetchCourseCount(universityCode: string): Promise<number> {
+  try {
+    const response = await apiClient.get('/courses/offerings/', { params: { university_code: universityCode } });
+    const list = getResponseData(response.data);
+    return list.filter((c: any) => c.university_code === universityCode).length;
+  } catch {
+    return 0;
   }
 }
 
-export async function insertSelectedCourse(courseCode: string): Promise<Course> {
+// COURSES (NEW: CourseOffering)
+export async function fetchCourses(params: Record<string, any> = {}): Promise<Course[]> {
   try {
-    if (!courseCode || typeof courseCode !== 'string' || courseCode.trim() === '') {
-      console.error("[insertSelectedCourse] Invalid courseCode:", courseCode);
-      throw new Error("Invalid course code");
+    const response = await apiClient.get('/courses/offerings/', { params });
+    const res = response.data;
+
+    if (!res.success || !Array.isArray(res.data)) return [];
+
+    const list = res.data;
+
+    return list.map((offering: any) => {
+      const program = offering.program || {};
+      const university = offering.university || {};
+
+      return {
+        id: offering.id.toString(),
+        name: program.name || "Unknown Program",
+        code: offering.code?.toString() || "N/A",  // ← CRITICAL: use offering.code
+        category: program.category || "General",
+        university: {
+          id: university.id?.toString() || "unknown",
+          name: university.name || offering.university_name || "Unknown",
+          code: university.code || offering.university_code,
+          logo: university.logo || null,
+        },
+        cluster_requirements: offering.cluster_requirements || program.cluster_requirements || "",
+        minimum_grade: offering.minimum_grade,
+        duration_years: offering.duration_years || program.typical_duration_years,
+        tuition_fee_per_year: offering.tuition_fee_per_year != null 
+          ? Number(offering.tuition_fee_per_year) 
+          : undefined,
+        career_prospects: offering.career_prospects || "",
+        intake_months: offering.intake_months || [],
+        required_subjects: (offering.subject_requirements || []).map((req: any) => ({
+          subject: {
+            id: req.subject?.value || "",
+            name: req.subject?.label || "Unknown Subject",
+          },
+          minimum_grade: req.minimum_grade || "",
+          is_mandatory: req.is_mandatory || false,
+        })),
+        is_selected: !!offering.is_selected,
+        is_applied: !!offering.is_applied,
+      };
+    });
+  } catch (error) {
+    console.error('Failed to fetch courses:', extractErrorDetails(error));
+    return [];
+  }
+}
+//kmtc course count
+export async function fetchkmtCourseCount(KmtcCode: string): Promise<number> {
+  try {
+    if (!KmtcCode || typeof KmtcCode !== 'string') {
+      console.warn('[fetchCourseCount] Invalid or missing universityCode:', KmtcCode);
+      return 0;
     }
-    const token = localStorage.getItem("token");
-    if (!token) {
-      console.error("[insertSelectedCourse] No authentication token found in localStorage");
-      throw new Error("Authentication required. Please log in.");
+    console.log('[fetchCourseCount] Fetching course count for universityCode:', KmtcCode);
+    const response = await apiClient.get<{
+      success: boolean;
+      message: string;
+      timestamp: string;
+      data: Course[];
+    }>('/courses/courses/', { params: { university_code: KmtcCode } });
+    console.log('[fetchCourseCount] Raw API response:', JSON.stringify(response.data, null, 2));
+    if (!response.data.success || !Array.isArray(response.data.data)) {
+      console.warn('[fetchCourseCount] Invalid courses data received:', response.data);
+      return 0;
     }
-    console.log('[insertSelectedCourse] Sending request for courseCode:', courseCode);
-    const response = await apiClient.post<SelectedCourseResponse>('/user/selected-courses/', { course_code: courseCode });
-    console.log('[insertSelectedCourse] Response:', JSON.stringify(response.data, null, 2));
-    const data = response.data;
-    if (!data.success) {
-      console.error('[insertSelectedCourse] API error:', data.errors?.detail || 'Unknown error');
-      throw new Error(data.errors?.detail || 'Failed to select course');
+    const validCourses = response.data.data.filter(
+      (course) => course.university_code === KmtcCode
+    );
+    console.log(`[fetchCourseCount] Filtered course count for ${KmtcCode}:`, validCourses.length);
+    return validCourses.length;
+  } catch (error: unknown) {
+    const errorDetails = extractErrorDetails(error);
+    console.error('[fetchCourseCount] Failed to fetch course count for university', KmtcCode, ':', errorDetails);
+    return 0;
+  }
+}
+export async function fetchCourseById(id: string): Promise<Course | null> {
+  try {
+    console.log(`Fetching course detail for ID: ${id}`);
+    const response = await apiClient.get(`/courses/offerings/${id}/`);
+    const res = response.data;
+
+    console.log("Raw course detail response:", JSON.stringify(res, null, 2));
+
+    if (!res.success || !res.data) {
+      console.warn("Invalid response format:", res);
+      return null;
     }
-    const item = Array.isArray(data.data) ? data.data[0] : data.data;
-    if (!item || !item.course?.id) {
-      throw new Error('No valid course data found in the response.');
-    }
+
+    const data = res.data;  // ← This is the course offering object
+
+    const program = data.program || {};
+    const university = data.university || {};
+
     return {
-      id: item.course.id.toString(),
-      code: item.course.code || 'N/A',
-      name: item.course.name || 'Unknown',
+      id: data.id.toString(),
+      name: program.name || "Unknown Program",
+      code: data.code?.toString() || "N/A",  // ← USE data.code, NOT program.code
+      category: program.category || "General",
       university: {
-        id: item.course.id || 'unknown',
-        name: item.course.university_name || 'Unknown',
-        slug: item.course.university_name?.toLowerCase().replace(/\s+/g, '-') || 'unknown',
-        code: item.course.university_code || undefined,
-        logo: null,
-        city: undefined,
-        campus: undefined,
-        ranking: null,
-        accreditation: undefined,
+        id: university.id?.toString() || "unknown",
+        name: university.name || "Unknown University",
+        slug: university.name?.toLowerCase().replace(/\s+/g, '-') || "unknown",
+        code: university.code || undefined,
+        logo: university.logo || null,
+        city: university.city || undefined,
+        campus: university.campus || undefined,
+        ranking: university.ranking || null,
+        accreditation: university.accreditation || undefined,
       },
-      universityId: item.course.id || undefined,
-      university_name: item.course.university_name || undefined,
-      minimum_grade: item.course.minimum_grade || undefined,
-      description: item.course.description || undefined,
-      duration_years: item.course.duration_years || undefined,
-      startDate: item.course.start_date || undefined,
-      applicationDeadline: item.course.application_deadline || undefined,
-      career_prospects: item.course.career_prospects || undefined,
-      tuition_fee_per_year: item.course.tuition_fee_per_year != null ? Number(item.course.tuition_fee_per_year) : undefined,
-      application_fee: item.course.application_fee != null ? Number(item.course.application_fee) : undefined,
-      category: item.course.category || undefined,
-      is_selected: true,
-      is_applied: item.is_applied || false,
-      user_application: item.is_applied ? {
-        id: item.id,
-        status: item.is_applied ? 'applied' : 'pending',
-        application_number: `APP-${item.id}`,
-        submitted_at: item.application_date || null,
-      } : null,
-      created_at: item.created_at || undefined,
-      updated_at: item.course.updated_at || undefined,
-      selectionId: item.id,
-      qualification: item.course.category || undefined,
-      average_rating: item.course.average_rating || undefined,
-      total_reviews: item.course.total_reviews || undefined,
+      university_name: university.name,
+      universityId: university.id,
+      minimum_grade: data.minimum_grade,
+      duration_years: data.duration_years || program.typical_duration_years,
+      tuition_fee_per_year: data.tuition_fee_per_year != null 
+        ? Number(data.tuition_fee_per_year) 
+        : undefined,
+      intake_months: data.intake_months || [],
+      career_prospects: data.career_prospects || "",
+      details: program.details || data.details || "",
+      required_subjects: program.required_subjects || [],
+      is_selected: !!data.is_selected,
+      is_applied: !!data.is_applied,
+      created_at: data.created_at,
+      updated_at: data.updated_at,
+      selectionId: data.selectionId,
     };
   } catch (error: any) {
-    const errorDetails = extractErrorDetails(error);
-    console.error('[insertSelectedCourse] Failed:', JSON.stringify(errorDetails, null, 2));
+    const details = extractErrorDetails(error);
+    console.error("Failed to fetch course detail:", details);
+    return null;
+  }
+}
+// SELECTED COURSES
+export async function insertSelectedCourse(courseCode: string | number): Promise<Partial<Course>> {
+  try {
+    const response = await apiClient.post('/user/selected-courses/', { course_code: courseCode });
+    const data = response.data.data || response.data || {};
+    console.log("RAW INSERT RESPONSE:", JSON.stringify(response.data, null, 2));
+
+    return {
+      id: data.id || data.selectionId || response.data?.id,                     // ← real selection PK (UUID)
+      selectionId: data.id,             // ← same
+      code: courseCode,
+      name: data.course_name || "Unknown Course",
+      university_name: data.institution === "KMTC" ? "KMTC" : data.institution,
+      institution: data.institution,
+      is_selected: true,
+    };
+  } catch (error: any) {
+    if (error.response?.status === 400) {
+      const msg = (error.response.data?.non_field_errors?.[0] || "").toLowerCase();
+      if (msg.includes("already") || msg.includes("exists") || msg.includes("selected")) {
+        // Treat as success (idempotent) - return fake success object
+        console.log("Course already selected - treating as success");
+        return {
+          code: courseCode,
+          is_selected: true,
+          selectionId: "already-exists", // marker so store knows
+        };
+      }
+    }
+    console.error("Insert failed:", error);
     throw error;
   }
 }
 
 export async function removeSelectedCourse(selectionId: string): Promise<void> {
+  await apiClient.delete(`/user/selected-courses/${selectionId}/`);
+}
+export async function deleteSelectedCourseByCode(courseCode: string | number): Promise<void> {
   try {
-    if (!selectionId || !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(selectionId)) {
-      console.error("[removeSelectedCourse] Invalid selectionId format:", selectionId);
-      throw new Error("Invalid selection ID format");
+    // 1. Get current selections
+    const response = await apiClient.get('/user/selected-courses/');
+    const list = response.data.data || response.data || [];
+
+    // 2. Find the selection with matching code
+    const selection = list.find((item: any) =>
+      String(item.course_code) === String(courseCode)
+    );
+
+    if (!selection || !selection.id) {
+      console.log(`No selection found for code ${courseCode} → already deselected`);
+      return; // Idempotent: success
     }
-    const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
-    if (!token) {
-      throw new Error('No authentication token found');
+
+    // 3. Delete using REAL selection ID
+    console.log(`Deleting real selection ID: ${selection.id} for code ${courseCode}`);
+    await apiClient.delete(`/user/selected-courses/${selection.id}/`);
+    console.log(`DELETE success for ID: ${selection.id}`);
+  } catch (err: any) {
+    if (err.response?.status === 404) {
+      console.log("404 → selection already gone");
+      return;
     }
-    console.log('[removeSelectedCourse] Sending request for selectionId:', selectionId);
-    await apiClient.delete(`/user/selected-courses/${selectionId}/`, {
-      headers: { Authorization: `Bearer ${token}` },
-      timeout: 10000,
-    });
-    console.log('[removeSelectedCourse] Successfully removed selectionId:', selectionId);
-  } catch (error: any) {
-    const errorDetails = extractErrorDetails(error);
-    console.error('[removeSelectedCourse] Failed:', JSON.stringify(errorDetails, null, 2));
-    throw error;
+    console.error("Delete by code failed:", err);
+    throw err;
   }
 }
-
+// New: Delete by name + institution (safe & idempotent)
+export async function removeSelectedCourseByName(courseName: string, institution: string): Promise<void> {
+  await apiClient.delete('/user/selected-courses/', {
+    params: {
+      course_name: courseName,
+      institution: institution,
+    },
+  });
+}
 export async function fetchSelectedCourses(): Promise<Course[]> {
   try {
-    const token = localStorage.getItem('token');
-    if (!token) return [];
+    const response = await apiClient.get('/user/selected-courses/');
+    const list = response.data.data || response.data || [];
 
-    const response = await apiClient.get('/user/selected-courses/', {
-      headers: { Authorization: `Bearer ${token}` },
-    });
-
-    const list = getResponseData(response.data);
     if (!Array.isArray(list)) return [];
 
-    return list.map((item: any) => {
-      const course = item.course || item;
-      return {
-        id: course.id.toString(),
-        name: course.name || 'Unknown',
-        code: course.code || 'N/A',
-        university: {
-          id: course.id || 'unknown',
-          name: course.university_name || 'Unknown',
-          slug: (course.university_name || '').toLowerCase().replace(/\s+/g, '-') || 'unknown',
-          code: course.university_code,
-          logo: null,
-        },
-        is_selected: true,
-        is_applied: !!item.is_applied,
-        selectionId: item.id,
-      };
-    });
-  } catch {
+    return list.map((item: any) => ({
+      id: item.id,                        // selection PK
+      selectionId: item.id,               // for delete
+      code: "N/A",                        // we don't have it — will enrich later
+      name: item.course_name || "Unknown Course",
+      university_name: item.institution || "Unknown",
+      institution: item.institution || "Unknown",
+      is_selected: true,
+      is_applied: item.is_applied,
+      application_date: item.application_date,
+      created_at: item.created_at,
+      // Flag to know we need enrichment
+      _needsEnrichment: true,
+      _sourceInstitution: item.institution,
+    }));
+  } catch (error) {
+    console.error("Failed to fetch selected courses:", error);
     return [];
   }
 }
-export async function refreshToken(): Promise<string> {
-  const refreshToken = typeof window !== 'undefined' ? localStorage.getItem('refreshToken') : null;
-  if (!refreshToken) {
-    throw new Error('No refresh token available');
-  }
+export async function enrichSelectedCourse(selection: Course): Promise<Course> {
+  if (!selection._needsEnrichment) return selection;
+
+  const institution = selection._sourceInstitution?.toLowerCase() || "";
+
   try {
-    const response = await apiClient.post<TokenResponse>('/auth/token/refresh/', { refresh: refreshToken });
-    console.log('Token refresh response:', response.data);
-    localStorage.setItem('token', response.data.access);
-    localStorage.setItem('refreshToken', response.data.refresh);
-    return response.data.access;
-  } catch (error: any) {
-    const errorDetails = extractErrorDetails(error);
-    console.error('Token refresh failed:', errorDetails);
-    if (typeof window !== 'undefined') {
-      localStorage.removeItem('token');
-      localStorage.removeItem('refreshToken');
-      localStorage.removeItem('phone_number');
+    // KMTC case
+    if (institution.includes("kmtc") || institution === "KMTC") {
+      const programmes = await fetchKMTCProgrammes();
+      const match = programmes.find(p => 
+        p.name.toLowerCase().includes(selection.name.toLowerCase()) ||
+        p.name.toLowerCase() === selection.name.toLowerCase()
+      );
+    
+      if (match) {
+        return {
+          ...selection,
+          code: match.code || selection.code || "N/A",
+          minimum_grade: match.minimum_grade || "N/A",
+          duration_years: match.duration || "N/A",
+          qualification: match.qualification || "Certificate/Diploma",
+          description: match.description || "",
+          _needsEnrichment: false,
+        };
+      }
     }
-    throw new Error(`Token refresh failed: ${JSON.stringify(errorDetails)}`);
+
+    // University case – search offerings by name (or code if you had it)
+    const allOfferings = await fetchCourses();  // or filter by institution if endpoint supports
+    const match = allOfferings.find(c => 
+      c.name.toLowerCase() === selection.name.toLowerCase() ||
+      c.name.toLowerCase().includes(selection.name.toLowerCase())
+    );
+
+    if (match) {
+      return {
+        ...selection,
+        code: match.code || "N/A",
+        minimum_grade: match.minimum_grade,
+        duration_years: match.duration_years,
+        tuition_fee_per_year: match.tuition_fee_per_year,
+        career_prospects: match.career_prospects,
+        qualification: match.category || selection.qualification,
+        _needsEnrichment: false,
+      };
+    }
+
+    // Fallback – at least show what we have
+    return {
+      ...selection,
+      code: "N/A (lookup failed)",
+      _needsEnrichment: false,
+    };
+  } catch (err) {
+    console.error("Enrichment failed for:", selection.name, err);
+    return {
+      ...selection,
+      code: "N/A (error)",
+      _needsEnrichment: false,
+    };
   }
 }
 
-export async function initiatePayment(amount: number, plan_id: number, phone_number: string, description?: string) {
+export async function fetchKMTCProgrammes(): Promise<Programme[]> {
+  try {
+    const response = await apiClient.get('/kmtc/programmes');
+    const list = getResponseData(response.data);
+
+    if (!Array.isArray(list)) {
+      console.warn('[fetchKMTCProgrammes] Expected array but got:', list);
+      return [];
+    }
+
+    return list.map((prog: any) => ({
+      id: prog.id.toString(),
+      code: prog.code || "N/A",
+      name: prog.name || "Unknown Programme",
+      level: prog.level || "N/A",
+      duration: prog.duration || "N/A",
+      qualification: prog.qualification || "N/A",
+      description: prog.description || "",
+      department_name: prog.department_name || "General",
+      faculty_name: prog.faculty_name || "N/A",
+      offered_at: prog.offered_at || [], // array of { campus_name, city, campus_code, notes }
+    }));
+  } catch (error: any) {
+    const errorDetails = extractErrorDetails(error);
+    console.error('[fetchKMTCProgrammes] Failed to fetch programmes:', errorDetails);
+    return [];
+  }
+}
+export async function fetchKMTCProgrammeByCode(code: string): Promise<Programme | null> {
+  try {
+    if (!code || typeof code !== "string") {
+      console.warn("[fetchKMTCProgrammeByCode] Invalid code:", code);
+      return null;
+    }
+
+    // CORRECT PATH — NO /eduhub prefix
+    const response = await apiClient.get(`/kmtc/programmes/${code}`);
+
+    const prog = response.data;
+    if (!prog || !prog.code) {
+      console.warn("[fetchKMTCProgrammeByCode] Invalid data:", prog);
+      return null;
+    }
+
+    return {
+      id: prog.id?.toString() || "",
+      code: prog.code,
+      name: prog.name || "Unknown Programme",
+      level: prog.level || "N/A",
+      duration: prog.duration || "N/A",
+      qualification: prog.qualification || "N/A",
+      description: prog.description || "",
+      department_name: prog.department_name || "General",
+      faculty_name: prog.faculty_name || "N/A",
+      offered_at: prog.offered_at || [],
+    };
+  } catch (error: any) {
+    const details = extractErrorDetails(error);
+    console.error("[fetchKMTCProgrammeByCode] Failed for code", code, ":", details);
+    return null;
+  }
+}
+
+// PAYMENT
+export async function initiatePayment(amount: number, plan_id: number, phone_number: string) {
   try {
     const response = await apiClient.post<{
       status: string;
       message: string;
       data: any;
-    }>('/payments/initiate/', { phone_number, amount, plan_id, description });
+    }>('/payments/initiate/', { phone_number, amount,  plan_type: plan_id === 1 ? 'PREMIUM' : 'RENEWAL'});
     if (response.data.status === 'success') {
       return response.data;
     }
@@ -828,26 +787,9 @@ export async function initiatePayment(amount: number, plan_id: number, phone_num
   }
 }
 
-export async function verifyPayment(reference: string) {
-  try {
-    const response = await apiClient.get<{ status: string; message: string; data: any }>(
-      `/payments/verify/${reference}/`
-    );
-    if (response.data.status !== 'success') {
-      console.warn('Invalid payment verification data received:', response.data);
-      throw new Error('Invalid payment verification data');
-    }
-    return response.data;
-  } catch (error: any) {
-    const errorDetails = extractErrorDetails(error);
-    console.error('Payment verification failed:', errorDetails);
-    throw new Error(`Payment verification failed: ${JSON.stringify(errorDetails)}`);
-  }
-}
-
 export async function fetchKMTCCampuses(params = {}): Promise<KMTCCampus[]> {
   try {
-    const response = await apiClient.get('/kmtc/campuses/', { params });
+    const response = await apiClient.get('/kmtc/campuses', { params });
     const list = getResponseData(response.data);
     return list.map((c: any) => ({
       id: c.id,
@@ -862,75 +804,63 @@ export async function fetchKMTCCampuses(params = {}): Promise<KMTCCampus[]> {
   }
 }
 
-export async function fetchCoursesByKMTCCampus(campusCode: string, params: Record<string, string> = {}): Promise<KMTCCourse[]> {
+export async function fetchCoursesByKMTCCampus(campusCode: string): Promise<KMTCCourse[]> {
   try {
     if (!campusCode || typeof campusCode !== 'string') {
       console.warn('[fetchCoursesByKMTCCampus] Invalid or missing campusCode:', campusCode);
       return [];
     }
-    console.log('[fetchCoursesByKMTCCampus] Fetching courses for campusCode:', campusCode, 'with params:', params);
-    const response = await apiClient.get<Faculty[]>('/kmtc/programmes/', { params });
-    console.log('[fetchCoursesByKMTCCampus] Raw API response:', JSON.stringify(response.data, null, 2));
-    const faculties = Array.isArray(response.data) ? response.data : [];
-    if (!faculties.every((faculty): faculty is Faculty =>
-      typeof faculty.id === 'number' &&
-      typeof faculty.name === 'string' &&
-      (typeof faculty.university_id === 'number' || faculty.university_id === undefined) &&
-      Array.isArray(faculty.departments) &&
-      faculty.departments.every((dept): dept is Department =>
-        typeof dept.id === 'number' &&
-        typeof dept.name === 'string' &&
-        (typeof dept.faculty_id === 'number' || dept.faculty_id === undefined)
-      )
-    )) {
-      console.warn('[fetchCoursesByKMTCCampus] Invalid programmes data received:', response.data);
-      return [];
-    }
+
+    // NEW BACKEND: Use the dedicated endpoint
+    const response = await apiClient.get(`/kmtc/campuses/${campusCode}/programmes`);
+    
+    // Response is array of programmes with offered_at info
+    const programmes = Array.isArray(response.data) ? response.data : [];
+
+    // Get campus name for display
     let campusName = 'Unknown KMTC Campus';
     try {
-      const campusData = await fetchKMTCCampuses({ code: campusCode });
-      if (campusData.length > 0) {
-        campusName = campusData[0].name || 'Unknown KMTC Campus';
+      const campusResponse = await apiClient.get('/kmtc/campuses', { params: { code: campusCode } });
+      const campuses = getResponseData(campusResponse.data);
+      if (campuses.length > 0) {
+        campusName = campuses[0].name || campusName;
       }
     } catch (err) {
-      console.error('[fetchCoursesByKMTCCampus] Error fetching campus name:', err);
+      console.warn('[fetchCoursesByKMTCCampus] Could not fetch campus name:', err);
     }
-    const courses: KMTCCourse[] = faculties.flatMap((faculty: Faculty) =>
-      (faculty.departments || []).map((dept: Department) => ({
-        id: dept.id.toString(),
-        code: dept.slug ? dept.slug.toUpperCase() : 'UNKNOWN',
-        name: dept.name.replace(/^DEPARTMENT OF\s+/i, '') || dept.name,
-        department: dept.name,
-        required_grade: 'N/A',
-        qualification: 'N/A',
-        campus_code: campusCode,
-        description: dept.description || 'No description available',
-        campus_name: campusName,
-      }))
-    );
-    console.log('[fetchCoursesByKMTCCampus] Courses for', campusCode, ':', JSON.stringify(courses, null, 2));
+
+    // Map to frontend KMTCCourse format
+    const courses: KMTCCourse[] = programmes.map((prog: any) => ({
+      id: prog.id.toString(),
+      code: prog.code || 'UNKNOWN',
+      name: prog.name,
+      department: prog.department_name || 'General',
+      level: prog.level || 'N/A',
+      duration: prog.duration || 'N/A',
+      qualification: prog.qualification || 'N/A',
+      campus_code: campusCode,
+      description: prog.description || 'No description available',
+      campus_name: campusName,
+    }));
+
+    console.log(`[fetchCoursesByKMTCCampus] Loaded ${courses.length} courses for ${campusName}`);
     return courses;
+
   } catch (error: any) {
     const errorDetails = extractErrorDetails(error);
     console.error('[fetchCoursesByKMTCCampus] Failed to fetch courses for campus', campusCode, ':', errorDetails);
     return [];
   }
 }
-export async function submitContactForm(
-  data: ContactFormData
-): Promise<ContactFormResponse> {
+
+// CONTACT
+export async function submitContactForm(data: ContactFormData): Promise<ContactFormResponse> {
   try {
-    console.log('Submitting contact form:', data);
-    const response = await apiClient.post<ContactFormResponse>(
-      '/auth/contact/submit/',
-      data
-    );
-    console.log('Contact form submitted successfully:', response.data);
+    const response = await apiClient.post<ContactFormResponse>('/auth/contact/submit/', data);
     return response.data;
   } catch (error: any) {
-    const errorDetails = extractErrorDetails(error);
-    console.error('Contact form submission failed:', errorDetails);
-    throw errorDetails;
+    console.error('Contact form submission failed:', extractErrorDetails(error));
+    throw extractErrorDetails(error);
   }
 }
 

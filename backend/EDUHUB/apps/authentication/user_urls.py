@@ -8,13 +8,12 @@ from rest_framework.routers import DefaultRouter
 from .user_views import (
     UserSubjectViewSet,
     UserSelectedCoursesView,
-    UserApplicationsView,
 )
 
 router = DefaultRouter()
 router.register(r'subjects', UserSubjectViewSet, basename='user_subjects')
 
-urlpatterns = [
+urlpatterns = [    
     # User subjects and grades
     path('', include(router.urls)),
     # Explicit paths for UserSelectedCoursesView

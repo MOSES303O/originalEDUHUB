@@ -1,35 +1,140 @@
+// lib/pdf-generator.ts
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { Course, KMTCCourse } from '@/types';
 
-export function generateCoursesPDF(courses: (Course | KMTCCourse)[], studentName: string): jsPDF {
+interface PDFRow {
+  type: string;
+  code: string;
+  name: string;
+  institution: string;
+  department: string;
+  minGrade: string;
+  duration: string;
+  qualification: string;
+  tuition: string;
+  campus: string;
+}
+
+export function generateCoursesPDF(
+  courses: (Course | KMTCCourse | any)[],
+  studentName: string
+): void {
   const doc = new jsPDF();
+
+  // Metadata
   doc.setProperties({
-    title: `EduHub Course Selection - ${studentName}`,
+    title: `EduHub Selected Courses & Programmes - ${studentName}`,
     author: 'EduHub',
     creator: 'EduHub',
+    subject: 'Course & Programme Selection List',
   });
-  doc.setFontSize(18);
-  doc.text('EduHub Course Selection', 20, 20);
+
+  // Header
+  doc.setFontSize(20);
+  doc.setTextColor(34, 197, 94); // emerald-600
+  doc.text('EduHub Selected Courses & Programmes', 105, 20, { align: 'center' });
+
   doc.setFontSize(12);
-  doc.text(`Student: ${studentName}`, 20, 30);
-  doc.text(`Generated: ${new Date().toLocaleDateString()}`, 20, 40);
+  doc.setTextColor(0);
+  doc.text(`Student: ${studentName || 'Student'}`, 20, 35);
+  doc.text(`Generated: ${new Date().toLocaleDateString()}`, 20, 42);
+  doc.text(`Total: ${courses.length} item${courses.length !== 1 ? 's' : ''}`, 20, 49);
+
+  // Normalize + clean data (never pass undefined to autoTable)
+  const tableRows: PDFRow[] = courses.map((course: any) => ({
+    type: course.institution?.toLowerCase().includes('kmtc') ? 'KMTC' : 'University',
+    code: String(course.code ?? course.programme_code ?? 'N/A'),
+    name: String(course.name ?? course.programme_name ?? 'Unnamed'),
+    institution: String(
+      course.university?.name ??
+      course.university_name ??
+      course.institution ??
+      (course.institution?.toLowerCase().includes('kmtc') ? 'Kenya Medical Training College' : 'Unknown')
+    ),
+    department: String(course.department_name ?? course.department ?? 'N/A'),
+    minGrade: String(course.minimum_grade ?? course.required_grade ?? course.cut_off_points ?? 'N/A'),
+    duration: String(
+      course.duration_years
+        ? `${course.duration_years} years`
+        : course.duration ?? 'N/A'
+    ),
+    qualification: String(course.qualification ?? course.category ?? course.level ?? 'N/A'),
+    tuition: String(
+      course.tuition_fee_per_year
+        ? `KES ${Number(course.tuition_fee_per_year).toLocaleString()}`
+        : 'N/A'
+    ),
+    campus: String(
+      course.campus_name ??
+      course.campus ??
+      (Array.isArray(course.offered_at) && course.offered_at.length > 0
+        ? `${course.offered_at.length} Campuses`
+        : 'Multiple / Not specified')
+    ),
+  }));
+
+  const pageWidth = doc.internal.pageSize.getWidth();
 
   autoTable(doc, {
-    startY: 50,
-    head: [['Code', 'Name', 'Department', 'Minimum Grade', 'Campus']],
-    body: courses.map(course => [
-      course.code || 'UNKNOWN',
-      course.name || 'Unknown Course',
-      course.department || 'Unknown Department',
-      (course as Course).minimum_grade || (course as KMTCCourse).required_grade || 'N/A',
-      (course as Course).university_name || (course as KMTCCourse).campus_name || 'Not specified',
+    startY: 60,
+    head: [
+      [
+        'Type',
+        'Code',
+        'Name',
+        'Institution',
+        'Department',
+        'Min Grade',
+        'Duration',
+        'Qualification',
+        'Tuition (per year)',
+        'Campus',
+      ],
+    ],
+    body: tableRows.map(row => [
+      row.type,
+      row.code,
+      row.name,
+      row.institution,
+      row.department,
+      row.minGrade,
+      row.duration,
+      row.qualification,
+      row.tuition,
+      row.campus,
     ]),
-    theme: 'striped',
-    styles: { fontSize: 10 },
-    headStyles: { fillColor: [0, 128, 128] },
+    theme: 'grid',
+    styles: { fontSize: 9, cellPadding: 3, overflow: 'linebreak' },
+    headStyles: { fillColor: [34, 197, 94], textColor: [255, 255, 255], fontStyle: 'bold' },
+    alternateRowStyles: { fillColor: [240, 253, 244] },
+    columnStyles: {
+      0: { cellWidth: 20 },  // Type
+      1: { cellWidth: 25 },  // Code
+      2: { cellWidth: 50 },  // Name
+      3: { cellWidth: 40 },  // Institution
+      4: { cellWidth: 30 },  // Department
+      5: { cellWidth: 22 },  // Min Grade
+      6: { cellWidth: 22 },  // Duration
+      7: { cellWidth: 30 },  // Qualification
+      8: { cellWidth: 35 },  // Tuition
+      9: { cellWidth: 35 },  // Campus
+    },
+    margin: { top: 60, left: 15, right: 15 },
   });
 
-  doc.save(`EduHub-Course-${studentName}.pdf`);
-  return doc;
+  // Footer
+  const finalY = (doc as any).lastAutoTable?.finalY || 70;
+  doc.setFontSize(10);
+  doc.setTextColor(100);
+  doc.text(
+    'Generated by EduHub • For personal use only',
+    pageWidth / 2,
+    finalY + 20,
+    { align: 'center' }
+  );
+
+  // Save
+  const filename = `EduHub_Selection_${studentName || 'Student'}_${new Date().toISOString().split('T')[0]}.pdf`;
+  doc.save(filename);
 }

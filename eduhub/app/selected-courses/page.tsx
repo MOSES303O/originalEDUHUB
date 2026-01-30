@@ -1,241 +1,348 @@
 "use client";
 
-import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, Trash2, Heart, Download } from "lucide-react";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { ArrowLeft, Trash2, Download, FileText, LogIn, CheckCircle2, XCircle, Loader2 } from "lucide-react";
 import Link from "next/link";
 import { useToast } from "@/hooks/use-toast";
-import { PDFNotification } from "@/components/pdf-notification";
 import { generateCoursesPDF } from "@/lib/pdf-generator";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
 import { Header } from "@/components/header";
 import { Footer } from "@/components/footer";
-import { useSelectedCourses, initializeSelectedCourses } from "@/lib/course-store";
+import { useSelectedCourses } from "@/lib/course-store";
+import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
-import { AuthenticationModal } from "@/components/authentication-modal";
-import { removeSelectedCourse } from "@/lib/api";
-import { Course } from "@/types";
+import { useEffect, useState } from "react";
 
 export default function SelectedCoursesPage() {
-  const { selectedCourses, setSelectedCourses } = useSelectedCourses();
-  const { user, loading: authLoading } = useAuth();
+  const { selectedCourses, toggleCourseSelection, isLoading: storeLoading } = useSelectedCourses();
+  const { user, requirePayment } = useAuth();
+  const router = useRouter();
   const { toast } = useToast();
-  const [courseToRemove, setCourseToRemove] = useState<string | null>(null);
-  const [showPdfNotification, setShowPdfNotification] = useState(false);
-  const [showAuthModal, setShowAuthModal] = useState(false);
+
+  // Local loading for remove actions (per-course)
+  const [removingIds, setRemovingIds] = useState<Set<string | number>>(new Set());
+
+  // Page-level loading (fetch + enrichment)
+  const [pageLoading, setPageLoading] = useState(true);
 
   useEffect(() => {
-    if (!authLoading && !user) {
-      setShowAuthModal(true);
-    } else if (user) {
-      initializeSelectedCourses().catch((err) => {
-        console.error("Failed to initialize selected courses:", JSON.stringify(err, null, 2));
-        toast({
-          title: "Error",
-          description: "Failed to fetch selected courses.",
-          variant: "destructive",
-          duration: 3000,
-        });
-      });
-    }
-  }, [authLoading, user, toast]);
-
-  const handleRemoveCourse = async (courseId: string, selectionId?: string | number) => {
-    if (!selectionId) {
-      toast({
-        title: "Error",
-        description: "Cannot remove course: selection ID not found.",
-        variant: "destructive",
-        duration: 3000,
-      });
-      return;
-    }
-    try {
-      // Convert selectionId to string to match removeSelectedCourse signature
-      const selectionIdStr = String(selectionId);
-      await removeSelectedCourse(selectionIdStr);
-      setSelectedCourses(selectedCourses.filter((course) => course.id !== courseId));
-      toast({
-        title: "Course Removed",
-        description: "The course has been removed from your selected courses.",
-        duration: 3000,
-      });
-    } catch (error) {
-      console.error("Failed to remove course:", JSON.stringify(error, null, 2));
-      toast({
-        title: "Error",
-        description: "Failed to remove the course.",
-        variant: "destructive",
-        duration: 3000,
-      });
-    }
-    setCourseToRemove(null);
-  };
-
-  const handleClosePdfNotification = () => {
-    setShowPdfNotification(false);
-    localStorage.setItem("hasSeenPdfNotification", "true");
-  };
-
-  const handleDownloadPdf = () => {
     if (!user) {
-      setShowAuthModal(true);
-      toast({
-        title: "Authentication Required",
-        description: "Please log in to download your selected courses as a PDF.",
-        variant: "destructive",
-        duration: 3000,
-      });
+      setPageLoading(false);
       return;
     }
+
+    // Always refresh when user is present (on mount & after login/subscription change)
+    const loadData = async () => {
+      setPageLoading(true);
+      try {
+        await useSelectedCourses.getState().refreshFromBackend();
+      } catch (err) {
+        console.error("Failed to load selected courses:", err);
+        toast({
+          title: "Loading Failed",
+          description: "Could not load your selected courses. Please try again.",
+          variant: "destructive",
+        });
+      } finally {
+        setPageLoading(false);
+      }
+    };
+
+    loadData();
+  }, [user, toast]); // Re-run when user changes (login/logout/subscription)
+
+  const handleRemove = async (course: any) => {
+    const courseKey = course.selectionId || course.id || course.code;
+    if (!courseKey) return;
+
+    setRemovingIds((prev) => new Set([...prev, courseKey]));
+
+    try {
+      await toggleCourseSelection(course);
+      toast({
+        title: "Removed",
+        description: `${course.name || "Course"} removed from your selections.`,
+      });
+    } catch (err) {
+      console.error("Remove failed:", err);
+      toast({
+        title: "Error",
+        description: "Failed to remove course. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setRemovingIds((prev) => {
+        const newSet = new Set(prev);
+        newSet.delete(courseKey);
+        return newSet;
+      });
+    }
+  };
+
+  const handleDownloadPDF = () => {
     if (selectedCourses.length === 0) {
       toast({
-        title: "No Courses Selected",
-        description: "Please select at least one course to generate a PDF.",
+        title: "No Courses",
+        description: "Select at least one course or programme first.",
         variant: "destructive",
-        duration: 3000,
       });
       return;
     }
+  
     try {
-      generateCoursesPDF(selectedCourses, user.first_name || "Student");
+      generateCoursesPDF(selectedCourses, user?.first_name || "Student");
       toast({
-        title: "PDF Generated",
-        description: "Your selected courses have been downloaded as a PDF.",
-        duration: 3000,
+        title: "PDF Downloaded!",
+        description: `Your ${selectedCourses.length} selected course${selectedCourses.length !== 1 ? "s/programmes" : ""} are ready.`,
       });
-    } catch (error) {
-      console.error("Error generating PDF:", JSON.stringify(error, null, 2));
+    } catch (err) {
+      console.error("PDF generation failed:", err);
       toast({
-        title: "Error",
-        description: "Failed to generate PDF. Please try again.",
+        title: "PDF Failed",
+        description: "Could not generate PDF. Please try again.",
         variant: "destructive",
-        duration: 3000,
       });
     }
   };
 
+  // Combined loading state
+  const isLoading = pageLoading || storeLoading;
+
+  // ────────────────────────────────────────────────
+  // Loading UI (your requested block)
+  // ────────────────────────────────────────────────
+  if (isLoading) {
+    return (
+      <div className="flex min-h-screen flex-col items-center justify-center bg-gradient-to-b from-blue-50 to-white dark:from-gray-900 dark:to-gray-800">
+        <Header />
+        <div className="flex flex-col items-center gap-4 py-20">
+          <Loader2 className="h-12 w-12 animate-spin text-emerald-600" />
+          <p className="text-lg text-gray-600 dark:text-gray-400">
+            Loading your selected courses...
+          </p>
+        </div>
+        <Footer />
+      </div>
+    );
+  }
+
+  // ────────────────────────────────────────────────
+  // Main content
+  // ────────────────────────────────────────────────
   return (
-    <div className="flex min-h-screen flex-col">
+    <div className="flex min-h-screen flex-col bg-gradient-to-b from-blue-50 to-white dark:from-gray-900 dark:to-gray-800">
       <Header />
-      {showAuthModal && <AuthenticationModal onClose={() => setShowAuthModal(false)} canClose={false} />}
-      <main className="flex-1">
-        <section className="w-full py-12 md:py-24 lg:py-32">
-          <div className="container px-4 md:px-6">
-            <div className="flex flex-col items-start gap-4 mb-8">
-              <Button variant="outline" size="sm" asChild className="mb-2">
-                <Link href="/courses">
-                  <ArrowLeft className="mr-2 h-4 w-4" />
-                  Back to Courses
-                </Link>
-              </Button>
-              <div className="flex flex-col md:flex-row md:items-center md: justify-between w-full">
-                <div>
-                  <h1 className="text-3xl font-bold tracking-tighter sm:text-4xl md:text-5xl flex items-center gap-3">
-                    Selected Courses
-                    <Heart className="h-8 w-8 text-emerald-600" />
-                  </h1>
-                  <p className="text-gray-500 md:text-xl">Courses you've shown interest in</p>
-                </div>
-                {selectedCourses.length > 0 && (
-                  <Button onClick={handleDownloadPdf} className="mt-4 md:mt-0 bg-emerald-600 hover:bg-emerald-700">
-                    <Download className="mr-2 h-4 w-4" />
-                    Download as PDF
-                  </Button>
-                )}
-              </div>
+
+      <main className="flex-1 container mx-auto px-4 md:px-6 py-12 md:py-24 lg:py-32 max-w-7xl">
+        {/* Back Button */}
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => router.back()}
+          className="mb-6"
+        >
+          <ArrowLeft className="mr-2 h-4 w-4" />
+          Back
+        </Button>
+
+        {/* Header */}
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between w-full gap-6 mb-10">
+          <div>
+            <h1 className="text-3xl font-bold tracking-tighter sm:text-4xl md:text-5xl gradient-text">
+              My Selected Courses
+            </h1>
+            <p className="text-gray-500 dark:text-gray-400 mt-3 text-lg">
+              {user
+                ? "All your saved courses from universities and KMTC campuses"
+                : "Log in to view and manage your selected courses"}
+            </p>
+          </div>
+
+          {user && selectedCourses.length > 0 && (
+            <Button size="lg" onClick={handleDownloadPDF} className="bg-emerald-600 hover:bg-emerald-700">
+              <Download className="mr-2 h-5 w-5" />
+              Download PDF Of Selected Courses
+            </Button>
+          )}
+        </div>
+
+        {/* USER INFO PANEL */}
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-5 border border-gray-200 dark:border-gray-700 mb-8">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+            <div>
+              <p className="text-sm font-medium text-gray-600 dark:text-gray-300">Status</p>
+              {user ? (
+                <Badge variant="secondary" className="mt-1 text-xs">
+                  Logged in
+                </Badge>
+              ) : (
+                <Badge variant="outline" className="mt-1 text-xs">
+                  Guest
+                </Badge>
+              )}
             </div>
 
-            {selectedCourses.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-12 text-center">
-                <Heart className="h-16 w-16 text-gray-300 mb-4" />
-                <h2 className="text-2xl font-bold mb-2">No Courses Selected</h2>
-                <p className="text-gray-500 mb-6">You haven't selected any courses yet.</p>
-                <Button className="bg-emerald-600 hover:bg-emerald-700" asChild>
-                  <Link href="/courses">Browse Courses</Link>
+            <div>
+              <p className="text-sm font-medium text-gray-600 dark:text-gray-300">Phone</p>
+              <Badge variant="outline" className="mt-1 text-sm">
+                {user ? user.phone_number : "Not logged in"}
+              </Badge>
+            </div>
+
+            <div>
+              <p className="text-sm font-medium text-gray-600 dark:text-gray-300">Total Points</p>
+              <Badge variant="outline" className="mt-1 text-lg font-bold border-emerald-500 text-emerald-600 dark:text-emerald-400">
+                {user ? (user.points || "N/A") : "N/A"}
+              </Badge>
+            </div>
+
+            <div>
+              <p className="text-sm font-medium text-gray-600 dark:text-gray-300">Subscription</p>
+              {user ? (
+                requirePayment ? (
+                  <Badge variant="destructive" className="mt-1 flex items-center gap-1 text-xs">
+                    <XCircle className="w-3 h-3" />
+                    Inactive
+                  </Badge>
+                ) : (
+                  <Badge variant="default" className="mt-1 bg-emerald-600 flex items-center gap-1 text-xs">
+                    <CheckCircle2 className="w-3 h-3" />
+                    Active
+                  </Badge>
+                )
+              ) : (
+                <Badge variant="secondary" className="mt-1 text-xs">
+                  Login to check
+                </Badge>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* GUEST / EMPTY STATE */}
+        {!user ? (
+          <Card className="border-dashed border-2">
+            <CardContent className="flex flex-col items-center justify-center py-20 text-center">
+              <div className="h-20 w-20 bg-gray-200 dark:bg-gray-800 rounded-full flex items-center justify-center mb-6">
+                <LogIn className="h-12 w-12 text-gray-500" />
+              </div>
+              <CardTitle className="text-2xl mb-3">Log in to view your selections</CardTitle>
+              <p className="text-lg text-gray-600 dark:text-gray-400 mb-8 max-w-md">
+                Your selected courses are saved on the server. Log in to access them.
+              </p>
+              <Button size="lg" onClick={() => router.push("/login")} className="bg-emerald-600 hover:bg-emerald-700">
+                <LogIn className="mr-2 h-5 w-5" />
+                Log In
+              </Button>
+            </CardContent>
+          </Card>
+        ) : selectedCourses.length === 0 ? (
+          <Card className="border-dashed border-2">
+            <CardContent className="flex flex-col items-center justify-center py-20 text-center">
+              <CardTitle className="text-2xl mb-3">No courses selected yet</CardTitle>
+              <p className="text-lg text-gray-600 dark:text-gray-400 mb-8 max-w-md">
+                Start exploring university and KMTC courses and save your favorites here!
+              </p>
+              <div className="flex gap-4">
+                <Button size="lg" asChild className="bg-emerald-600 hover:bg-emerald-700">
+                  <Link href="/courses">Browse Universities</Link>
+                </Button>
+                <Button size="lg" variant="outline" asChild>
+                  <Link href="/kmtc">Browse KMTC</Link>
                 </Button>
               </div>
-            ) : (
-              <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-                {selectedCourses.map((course: Course) => (
-                  <Card key={course.id} className="overflow-hidden">
-                    <CardHeader className="pb-3">
-                      <div className="flex justify-between items-start">
-                        <Badge className="mb-2">{course.id}</Badge>
-                        <AlertDialog>
-                          <AlertDialogTrigger asChild>
+            </CardContent>
+          </Card>
+        ) : (
+          <Card className="overflow-hidden shadow-lg">
+            <CardHeader className="bg-gradient-to-r from-emerald-600 to-emerald-700 text-white">
+              <CardTitle className="text-2xl flex items-center gap-3">
+                <FileText className="h-7 w-7" />
+                Your Selected Courses
+              </CardTitle>
+              <p className="text-emerald-100">
+                {selectedCourses.length} course{selectedCourses.length !== 1 ? "s" : ""} saved
+              </p>
+            </CardHeader>
+
+            <CardContent className="p-0">
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow className="bg-gray-50 dark:bg-gray-900">
+                      <TableHead className="font-bold">Code</TableHead>
+                      <TableHead className="font-bold">Course Name</TableHead>
+                      <TableHead className="font-bold">Institution</TableHead>
+                      <TableHead className="font-bold">Category</TableHead>
+                      <TableHead className="font-bold text-center">Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {selectedCourses.map((course) => {
+                      const courseKey = course.selectionId || course.id || course.code;
+                      const isRemoving = removingIds.has(courseKey);
+
+                      return (
+                        <TableRow
+                          key={courseKey}
+                          className="hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors"
+                        >
+                          <TableCell className="font-mono font-semibold">
+                            {course.code || "N/A"}
+                          </TableCell>
+                          <TableCell>
+                            <div>
+                              <p className="font-medium text-foreground">{course.name || "Unnamed Course"}</p>
+                              {course.description && (
+                                <p className="text-sm text-muted-foreground mt-1 line-clamp-2">
+                                  {course.description}
+                                </p>
+                              )}
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <Badge variant="secondary" className="text-xs">
+                              {course.university_name || course.university?.name || course.institution || "KMTC"}
+                            </Badge>
+                          </TableCell>
+                          <TableCell className="text-center">
+                            <Badge variant="outline" className="border-emerald-500 text-emerald-600 dark:text-emerald-400">
+                              {course.qualification || "Diploma/Certificate"}
+                            </Badge>
+                          </TableCell>
+                          <TableCell className="text-center">
                             <Button
-                              variant="ghost"
-                              size="icon"
-                              className="text-red-500 hover:text-red-700 hover:bg-red-50"
-                              onClick={() => setCourseToRemove(course.id)}
+                              size="sm"
+                              variant="destructive"
+                              onClick={() => handleRemove(course)}
+                              disabled={isRemoving}
                             >
-                              <Trash2 className="h-5 w-5" />
+                              {isRemoving ? (
+                                <>
+                                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                                  Removing...
+                                </>
+                              ) : (
+                                <>
+                                  <Trash2 className="h-4 w-4 mr-2" />
+                                  Remove
+                                </>
+                              )}
                             </Button>
-                          </AlertDialogTrigger>
-                          <AlertDialogContent>
-                            <AlertDialogHeader>
-                              <AlertDialogTitle>Remove Course</AlertDialogTitle>
-                              <AlertDialogDescription>
-                                Are you sure you want to remove "{course.name}" from your selected courses?
-                              </AlertDialogDescription>
-                            </AlertDialogHeader>
-                            <AlertDialogFooter>
-                              <AlertDialogCancel onClick={() => setCourseToRemove(null)}>
-                                Cancel
-                              </AlertDialogCancel>
-                              <AlertDialogAction
-                                className="bg-red-500 hover:bg-red-600"
-                                onClick={() => handleRemoveCourse(course.id, course.selectionId)}
-                              >
-                                Remove
-                              </AlertDialogAction>
-                            </AlertDialogFooter>
-                          </AlertDialogContent>
-                        </AlertDialog>
-                      </div>
-                      <CardTitle className="text-xl">{course.name}</CardTitle>
-                      <CardDescription>{course.university_name}</CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="space-y-2">
-                        <div className="flex justify-between">
-                          <span className="text-sm font-medium">Course Code:</span>
-                          <span className="text-sm">{course.code}</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-sm font-medium">Required Points:</span>
-                          <span className="text-sm">{course.minimum_grade}</span>
-                        </div>
-                        <p className="text-sm text-gray-500 mt-2">{course.description}</p>
-                      </div>
-                    </CardContent>
-                    <CardFooter className="pt-3">
-                      <Button className="w-full bg-emerald-600 hover:bg-emerald-700" asChild>
-                        <Link href={`/courses/${course.id}`}>View Details</Link>
-                      </Button>
-                    </CardFooter>
-                  </Card>
-                ))}
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
+                  </TableBody>
+                </Table>
               </div>
-            )}
-          </div>
-        </section>
+            </CardContent>
+          </Card>
+        )}
       </main>
       <Footer />
-      {showPdfNotification && <PDFNotification onClose={handleClosePdfNotification} onDownload={handleDownloadPdf} />}
     </div>
   );
 }

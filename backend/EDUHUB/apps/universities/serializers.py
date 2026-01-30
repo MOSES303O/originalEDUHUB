@@ -1,57 +1,47 @@
+# universities/serializers.py — FINAL & CLEAN
 from rest_framework import serializers
-from .models import University, Faculty, Department, UniversityRequirement
+from .models import University, Faculty, Department,UniversityRequirement
 
 
 class UniversityRequirementSerializer(serializers.ModelSerializer):
-    """
-    Serializer for university requirements.
-    """
     class Meta:
         model = UniversityRequirement
-        fields = ['id', 'title', 'description', 'min_grade']
-
+        fields = ['title', 'description', 'min_grade']
 
 class DepartmentSerializer(serializers.ModelSerializer):
-    """
-    Serializer for university departments.
-    """
+    faculty_name = serializers.CharField(source='faculty.name', read_only=True)
+
     class Meta:
         model = Department
-        fields = ['id', 'name', 'slug', 'description']
+        fields = ['id', 'name', 'slug', 'faculty_name']
 
 
 class FacultySerializer(serializers.ModelSerializer):
-    """
-    Serializer for university faculties with nested departments.
-    work in coursecount
-    """
     departments = DepartmentSerializer(many=True, read_only=True)
 
     class Meta:
         model = Faculty
-        fields = ['id', 'name', 'slug', 'description', 'departments']
+        fields = ['id', 'name', 'slug', 'departments']
 
 
 class UniversityListSerializer(serializers.ModelSerializer):
-    """
-    Simplified serializer for listing universities.
-    """
+    courses_count = serializers.SerializerMethodField()
+
     class Meta:
         model = University
-        fields = ['id', 'name', 'slug', 'code', 'logo', 'city','campus','accreditation', 'ranking']
+        fields = ['id', 'code', 'name', 'city','description', 'type','accreditation', 'ranking', 'logo','courses_count']
 
+    def get_courses_count(self, obj):
+        return obj.offerings.filter(is_active=True).count()
 
 class UniversityDetailSerializer(serializers.ModelSerializer):
-    """
-    Detailed serializer for university information with nested faculties and requirements.
-    """
-    faculties = FacultySerializer(many=True, read_only=True)
     requirements = UniversityRequirementSerializer(many=True, read_only=True)
+    #courses_offered = OfferedAtSerializer(many=True, read_only=True)
 
     class Meta:
         model = University
         fields = [
-            'id', 'name', 'slug', 'code', 'description', 'website', 
-            'logo', 'address', 'city', 'ranking','campus','accreditation',
-            'established_year', 'faculties', 'requirements'
+            'id', 'code', 'name','city', 'type',
+            'description', 'website', 'accreditation', 'logo',
+            'ranking', 'established_year', 'requirements'
         ]

@@ -1,7 +1,6 @@
-// frontend/components/university-courses-client.tsx
 "use client";
 
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo } from "react";
 import { Header } from "@/components/header";
 import { Footer } from "@/components/footer";
 import { CourseRow } from "@/components/course-row";
@@ -15,11 +14,11 @@ import { useToast } from "@/hooks/use-toast";
 import { AuthenticationModal } from "@/components/authentication-modal";
 import { FindCourseForm } from "@/components/find-course-form";
 import { useAuth } from "@/lib/auth-context";
-import { UniversityWithCourses, Course } from "@/types";
+import { Course } from "@/types";
 import { useDebounce } from "use-debounce";
 
 interface UniversityCoursesClientProps {
-  initialUniversity: UniversityWithCourses | null;
+  initialUniversity: { name: string } | null;
   initialCourses: Course[];
   initialError: string | null;
 }
@@ -34,17 +33,17 @@ export default function UniversityCoursesClient({
 
   const [searchTerm, setSearchTerm] = useState("");
   const [debouncedSearchTerm] = useDebounce(searchTerm, 300);
-  const [departmentFilter, setDepartmentFilter] = useState("all");
+  const [categoryFilter, setCategoryFilter] = useState("all");
   const [courses] = useState<Course[]>(initialCourses);
   const [error] = useState<string | null>(initialError);
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [showFindCourseForm, setShowFindCourseForm] = useState(false);
-  const [universityName] = useState<string>(initialUniversity?.name || "Unknown University");
+
+  const universityName = initialUniversity?.name || "Unknown University";
+  const totalCourses = courses.length;
 
   const handleGetStarted = () => {
-    console.log("[UniversityCoursesClient] Get Started clicked, user:", user);
     if (!user) {
-      console.log("[UniversityCoursesClient] User not logged in, showing auth modal");
       setShowAuthModal(true);
       toast({
         title: "Authentication Required",
@@ -53,7 +52,6 @@ export default function UniversityCoursesClient({
         duration: 3000,
       });
     } else if (!user.hasPaid) {
-      console.log("[UniversityCoursesClient] User not paid, showing auth modal");
       setShowAuthModal(true);
       toast({
         title: "Payment Required",
@@ -62,46 +60,37 @@ export default function UniversityCoursesClient({
         duration: 3000,
       });
     } else {
-      console.log("[UniversityCoursesClient] User authenticated and paid, showing FindCourseForm");
       setShowFindCourseForm(true);
     }
   };
 
-  useEffect(() => {
-    if (!user || !user.hasPaid) {
-      console.log("[UniversityCoursesClient] User not paid or not logged in, showing auth modal");
-      setShowAuthModal(true);
-    } else {
-      setShowAuthModal(false);
-    }
-  }, [user]);
-
-  const departments = useMemo(() => {
-    const uniqueDepartments = [...new Set(courses.map((course) => course.department).filter((dept): dept is string => !!dept))];
-    return uniqueDepartments.sort();
+  // Extract unique categories safely
+  const categories = useMemo(() => {
+    const unique = [
+      ...new Set(
+        courses
+          .map((course) => course.category)
+          .filter((cat): cat is string => typeof cat === "string" && cat.trim() !== "")
+      ),
+    ];
+    return unique.sort();
   }, [courses]);
 
   const filteredCourses = useMemo(() => {
     return courses.filter((course) => {
       const matchesSearch =
         debouncedSearchTerm === "" ||
-        course.name.toLowerCase().includes(debouncedSearchTerm.toLowerCase()) ||
-        (course.code && course.code.toLowerCase().includes(debouncedSearchTerm.toLowerCase())) ||
-        (course.department && course.department.toLowerCase().includes(debouncedSearchTerm.toLowerCase())) ||
-        (course.description && course.description.toLowerCase().includes(debouncedSearchTerm.toLowerCase()));
-      const matchesDepartment = departmentFilter === "all" || course.department === departmentFilter;
-      return matchesSearch && matchesDepartment;
-    });
-  }, [courses, debouncedSearchTerm, departmentFilter]);
+        course.name?.toLowerCase().includes(debouncedSearchTerm.toLowerCase()) ||
+        course.code ||
+        (course.category && course.category.toLowerCase().includes(debouncedSearchTerm.toLowerCase()));
 
-  if (process.env.NODE_ENV !== "production") {
-    console.log("[Render] State:", {
-      error,
-      universityName,
-      coursesLength: courses.length,
-      filteredCoursesLength: filteredCourses.length,
+      const matchesCategory =
+        categoryFilter === "all" ||
+        (course.category && course.category === categoryFilter);
+
+      return matchesSearch && matchesCategory;
     });
-  }
+  }, [courses, debouncedSearchTerm, categoryFilter]);
 
   return (
     <div className="min-h-screen bg-white dark:bg-gray-900">
@@ -114,45 +103,45 @@ export default function UniversityCoursesClient({
             setShowFindCourseForm={setShowFindCourseForm}
           />
         )}
+
         <div className="flex items-center justify-between mb-6 sm:mb-8">
           <Link href="/university">
-            <Button
-              variant="outline"
-              className="border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100 bg-transparent text-xs sm:text-sm"
-            >
+            <Button variant="outline" className="text-xs sm:text-sm">
               <ArrowLeft className="w-4 h-4 sm:w-5 sm:h-5 mr-2" />
               Back to Universities
             </Button>
           </Link>
         </div>
 
-        <div className="mb-6 sm:mb-8">
-          <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold gradient-text mb-2">Available Courses - {universityName}</h1>
-          <p className="text-gray-600 dark:text-gray-400 text-sm sm:text-base">Browse through courses offered by {universityName}</p>
+        <div className="mb-8 sm:mb-10">
+          <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold gradient-text mb-3">
+            Available Courses - {universityName}
+          </h1>
+          <p className="text-gray-600 dark:text-gray-400 text-sm sm:text-base">
+            Browse through {totalCourses} course{totalCourses !== 1 ? "s" : ""} offered by {universityName}
+          </p>
         </div>
 
-        <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 mb-6 sm:mb-8">
+        <div className="flex flex-col sm:flex-row gap-4 mb-8">
           <div className="flex-1 relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4 sm:w-5 sm:h-5" />
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
             <Input
-              placeholder="Search courses by name, code, department, or description..."
+              placeholder="Search by course name, code, or category..."
               value={searchTerm}
-              onChange={(e) => {
-                e.preventDefault();
-                setSearchTerm(e.target.value);
-              }}
-              className="pl-10 h-9 sm:h-10 w-full rounded-md border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-400 text-xs sm:text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500"
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-10 h-10 sm:h-12 w-full rounded-md border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800"
             />
           </div>
-          <Select value={departmentFilter} onValueChange={setDepartmentFilter}>
-            <SelectTrigger className="w-full sm:w-[180px] md:w-[200px] bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-gray-900 dark:text-gray-100 text-xs sm:text-sm">
-              <SelectValue placeholder="Filter by department" />
+
+          <Select value={categoryFilter} onValueChange={setCategoryFilter}>
+            <SelectTrigger className="w-full sm:w-[220px] bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700">
+              <SelectValue placeholder="All Categories" />
             </SelectTrigger>
-            <SelectContent className="bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 max-h-[50vh] overflow-y-auto">
-              <SelectItem value="all" className="text-xs sm:text-sm">All Departments</SelectItem>
-              {departments.map((department) => (
-                <SelectItem key={department} value={department} className="text-xs sm:text-sm">
-                  {department}
+            <SelectContent className="bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700">
+              <SelectItem value="all">All Categories</SelectItem>
+              {categories.map((cat) => (
+                <SelectItem key={cat} value={cat} className="capitalize">
+                  {cat.charAt(0).toUpperCase() + cat.slice(1)}
                 </SelectItem>
               ))}
             </SelectContent>
@@ -160,33 +149,30 @@ export default function UniversityCoursesClient({
         </div>
 
         {error ? (
-          <div className="flex justify-center items-center p-6 sm:p-8 rounded-md border bg-red-50 dark:bg-red-900/20 dark:text-red-300 text-sm sm:text-base">
-            <p>{error}</p>
-            <Button
-              variant="outline"
-              className="ml-4 text-xs sm:text-sm border-gray-200 dark:border-gray-700"
-              onClick={() => window.location.reload()}
-            >
+          <div className="text-center py-12 rounded-lg border bg-red-50 dark:bg-red-900/20">
+            <p className="text-red-600 dark:text-red-400 mb-4">{error}</p>
+            <Button variant="outline" onClick={() => window.location.reload()}>
               Try Again
             </Button>
           </div>
         ) : filteredCourses.length === 0 ? (
-          <div className="text-center py-8 sm:py-12">
-            <p className="text-gray-600 dark:text-gray-400 text-sm sm:text-base md:text-lg">No courses found matching your criteria.</p>
+          <div className="text-center py-12">
+            <p className="text-gray-600 dark:text-gray-400 text-lg">
+              No courses found matching your filters.
+            </p>
           </div>
         ) : (
-          <div className="relative overflow-x-auto rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm card-hover">
+          <div className="rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm overflow-hidden">
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead className="w-[40px] sm:w-[50px]"></TableHead>
-                  <TableHead className="text-xs sm:text-sm">Course Code</TableHead>
-                  <TableHead className="text-xs sm:text-sm">Course Name</TableHead>
-                  <TableHead className="text-center text-xs sm:text-sm">Required Grade</TableHead>
-                  <TableHead className="text-center text-xs sm:text-sm">Qualification</TableHead>
-                  <TableHead className="text-center text-xs sm:text-sm">Type</TableHead>
-                  <TableHead className="text-center text-xs sm:text-sm">Choose</TableHead>
-                  <TableHead className="text-center text-xs sm:text-sm">Actions</TableHead>
+                  <TableHead className="w-[50px]"></TableHead>
+                  <TableHead>Course Code</TableHead>
+                  <TableHead>Course Name</TableHead>
+                  <TableHead>Cut-off Grade</TableHead>
+                  <TableHead>Duration</TableHead>
+                  <TableHead>Select</TableHead>
+                  <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -194,7 +180,7 @@ export default function UniversityCoursesClient({
                   <CourseRow
                     key={course.id}
                     course={course}
-                    showUniversity={true}
+                    showUniversity={false}
                     onAuthRequired={() => setShowAuthModal(true)}
                   />
                 ))}

@@ -1,7 +1,6 @@
 # backend/EDUHUB/apps/core/mixins.py
 
 from django.core.cache import cache
-from django.conf import settings
 from apps.core.utils import standardize_response
 from rest_framework import status
 

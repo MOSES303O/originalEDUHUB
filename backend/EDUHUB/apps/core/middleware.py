@@ -23,7 +23,7 @@ class RequestLoggingMiddleware(MiddlewareMixin):
         # Log request details
         logger.info(f"Request: {request.method} {request.path}")
         if request.user.is_authenticated:
-            logger.info(f"User: {request.user.email}")
+            logger.info(f"User: {request.user.phone_number}")
         
         return None
     
@@ -84,3 +84,48 @@ class RateLimitMiddleware(MiddlewareMixin):
         else:
             ip = request.META.get('REMOTE_ADDR')
         return ip
+    
+class PremiumAccessMiddleware:
+    def __init__(self, get_response): 
+        self.get_response = get_response
+
+    def __call__(self, request):
+        if request.user.is_authenticated:
+            if not request.user.is_account_active():
+                # Optional: log and logout
+                logger.info(request.user, 'ACCOUNT_EXPIRED')
+                return JsonResponse(
+                    {"error": "Account expired. Please renew subscription."},
+                    status=403
+                )
+            if request.path.startswith('/api/premium/') and not request.user.is_premium_active():
+                return JsonResponse(
+                    {"error": "Premium access expired."},
+                    status=403
+                )
+        response = self.get_response(request)
+        return response
+class SubscriptionExpirationMiddleware:
+    def __init__(self, get_response):
+        self.get_response = get_response
+
+    def __call__(self, request):
+        if request.user.is_authenticated:
+            user = request.user
+            user.cleanup_expired_data()  # clean if expired
+
+            if not user.is_account_active():
+                return JsonResponse(
+                    {"error": "Account expired. Please make a new payment."},
+                    status=403
+                )
+
+            # Premium-only routes (add your premium endpoints here)
+            if request.path.startswith('/api/premium/') and not user.is_premium_active():
+                return JsonResponse(
+                    {"error": "Premium access expired. Renew within 24 hours."},
+                    status=403
+                )
+
+        response = self.get_response(request)
+        return response

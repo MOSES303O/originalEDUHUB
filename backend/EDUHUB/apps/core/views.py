@@ -3,40 +3,21 @@ Core base views and mixins for consistent API behavior across all apps.
 """
 
 import logging
-from typing import Dict, Any, Optional
 from rest_framework import status
 from rest_framework.views import APIView
 from rest_framework.viewsets import ModelViewSet
-from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from django.utils import timezone
 from django.core.cache import cache
 
 from .utils import (
     standardize_response, get_client_ip, log_user_activity,
-    cache_key, APIResponseMixin, RateLimitMixin
+     APIResponseMixin, RateLimitMixin
 )
 
 logger = logging.getLogger(__name__)
 
-# apps/core/views.py
-import logging
-from typing import Dict, Any, Optional
-from rest_framework import status
-from rest_framework.views import APIView
-from rest_framework.viewsets import ModelViewSet
-from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticated
 from rest_framework import exceptions
-from django.utils import timezone
-from django.core.cache import cache
-from .utils import (
-    standardize_response, get_client_ip, log_user_activity,
-    cache_key, APIResponseMixin, RateLimitMixin
-)
-
-logger = logging.getLogger(__name__)
-
 class BaseAPIView(APIView, APIResponseMixin, RateLimitMixin):
     rate_limit_scope = 'default'
     rate_limit_count = 60

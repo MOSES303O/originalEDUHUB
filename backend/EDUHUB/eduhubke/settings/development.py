@@ -10,6 +10,8 @@ ALLOWED_HOSTS = [
     'localhost',
     '127.0.0.1',
     '0.0.0.0',
+    'brunilda-seminationalized-affinely.ngrok-free.dev',  # ← exact current ngrok subdomain
+    '.ngrok-free.dev',
 ]
 
 if os.environ.get('RENDER_EXTERNAL_HOSTNAME'):

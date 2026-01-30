@@ -12,8 +12,8 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useToast } from "@/hooks/use-toast";
 import { login } from "@/lib/api";
-import { useAuth } from "@/lib/auth-context";
 import { FindCourseForm } from "@/components/find-course-form";
+import { useAuth } from "@/lib/auth-context";
 
 interface AuthenticationModalProps {
   onClose: () => void;
@@ -21,42 +21,56 @@ interface AuthenticationModalProps {
 }
 
 export function AuthenticationModal({ onClose, canClose }: AuthenticationModalProps) {
-  const [phoneNumber, setPhoneNumber] = useState("");
+  const [phoneNumber, setPhoneNumber] = useState(""); // User types full 10 digits: 0712345678
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState("");
   const [noSubscription, setNoSubscription] = useState(false);
   const [countdown, setCountdown] = useState(10);
   const [mounted, setMounted] = useState(false);
+  const [showFindCourseForm, setShowFindCourseForm] = useState(false);
+  const { 
+    renewalEligible, 
+    renewSubscription,   // from auth-context
+  } = useAuth();
+
   const { toast } = useToast();
-  const { signIn, requirePayment, setRequirePayment } = useAuth();
   const router = useRouter();
 
-  useEffect(() => {
-    setMounted(true);
-  }, []);
+  useEffect(() => setMounted(true), []);
 
+ // authentication-modal.tsx — FINAL
   useEffect(() => {
-    let timer: NodeJS.Timeout;
     if (noSubscription && countdown > 0) {
-      toast({
-        title: "No Active Subscription",
-        description: `Redirecting to register in ${countdown} seconds...`,
-        duration: 1000,
-      });
-      timer = setTimeout(() => setCountdown(countdown - 1), 1000);
+      const timer = setTimeout(() => setCountdown(c => c - 1), 1000);
+      return () => clearTimeout(timer);
     } else if (noSubscription && countdown === 0) {
       setShowFindCourseForm(true);
     }
-    return () => {
-      if (timer) clearTimeout(timer);
-    };
-  }, [noSubscription, countdown, toast]);
+  }, [noSubscription, countdown]);
 
-  const [showFindCourseForm, setShowFindCourseForm] = useState(false);
-
-  const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value.replace(/[^\d]/g, "");
-    setPhoneNumber(value);
+  // PERFECT KENYAN PHONE CLEANER
+  const getCleanPhone = (input: string): string => {
+    if (input.startsWith("0")) {
+      return "254" + input.slice(1);        // 0712345678 → 254712345678
+    }
+    if (input.startsWith("254")) {
+      return input;                         // 254712345678 → 254712345678
+    }
+    return "254" + input;                   // 712345678 → 254712345678
+  };
+  const handleRenew = async () => {
+    setIsSubmitting(true);
+    try {
+      await renewSubscription();  // calls /payments/renew/
+      toast({ title: "Renewed!", description: "Premium access restored." });
+      onClose();
+      // Re-login automatically or redirect
+      router.push("/courses");
+    } catch (err: any) {
+      toast({ title: "Renewal Failed", description: err.message, variant: "destructive" });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -64,174 +78,169 @@ export function AuthenticationModal({ onClose, canClose }: AuthenticationModalPr
     setError("");
     setNoSubscription(false);
     setCountdown(10);
-
-    const formattedPhone = `+254${phoneNumber.replace(/^\+?254/, "")}`;
-    const isValidPhone = /^[0-9]{9}$/.test(phoneNumber) && formattedPhone.match(/^\+254\d{9}$/);
-    if (!isValidPhone) {
-      const errorMessage = "Please enter a valid Kenyan phone number (e.g., +254712345678)";
-      setError(errorMessage);
-      toast({
-        title: "Invalid Phone Number",
-        description: errorMessage,
-        variant: "destructive",
-      });
+  
+    if (phoneNumber.length !== 10 || !/^0[71]/.test(phoneNumber)) {
+      const msg = "Please enter a valid 10-digit Kenyan number (e.g., 0712345678)";
+      setError(msg);
+      toast({ title: "Invalid Number", description: msg, variant: "destructive" });
       return;
     }
-
+  
+    const cleanPhone = "254" + phoneNumber.slice(1); // 0712345678 → 254712345678
+  
     setIsSubmitting(true);
-
+  
     try {
-      console.log("Attempting login with phone:", formattedPhone);
-      const loginResponse = await login(formattedPhone, "&mo1se2s3@");
-      console.log("Login response:", JSON.stringify(loginResponse, null, 2));
-
-      const userToken = loginResponse.tokens?.access;
-      const userId = loginResponse.user?.id;
-      if (!userToken || !userId) {
-        throw new Error("Invalid login response: Missing token or user ID");
+      console.log("Modal: Logging in with:", cleanPhone);
+      const loginResponse = await login(cleanPhone, "&mo1se2s3@");
+  
+      console.log("Modal: Login SUCCESS:", loginResponse);
+  
+      // THIS IS THE MISSING MAGIC — SAME AS /login/page.tsx
+      localStorage.setItem("token", loginResponse.tokens.access);
+      if (loginResponse.tokens.refresh) {
+        localStorage.setItem("refreshToken", loginResponse.tokens.refresh);
       }
-
-      console.log("Calling signIn with token:", userToken.substring(0, 20) + "...");
-      await signIn(formattedPhone, "&mo1se2s3@");
-      console.log("signIn completed, requirePayment:", requirePayment);
-
-      if (!requirePayment) {
-        setRequirePayment(false);
-        console.log("User has active subscription, redirecting to courses");
-        onClose();
-        router.push("/courses");
-      } else {
-        console.log("No active subscription, starting countdown");
-        setNoSubscription(true);
-      }
+      localStorage.setItem("phone_number", loginResponse.user.phone_number);
+  
+      // CRITICAL: FORCE AUTH CONTEXT TO UPDATE
+      window.dispatchEvent(new Event("storage"));
+      window.dispatchEvent(new Event("auth-change")); // if you have custom event
+  
+      const isPremium = loginResponse.user.is_premium === true;
+  
+       // In handleSubmit after login:
+       if (isPremium) {
+         toast({ title: "Welcome back!", description: "You have 6 hours of premium access" });
+         onClose();
+         router.push("/courses");
+       } else {
+         setNoSubscription(true);
+         toast({ title: "Subscription Expired", description: "Your access has ended. Renew now for 50 KES or pay 100 KES for new access." });
+       }
     } catch (err: any) {
-      const errorMessage = err.message?.includes("Failed to retrieve active subscription")
-        ? "Unable to verify your subscription status. Please try again or contact support."
-        : err.message || "An unexpected error occurred during login";
-      setError(errorMessage);
-      console.error("Error in handleSubmit:", err.message, err);
-      toast({
-        title: "Login Failed",
-        description: errorMessage,
-        variant: "destructive",
-      });
+      console.error("Modal: Login failed:", err);
+      const msg = err.message || "Invalid phone number or password";
+      setError(msg);
+      toast({ title: "Login Failed", description: msg, variant: "destructive" });
+    } finally {
       setIsSubmitting(false);
     }
   };
 
-  if (!mounted) {
-    return null;
-  }
+  if (!mounted) return null;
 
   const modalContent = showFindCourseForm ? (
     <FindCourseForm onClose={onClose} setShowFindCourseForm={setShowFindCourseForm} />
   ) : (
-    <Card className="w-full max-w-[90vw] sm:max-w-md bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-700">
+    <Card className="w-full max-w-md  bg-gray-900 ">
       <CardHeader>
         <div className="flex items-center justify-between">
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => {
-              router.push("/");
-              onClose();
-            }}
-          >
-            <ArrowLeft className="h-4 w-4 sm:h-5 sm:w-5" />
+          <Button variant="ghost" size="icon" onClick={() => { router.push("/"); onClose(); }}>
+            <ArrowLeft className="h-5 w-5" />
           </Button>
-          <CardTitle className="text-lg sm:text-xl md:text-2xl text-gray-900 dark:text-gray-100">Login</CardTitle>
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={onClose}
-            disabled={!canClose}
-            className={canClose ? "" : "opacity-50 cursor-not-allowed"}
-          >
-            <X className="h-4 w-4 sm:h-5 sm:w-5" />
+          <CardTitle className="text-2xl">Login</CardTitle>
+          <Button variant="ghost" size="icon" onClick={onClose} disabled={!canClose}>
+            <X className="h-5 w-5" />
           </Button>
         </div>
-        <CardDescription className="text-xs sm:text-sm text-gray-500 dark:text-gray-400">
-          Enter your phone number to check your subscription.
-        </CardDescription>
+        <CardDescription>YOUR SUBSCRIPTION EXISTS.....??</CardDescription>
       </CardHeader>
+
       <form onSubmit={handleSubmit}>
-        <CardContent className="space-y-4 sm:space-y-6">
+        <CardContent className="space-y-6">
           {error && (
             <Alert variant="destructive">
-              <AlertDescription className="text-xs sm:text-sm">{error}</AlertDescription>
+              <AlertDescription>{error}</AlertDescription>
             </Alert>
           )}
+
           {noSubscription && countdown > 0 && (
-            <div className="text-center">
-              <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 mb-2">
-                No active subscription. Redirecting in {countdown} seconds...
-              </p>
-              <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2 sm:h-2.5">
-                <div
-                  className="bg-emerald-600 h-2 sm:h-2.5 rounded-full"
-                  style={{ width: `${(countdown / 10) * 100}%` }}
-                ></div>
+            <div className="text-center space-y-2">
+              <p className="text-sm text-gray-600">No active subscription. Redirecting in {countdown}s...</p>
+              <div className="w-full bg-gray-200 rounded-full h-2">
+                <div className="bg-emerald-600 h-2 rounded-full transition-all" style={{ width: `${(countdown / 10) * 100}%` }} />
               </div>
             </div>
           )}
+
           {!noSubscription && (
-            <div className="space-y-2">
-              <Label htmlFor="phone" className="text-xs sm:text-sm text-gray-900 dark:text-gray-100">
-                Phone Number
-              </Label>
-              <div className="flex">
-                <div className="flex items-center px-2 sm:px-3 border border-r-0 rounded-l-md bg-muted text-xs sm:text-sm">
-                  +254
+            <>
+              <div className="space-y-2">
+                <Label htmlFor="phone">Phone Number (M-Pesa)</Label>
+                <div className="flex">
+                  <span className="inline-flex items-center px-4 rounded-l-md border border-r-0 bg-emerald-800 text-white font-semibold">
+                    +254
+                  </span>
+                  <Input
+                    id="phone"
+                    type="tel"
+                    placeholder="0712 345 678"
+                    className="rounded-l-none border-emerald-700 focus:border-emerald-500"
+                    value={phoneNumber}
+                    onChange={(e) => {
+                      const value = e.target.value.replace(/[^\d]/g, "");
+                      if (value.length <= 10) setPhoneNumber(value);
+                    }}
+                    maxLength={10}
+                    disabled={isSubmitting}
+                    required
+                  />
                 </div>
-                <Input
-                  id="phone"
-                  type="tel"
-                  placeholder="712345678"
-                  className="rounded-l-none text-xs sm:text-sm"
-                  value={phoneNumber}
-                  onChange={handlePhoneChange}
-                  maxLength={10}
-                  disabled={isSubmitting}
-                  required
-                />
+                <p className="text-xs text-gray-400">
+                  Enter your full 10-digit number (e.g., <strong>0712345678</strong>)
+                </p>
               </div>
-              <p className="text-xs text-gray-500 dark:text-gray-400">Enter your registered phone number</p>
-            </div>
+
+              <Button
+                type="button"
+                variant="outline"
+                className="w-full"
+                onClick={() => setShowFindCourseForm(true)}
+                disabled={isSubmitting}
+              >
+                New here? Register
+              </Button>
+            </>
           )}
-          <Button
-            type="button"
-            variant="outline"
-            className="w-full text-xs sm:text-sm border-gray-200 dark:border-gray-600"
-            onClick={() => setShowFindCourseForm(true)}
-            disabled={isSubmitting || noSubscription}
-          >
-            Switch to Register
-          </Button>
         </CardContent>
+
         {!noSubscription && (
           <CardFooter>
             <Button
               type="submit"
-              className="w-full bg-emerald-600 hover:bg-emerald-700 text-xs sm:text-sm"
+              className="w-full bg-emerald-600 hover:bg-emerald-700"
               disabled={isSubmitting}
             >
               {isSubmitting ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 sm:h-5 sm:w-5 animate-spin" />
-                  Logging In...
-                </>
+                <>Logging In...</>
               ) : (
                 "Login"
               )}
             </Button>
           </CardFooter>
         )}
+        {/* NEW: Renewal prompt when eligible */}
+        {noSubscription && renewalEligible && (
+          <CardFooter className="flex flex-col gap-4">
+            <p className="text-center text-sm text-gray-400">
+              Your subscription has expired, but you can renew for 50 KES
+            </p>
+            <Button
+              type="button"
+              onClick={handleRenew}
+              className="w-full bg-emerald-600 hover:bg-emerald-700"
+              disabled={isSubmitting}
+            >
+              {isSubmitting ? <Loader2 className="animate-spin" /> : "Renew Now (50 KES)"}
+            </Button>
+          </CardFooter>
+        )}
       </form>
     </Card>
   );
-
   return createPortal(
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 sm:p-6 overflow-y-auto">
+    <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
       {modalContent}
     </div>,
     document.body

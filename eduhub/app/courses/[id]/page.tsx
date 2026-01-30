@@ -1,50 +1,47 @@
-// frontend/app/courses/[id]/page.tsx
+// app/courses/[id]/page.tsx
 import { fetchCourseById, fetchCourses } from "@/lib/api";
 import CourseDetailClient from "@/components/clientcourse";
 import type { Course } from "@/types";
-import type { NextPage } from "next";
+import { Suspense } from "react";
 
+// Server-side data fetching
 async function fetchInitialData(courseId: string) {
   try {
-    console.log('Fetching initial data for course ID:', courseId);
+    console.log("Fetching initial course data for ID:", courseId);
     const course = await fetchCourseById(courseId);
+
     if (!course) {
-      console.warn('No course data returned for ID:', courseId);
-      return { course: null, campus: 'Not specified', error: 'Course not found or invalid response' };
+      return { course: null, error: "Course not found or unavailable." };
     }
-    console.log('Fetched course:', JSON.stringify(course, null, 2));
-    return { course, campus: course.university.campus || 'Not specified', error: null };
+
+    return { course, error: null };
   } catch (error: any) {
-    const errorMessage = error.message
-      ? JSON.parse(error.message)?.message || error.message
-      : 'Failed to load course details. Please check your network or API configuration.';
-    console.error('Error fetching initial data:', JSON.stringify({ message: errorMessage, error }, null, 2));
-    return { course: null, campus: 'Not specified', error: errorMessage };
+    console.error("Error in fetchInitialData:", error);
+    return { course: null, error: "Failed to load course. Please try again later." };
   }
 }
 
+// Generate static paths for all courses (SSG)
 export async function generateStaticParams() {
   try {
-    console.log('Generating static params for courses');
-    const courses = await fetchCourses();
-    console.log('Courses for static params:', JSON.stringify(courses, null, 2));
-    if (!courses.length) {
-      console.warn('No courses returned, static params will be empty');
-    }
+    const courses = await fetchCourses({});
     return courses.map((course: Course) => ({
-      id: course.id.toString(),
-    }));
+      id: course.id?.toString() || "", // safe guard if id is optional
+    })).filter(param => param.id !== ""); // skip invalid
   } catch (error) {
-    console.error('Error in generateStaticParams:', JSON.stringify(error, null, 2));
+    console.error("Failed to generate static params:", error);
     return [];
   }
 }
 
-const CourseDetailPage: NextPage<{ params: Promise<{ id: string }> }> = async ({ params }) => {
+// Main page component (Server Component)
+export default async function CourseDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  console.log('Resolved params:', { id });
-  const { course, campus, error } = await fetchInitialData(id);
-  return <CourseDetailClient initialCourse={course} initialCampus={campus} initialError={error} />;
-};
+  const { course, error } = await fetchInitialData(id);
 
-export default CourseDetailPage;
+  return (
+    <Suspense fallback={<div>Loading course details...</div>}>
+      <CourseDetailClient initialCourse={course} initialError={error} />
+    </Suspense>
+  );
+}

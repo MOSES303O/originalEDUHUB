@@ -34,10 +34,15 @@ const nextConfig = {
     console.log("Next.js rewrite destination:", destination);
 
     return [
+      // ONLY PROXY API CALLS — NOT YOUR NEXT.JS PAGES!
       {
-        // THIS IS THE ONLY CHANGE NEEDED
-        source: "/:path*",
+        source: "/eduhub/:path*",
         destination: `${destination}/:path*`,
+      },
+      // Optional: proxy media files directly
+      {
+        source: "/media/:path*",
+        destination: `${destination.replace("/eduhub", "")}/media/:path*`,
       },
     ];
   },

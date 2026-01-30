@@ -24,9 +24,12 @@ def root_view(request):
         <div style="background: rgba(255,255,255,0.1); padding: 1.5rem; border-radius: 12px; max-width: 600px; margin: 0 auto;">
             <h2 style="margin-bottom: 1rem;">Useful Links:</h2>
             <ul style="list-style: none; padding: 0; font-size: 1.1rem;">
+                <li style="margin: 0.8rem 0;"><a href="/eduhub/courses/subjects/" style="color: #fff; text-decoration: underline;">subjects</a></li>
                 <li style="margin: 0.8rem 0;"><a href="/admin/" style="color: #fff; text-decoration: underline;">Admin Panel</a></li>
                 <li style="margin: 0.8rem 0;"><a href="/api/docs/" style="color: #fff; text-decoration: underline;">API Documentation (Swagger)</a></li>
                 <li style="margin: 0.8rem 0;"><a href="/eduhub/auth/register/" style="color: #fff; text-decoration: underline;">Register User</a></li>
+                <li style="margin: 0.8rem 0;"><a href="/eduhub/courses/courses/" style="color: #fff; text-decoration: underline;">courses</a></li>
+                <li style="margin: 0.8rem 0;"><a href="/eduhub/universities/universities/" style="color: #fff; text-decoration: underline;">universities</a></li>
                 <li style="margin: 0.8rem 0;"><a href="/eduhub/auth/contact/submit/" style="color: #fff; text-decoration: underline;">Contact Form Test</a></li>
                 <li style="margin: 0.8rem 0;"><a href="/health/" style="color: #fff; text-decoration: underline;">Health Check</a></li>
             </ul>

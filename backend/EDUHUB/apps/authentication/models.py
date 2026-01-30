@@ -10,24 +10,27 @@ from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin
 from django.contrib.auth.base_user import BaseUserManager
 from django.db import models
 from django.utils import timezone
-from django.core.validators import RegexValidator
-from apps.courses.models import Subject,Course
+from django.contrib.contenttypes.models import ContentType
+from django.contrib.contenttypes.fields import GenericForeignKey
+from django.db.models.signals import post_save
+from django.dispatch import receiver
+from apps.core.utils import logger
+from apps.courses.models import Subject
 import uuid
-from apps.core.utils import calculate_age, standardize_phone_number,validate_kenyan_phone
+from apps.core.utils import standardize_phone_number,validate_kenyan_phone
 
 # apps/authentication/models.py
 class UserManager(BaseUserManager):
-    def create_user(self, phone_number, password=None, email=None, **extra_fields):
+    def create_user(self, phone_number, password=None,**extra_fields):
         if not phone_number:
             raise ValueError("The Phone number must be set")
         phone_number = standardize_phone_number(phone_number)
-        email = self.normalize_email(email) if email else None
-        user = self.model(phone_number=phone_number, email=email, **extra_fields)
+        user = self.model(phone_number=phone_number, **extra_fields)
         user.set_password(password)
         user.save(using=self._db)
         return user
 
-    def create_superuser(self, phone_number, password=None, email=None, **extra_fields):
+    def create_superuser(self, phone_number, password=None, **extra_fields):
         extra_fields.setdefault('is_staff', True)
         extra_fields.setdefault('is_superuser', True)
         extra_fields.setdefault('is_active', True)
@@ -37,16 +40,9 @@ class UserManager(BaseUserManager):
         if extra_fields.get('is_superuser') is not True:
             raise ValueError('Superuser must have is_superuser=True.')
         
-        return self.create_user(phone_number, password, email, **extra_fields)
+        return self.create_user(phone_number, password, **extra_fields)
 
 class User(AbstractBaseUser, PermissionsMixin):
-    email = models.EmailField(
-        unique=False,
-        blank=True,
-        null=True,
-        db_index=True,
-        help_text="User's email address (optional)"
-    )
     phone_number = models.CharField(
         max_length=15,
         unique=True,
@@ -55,15 +51,24 @@ class User(AbstractBaseUser, PermissionsMixin):
     )
     is_active = models.BooleanField(default=True)
     is_staff = models.BooleanField(default=False)
-    is_verified = models.BooleanField(default=False)
+    is_verified = models.BooleanField(default=True)
+    premium_expires_at = models.DateTimeField(null=True, blank=True, help_text="When premium access ends (6 hours after payment)")
+    account_expires_at = models.DateTimeField(null=True, blank=True, help_text="When full account + subjects are deleted (24 hours after payment)")
     is_premium = models.BooleanField(default=False)
     date_joined = models.DateTimeField(default=timezone.now)
     last_login = models.DateTimeField(blank=True, null=True)
+    cluster_points = models.DecimalField(
+        max_digits=6,
+        decimal_places=3,
+        default=0.000,
+        null=True,
+        blank=True,
+        help_text="User's KCSE cluster points (editable)"
+    )
     
     objects = UserManager()
     
     USERNAME_FIELD = 'phone_number'
-    REQUIRED_FIELDS = []  # Remove email from required fields
     
     class Meta:
         db_table = 'auth_user'
@@ -77,7 +82,24 @@ class User(AbstractBaseUser, PermissionsMixin):
     
     def __str__(self):
         return self.phone_number
-    
+    def is_premium_active(self):
+        return (
+            self.is_premium and 
+            self.premium_expires_at and 
+            timezone.now() < self.premium_expires_at
+        )
+    def is_account_active(self):
+        return not self.account_expires_at or timezone.now() < self.account_expires_at
+
+    def cleanup_expired_data(self):
+        """Delete subjects, selected courses, etc. when account expires"""
+        if self.account_expires_at and timezone.now() >= self.account_expires_at:
+            self.subjects.all().delete()
+            self.selected_courses.all().delete()
+            self.is_active = False
+            self.is_premium = False
+            self.save(update_fields=['is_active', 'is_premium'])
+            logger.info(f"Expired user data cleaned: {self.phone_number}")
     def clean(self):
         super().clean()
         if self.phone_number:
@@ -89,16 +111,11 @@ class UserProfile(models.Model):
     Contains additional user data for personalization,
     payments, and educational preferences.
     """
-    user = models.OneToOneField(
-        User,
-        on_delete=models.CASCADE,
-        related_name='profile'
-    )
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='profile')
     registration_ip = models.GenericIPAddressField(null=True, blank=True)
-    # Timestamps
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-    
+
     class Meta:
         db_table = 'user_profile'
         verbose_name = 'User Profile'
@@ -187,7 +204,7 @@ class UserSession(models.Model):
         ]
     
     def __str__(self):
-        return f"{self.user.email} - {self.ip_address}"
+        return f"{self.user.phone_number} - {self.ip_address}"
     
     @property
     def duration(self):
@@ -212,7 +229,6 @@ class UserActivity(models.Model):
         ('PASSWORD_CHANGED', 'Password Changed'),
         ('PASSWORD_RESET_REQUESTED', 'Password Reset Requested'),
         ('PASSWORD_RESET_COMPLETED', 'Password Reset Completed'),
-        ('EMAIL_VERIFIED', 'Email Verified'),
         ('PROFILE_UPDATED', 'Profile Updated'),
         ('PHONE_VERIFIED', 'Phone Verified'),
         
@@ -292,7 +308,7 @@ class UserActivity(models.Model):
         ordering = ['-timestamp']
     
     def __str__(self):
-        return f"{self.user.email} - {self.action} - {self.timestamp}"
+        return f"{self.user.phone_number} - {self.action} - {self.timestamp}"
 
 
 class UserSubject(models.Model):
@@ -349,7 +365,7 @@ class UserSubject(models.Model):
         ]
     
     def __str__(self):
-        return f"{self.user.email} - {self.subject.name} ({self.grade})"
+        return f"{self.user.phone_number} - {self.subject.name} ({self.grade})"
     
     @property
     def grade_points(self):
@@ -360,20 +376,33 @@ class UserSubject(models.Model):
             'D-': 2, 'E': 1
         }
         return grade_mapping.get(self.grade, 0)
+# apps/authentication/models.py
 class UserSelectedCourse(models.Model):
     """
-    Model to track courses selected by users
+    Tracks selected courses/programs from any app (University CourseOffering, KMTC, etc.)
     """
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='selected_courses')
-    course = models.ForeignKey(Course, on_delete=models.CASCADE)
+
+    # Generic relation — now points to CourseOffering or KMTC program
+    content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE)
+    object_id = models.UUIDField()
+    content_object = GenericForeignKey('content_type', 'object_id')
+
+    # Display fields
+    course_name = models.CharField(max_length=300)
+    institution = models.CharField(max_length=100)
+
     is_applied = models.BooleanField(default=False)
-    application_date = models.DateTimeField(blank=True, null=True)
+    application_date = models.DateTimeField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
-        unique_together = ['user', 'course']
-        ordering = ['created_at']
+        unique_together = ['user', 'content_type', 'object_id']
+        ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['user', 'content_type', 'object_id']),
+        ]
 
     def __str__(self):
-        return f"{self.user.phone_number} - {self.course.name}"
+        return f"{self.user.phone_number} → {self.course_name}"

@@ -14,15 +14,30 @@ export interface UserData {
     // Add any other fields from your form
 }
 export interface Course {
-  id: string;
+  id?: string;
   name: string;
-  code?: string;
+  code: string | number;
   university_name?: string ; // Changed from University to string
   university_code?: string;
   category?: string;
+  institution?: string;
   description?: string;
-  duration_years?: number;
-  university:{
+  
+  details?: string;
+  cluster_requirements?:string;
+  program?:{
+    id?: string;
+    name?: string;
+    required_subjects?: Array<{ subject: { name?: string }; minimum_grade?: string; is_mandatory?: boolean; cluster_requirements?: string }>;
+    category?: string;
+    typical_duration_years?: string | number;
+    details?: string;
+  }
+  type?: string;
+  _sourceInstitution?: string;
+  _needsEnrichment?: boolean;
+  duration_years?: string | number | undefined;
+  university?:{
     id: number | string;
     name: string;
     slug: string;
@@ -48,6 +63,9 @@ export interface Course {
   faculty_id?: string | number;
   qualification?: string; // Added to manage qualification status
   selectionId?: string;
+  is_kmtc_course?: boolean; // Flag to identify KMTC courses
+  level?: string; // KMTC course level
+  intake_months?: string[]; // KMTC intake months
   user_application?: {
     id: string;
     status: string;
@@ -77,12 +95,13 @@ export interface University {
   }>;
   established_year?: string; // Optional, as it is not in the API response
   ranking?: number | null; // Matches the API response
-  available_courses?: number; // Optional, as it is not in the API response
+  courses_count?: string | number; // Optional, as it is not in the API response
   accreditation?: string; // Matches the API response
   description?: string; // Optional, as it is not in the API response
 }
 export interface UniversityWithCourses extends University {
   courseCount: number;
+  type?: string;
   departments: Array<{
     name: string;
     courseCount: number;
@@ -101,6 +120,7 @@ export interface UniversityWithCourses extends University {
     slug?: string | undefined;
     description?: string;
   }>;
+  description?: string;
   establishedYear: string;
   accreditation: string;
 }
@@ -128,6 +148,27 @@ export interface Subject {
   code: string;
   id: string; // Assuming each subject has a unique ID
   name: string; // Assuming each subject has a name
+}
+export interface OfferedAt {
+  campus_name: string;
+  city: string;
+  campus_code: string;
+  notes?: string;
+}
+
+export interface Programme {
+  id: string;
+  code: string;
+  name: string;
+  level: string;
+  duration_years?: string | number | undefined;
+  minimum_grade?: string | number;
+  duration: string;
+  qualification: string;
+  description: string;
+  department_name: string;
+  faculty_name: string;
+  offered_at: OfferedAt[];
 }
 interface User {
   id: string
@@ -165,14 +206,16 @@ export interface KMTCCampus {
   slug: string;
   code: string;
   city: string;
-  description: string;
+  description?: string;
+  programmes_count?: number;
 }
 export interface KMTCCourse {
   id: string;
   code: string;
   name: string;
+  level?: string;
   department: string;
-  required_grade: string;
+  required_grade?: string;
   qualification: string;
   campus_code: string;
   description: string;
@@ -194,83 +237,37 @@ export interface LoginResponse {
   };
 
 }
+// types/index.ts or wherever you define it
+export interface SelectedCourseItem {
+  id: string;
+  course: {
+    id: string;
+    name: string;
+    code?: string;
+    university_name?: string;
+    university_code?: string;
+    category?: string;
+    description?: string;
+    duration_years?: number;
+    minimum_grade?: string | number;
+    tuition_fee_per_year?: number;
+    application_fee?: number;
+    average_rating?: number;
+    total_reviews?: number;
+    is_selected?: boolean;
+    // add any other course fields you use
+  };
+  is_applied: boolean;
+  application_date: string | null;
+  created_at: string;
+}
+
 export interface SelectedCourseResponse {
   success: boolean;
   message: string;
   timestamp: string;
-  data: Array<{
-    id: string;
-    course: {
-      id: string;
-      name: string;
-      university_name?: string;
-      code?: string;
-      university_code?: string;
-      category?: string;
-      description?: string;
-      duration_years?: number;
-      minimum_grade?: string | number;
-      career_prospects?: string;
-      tuition_fee_per_year?: number;
-      start_date?: string;
-      application_deadline?: string;
-      delivery_mode?: string;
-      department?: string;
-      level?: string;
-      qualification?: string;
-      application_fee?: number;
-      updated_at?: string;
-      average_rating?: number;
-      user_application?: {
-        id: string;
-        status: string;
-        application_number: string;
-        submitted_at: string | null;
-      } | null;
-      total_reviews?: number;
-      is_selected?: boolean;
-    };
-    is_applied: boolean;
-    application_date: string | null;
-    created_at: string;
-  }> | {
-    id: string;
-    course: {
-      id: string;
-      name: string;
-      university_name?: string;
-      code?: string;
-      university_code?: string;
-      category?: string;
-      description?: string;
-      duration_years?: number;
-      minimum_grade?: string | number;
-      career_prospects?: string;
-      tuition_fee_per_year?: number;
-      start_date?: string;
-      application_deadline?: string;
-      delivery_mode?: string;
-      department?: string;
-      level?: string;
-      updated_at?: string;
-      user_application?: {
-        id: string;
-        status: string;
-        application_number: string;
-        submitted_at: string | null;
-      } | null;
-      qualification?: string;
-      application_fee?: number;
-      average_rating?: number;
-      total_reviews?: number;
-      is_selected?: boolean;
-    };
-    is_applied: boolean;
-    application_date: string | null;
-    created_at: string;
-  } | null;
+  data: SelectedCourseItem[] | SelectedCourseItem | null;
   errors?: Record<string, any>;
-  meta?: Record<string, any>;
 }
 export interface ContactFormData {
   name: string;
@@ -282,4 +279,12 @@ export interface ContactFormData {
 
 export interface ContactFormResponse {
   received: boolean;
+}
+
+export interface CourseSubjectRequirement {
+  subject?: Subject | null;
+  subject_id?: string | null;
+  minimum_grade?: string;
+  is_mandatory?: boolean;
+  cluster_requirements?: string; // KUUCPS-style cluster text
 }

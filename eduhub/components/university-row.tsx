@@ -1,19 +1,18 @@
-// frontend/components/university-row.tsx
 "use client";
 
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { ChevronRight, ChevronDown, MapPin, Calendar, Award, ExternalLink } from "lucide-react";
+import { ChevronRight, ChevronDown, MapPin, Calendar, Award, ExternalLink, Building2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import Image from "next/image";
-import { University } from "@/types";
+import Link from "next/link";
+import { UniversityWithCourses } from "@/types";
 
 interface UniversityRowProps {
-  university: University;
-  onViewCourses: () => void;
+  university: UniversityWithCourses;
 }
 
-export function UniversityRow({ university, onViewCourses }: UniversityRowProps) {
+export function UniversityRow({ university }: UniversityRowProps) {
   const [isExpanded, setIsExpanded] = useState(false);
 
   const toggleExpanded = (e: React.MouseEvent | React.KeyboardEvent) => {
@@ -25,139 +24,168 @@ export function UniversityRow({ university, onViewCourses }: UniversityRowProps)
 
   return (
     <>
-      {/* Main Row */}
+      {/* MAIN ROW */}
       <tr
-        className="border-b border-gray-200 dark:border-gray-700 cursor-pointer hover:bg-muted/50"
+        className="border-b border-gray-200 dark:border-gray-700 cursor-pointer hover:bg-muted/50 transition-colors"
         onClick={toggleExpanded}
         onKeyDown={toggleExpanded}
         role="button"
         tabIndex={0}
       >
-        <td className="p-2 sm:p-3 md:p-4">
+        <td className="p-3 md:p-4">
           {isExpanded ? (
-            <ChevronDown className="w-4 h-4 text-gray-400" />
+            <ChevronDown className="w-5 h-5 text-gray-400" />
           ) : (
-            <ChevronRight className="w-4 h-4 text-gray-400" />
+            <ChevronRight className="w-5 h-5 text-gray-400" />
           )}
         </td>
-        <td className="p-2 sm:p-3 md:p-4 text-gray-900 dark:text-gray-100 font-medium text-xs sm:text-sm">
-          {university.code}
+        <td className="p-3 md:p-4 text-gray-900 dark:text-gray-100 font-medium text-sm">
+          {university.code?.toUpperCase() || "N/A"}
         </td>
-        <td className="p-2 sm:p-3 md:p-4">
-          <div className="flex items-center gap-2 sm:gap-3">
+        <td className="p-3 md:p-4">
+          <div className="flex items-center gap-3">
             {university.logo ? (
               <Image
                 src={university.logo}
                 alt={`${university.name} logo`}
-                width={24}
-                height={24}
-                className="rounded border sm:w-8 sm:h-8"
+                width={40}
+                height={40}
+                className="rounded-lg border shadow-sm"
               />
             ) : (
-              <div className="w-6 h-6 sm:w-8 sm:h-8 bg-gradient-to-br from-emerald-500 to-green-400 rounded flex items-center justify-center">
-                <span className="text-white text-xs font-bold">{university.name.charAt(0)}</span>
+              <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center shadow-md">
+                <span className="text-white font-bold text-lg">
+                  {university.name.charAt(0).toUpperCase()}
+                </span>
               </div>
             )}
-            <span className="text-gray-900 dark:text-gray-100 font-medium text-xs sm:text-sm truncate">
-              {university.name}
-            </span>
+            <div>
+              <p className="font-semibold text-gray-900 dark:text-gray-100">{university.name}</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400 capitalize">{university.type}</p>
+            </div>
           </div>
         </td>
-        <td className="p-2 sm:p-3 md:p-4 text-gray-600 dark:text-gray-300 capitalize text-xs sm:text-sm">
-          {university.city}
+        <td className="p-3 md:p-4 text-gray-600 dark:text-gray-300 capitalize text-sm">
+          <div className="flex items-center gap-2">
+            <MapPin className="w-4 h-4" />
+            {university.city}
+          </div>
         </td>
-        <td className="p-2 sm:p-3 md:p-4 text-center">
-          <Badge
-            variant="outline"
-            className="border-emerald-500 text-emerald-600 dark:text-emerald-400 text-xs sm:text-sm"
-          >
-            {university.available_courses ?? 0} Courses
+        <td className="p-3 md:p-4 text-center">
+          <Badge variant="outline" className="text-emerald-600 border-emerald-500 font-medium">
+            {university.courseCount || 0} Course{university.courseCount !== 1 ? "s" : ""}
           </Badge>
         </td>
-        <td className="p-2 sm:p-3 md:p-4 text-center">
-          <Badge
-            variant="outline"
-            className="border-blue-500 text-blue-600 dark:text-blue-400 text-xs sm:text-sm"
-          >
-            {university.accreditation ?? "N/A"}
+        <td className="p-3 md:p-4 text-center">
+          <Badge variant="secondary" className="text-xs">
+            Rank #{university.ranking || "N/A"}
           </Badge>
         </td>
-        <td className="p-2 sm:p-3 md:p-4">
+        <td className="p-3 md:p-4">
           <div className="flex justify-end">
             <Button
               size="sm"
-              className="bg-emerald-500 hover:bg-emerald-600 text-white text-xs sm:text-sm"
-              onClick={(e) => {
-                e.stopPropagation();
-                onViewCourses();
-              }}
+              className="bg-emerald-600 hover:bg-emerald-700 text-white"
+              asChild
             >
-              <ExternalLink className="w-3 h-3 mr-1" />
-              View Courses
+              <Link href={`/university/${university.code}/courses`}>
+                <ExternalLink className="w-4 h-4 mr-2" />
+                View Courses
+              </Link>
             </Button>
           </div>
         </td>
       </tr>
 
-      {/* Expanded Content */}
+      {/* EXPANDED ROW */}
       {isExpanded && (
-        <tr className="bg-muted/50">
+        <tr className="bg-gradient-to-r from-emerald-50/50 to-teal-50/50 dark:from-emerald-900/20 dark:to-teal-900/20">
           <td colSpan={7} className="p-0">
-            <div className="bg-gray-50 dark:bg-gray-800/30 p-3 sm:p-4 md:p-6 border-l-4 border-emerald-500">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 md:gap-6">
-                {/* University Details */}
-                <div>
-                  <h4 className="text-gray-900 dark:text-gray-100 font-semibold mb-2 sm:mb-3 md:mb-4 flex items-center gap-2 text-xs sm:text-sm md:text-base">
-                    <Award className="w-4 h-4 text-emerald-500" />
-                    University Information
+            <div className="p-6 md:p-8 border-l-4 border-emerald-600">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                {/* Basic Info */}
+                <div className="space-y-4">
+                  <h4 className="text-lg font-bold text-gray-900 dark:text-gray-100 flex items-center gap-2">
+                    <Building2 className="w-5 h-5 text-emerald-600" />
+                    University Overview
                   </h4>
-                  <div className="space-y-2 sm:space-y-3 text-xs sm:text-sm">
-                    <div className="flex items-center gap-2 text-gray-600 dark:text-gray-300">
-                      <MapPin className="w-4 h-4" />
-                      <span className="capitalize">
-                        {university.city} - {university.campus}
+                  <div className="space-y-3 text-sm">
+                    <div className="flex items-center gap-3">
+                      <MapPin className="w-4 h-4 text-gray-500" />
+                      <span className="text-gray-700 dark:text-gray-300">
+                        {university.city}, Kenya
                       </span>
                     </div>
-                    <div className="flex items-center gap-2 text-gray-600 dark:text-gray-300">
-                      <Calendar className="w-4 h-4" />
-                      <span>Established: {university.established_year ?? "Unknown"}</span>
+                    <div className="flex items-center gap-3">
+                      <Calendar className="w-4 h-4 text-gray-500" />
+                      <span className="text-gray-700 dark:text-gray-300">
+                        TYPE: {university.type || "Unknown"}
+                      </span>
                     </div>
-                    <div className="flex items-center gap-2 text-gray-600 dark:text-gray-300">
-                      <Award className="w-4 h-4" />
-                      <span>Accreditation: {university.accreditation ?? "N/A"}</span>
+                    <div className="flex items-center gap-3">
+                      <Award className="w-4 h-4 text-gray-500" />
+                      <span className="text-gray-700 dark:text-gray-300">
+                        Accreditation: {university.accreditation || "N/A"}
+                      </span>
                     </div>
+                    <div><h4 className="text-sm font-semibold">DESCRIPTIONS:</h4><p>{university.description}</p></div>
                   </div>
                 </div>
 
-                {/* Faculties */}
-                <div>
-                  <h4 className="text-gray-900 dark:text-gray-100 font-semibold mb-2 sm:mb-3 md:mb-4 text-xs sm:text-sm md:text-base">
-                    Faculties ({Array.isArray(university.faculties) ? university.faculties.length : 0})
+                {/* Course Stats */}
+                <div className="space-y-4">
+                  <h4 className="text-lg font-bold text-gray-900 dark:text-gray-100">
+                    Academic Offerings
                   </h4>
-                  <div className="space-y-2">
-                    {Array.isArray(university.faculties) && university.faculties.length > 0 ? (
-                      university.faculties.map((faculty) => (
-                        <div
-                          key={faculty.id}
-                          className="p-2 sm:p-3 rounded-lg border border-gray-200 dark:border-gray-600"
-                        >
-                          <div className="flex justify-between items-start">
-                            <span className="text-gray-900 dark:text-gray-100 font-medium text-xs sm:text-sm truncate">
-                              {faculty.name}
-                            </span>
-                            <Badge variant="secondary" className="text-xs">
-                              {faculty.courseCount ?? 0} courses
-                            </Badge>
-                          </div>
-                        </div>
-                      ))
-                    ) : (
-                      <div className="text-gray-600 dark:text-gray-300 text-xs sm:text-sm">
-                        No faculties available
-                      </div>
-                    )}
+                  <div className="bg-white dark:bg-gray-800 rounded-lg p-4 shadow-inner">
+                    <div className="text-3xl font-bold text-emerald-600">
+                      {university.courseCount || 0}
+                    </div>
+                    <p className="text-gray-600 dark:text-gray-400">
+                      Available Program{university.courseCount !== 1 ? "s" : ""}
+                    </p>
                   </div>
                 </div>
+
+                {/* Faculties (if available) */}
+                {university.faculties && university.faculties.length > 0 && (
+                  <div className="space-y-4">
+                    <h4 className="text-lg font-bold text-gray-900 dark:text-gray-100">
+                      Faculties ({university.faculties.length})
+                    </h4>
+                    <div className="space-y-2 max-h-60 overflow-y-auto">
+                      {university.faculties.map((faculty) => (
+                        <div
+                          key={faculty.id}
+                          className="p-3 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700"
+                        >
+                          <p className="font-medium text-gray-900 dark:text-gray-100">
+                            {faculty.name}
+                          </p>
+                          {faculty.courseCount !== undefined && (
+                            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                              {faculty.courseCount} course{faculty.courseCount !== 1 ? "s" : ""}
+                            </p>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* CTA */}
+              <div className="mt-8 flex justify-center">
+                <Button
+                  size="lg"
+                  className="bg-emerald-600 hover:bg-emerald-700 text-white px-8"
+                  asChild
+                >
+                  <Link href={`/university/${university.code}/courses`}>
+                    <ExternalLink className="w-5 h-5 mr-2" />
+                    Explore All Courses at {university.name}
+                  </Link>
+                </Button>
               </div>
             </div>
           </td>

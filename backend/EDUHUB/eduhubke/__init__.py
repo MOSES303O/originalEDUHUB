@@ -1,3 +1,4 @@
-# This file can be EMPTY or import base settings
-
 from .settings.base import *
+
+from .celery import app as celery_app
+__all__ = ('celery_app',)

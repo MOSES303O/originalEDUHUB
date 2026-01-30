@@ -1,3 +1,4 @@
+# apps/authentication/views.py
 """
 User Authentication Views for EduPathway Platform
 
@@ -9,57 +10,49 @@ This module provides comprehensive user authentication functionalities including
 - User profile management
 - Account activation and deactivation
 - Subject selection during registration
-
-All views are secured with proper error handling and follow Django REST Framework best practices.
+- Selected courses management (University + KMTC via GenericForeignKey)
 """
 
 from django.contrib.auth import authenticate
 from django.core.mail import send_mail
-from django.template.loader import render_to_string
-from rest_framework.response import Response
-import json
-from django.http import JsonResponse
-from reportlab.lib.pagesizes import letter
-from django.conf import settings
-import traceback
-from rest_framework import permissions
-from rest_framework import status
-from rest_framework.mixins import ListModelMixin, CreateModelMixin, UpdateModelMixin, DestroyModelMixin
-from rest_framework.generics import GenericAPIView
-from django.db import transaction
 from django.utils import timezone
+from rest_framework import status
+from rest_framework.response import Response
+from django.db import transaction
+from django.conf import settings
 from django.core.cache import cache
-from django.http import HttpResponse
-from .models import User, UserProfile, UserSession, UserSelectedCourse
-from rest_framework import status, viewsets
-from rest_framework.views import APIView
+from apps.core.utils import  standardize_phone_number
+from rest_framework import generics, mixins, viewsets
 from rest_framework.permissions import IsAuthenticated, AllowAny
-from rest_framework.throttling import AnonRateThrottle, UserRateThrottle
+from rest_framework.views import APIView
+from drf_spectacular.utils import extend_schema, OpenApiResponse, OpenApiTypes
+from drf_spectacular.types import OpenApiTypes
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.exceptions import TokenError
 from rest_framework.decorators import action
-import logging
-from apps.core.utils import standardize_phone_number, log_user_activity
-from .models import User, UserProfile, UserSession, UserSubject
+from apps.core.utils import logger, standardize_response
+from rest_framework.throttling import AnonRateThrottle, UserRateThrottle
+from apps.core.mixins import APIResponseMixin, RateLimitMixin
+from apps.core.utils import logger,log_user_activity
+from .models import User, UserProfile, UserSession, UserSubject, UserSelectedCourse
 from .serializers import (
     UserRegistrationSerializer,
     UserLoginSerializer,
     UserProfileSerializer,
+    UserSubjectSerializer,
     UserSelectedCourseSerializer,
     PasswordChangeSerializer,
-    UserSubjectSerializer,
+    UserClusterPointsSerializer,
 )
-from apps.core.mixins import APIResponseMixin, RateLimitMixin
+import logging
 
 logger = logging.getLogger(__name__)
 
 class CustomAnonRateThrottle(AnonRateThrottle):
-    """Custom rate throttle for anonymous users"""
     scope = 'anon_auth'
     rate = '10/min'
 
 class CustomUserRateThrottle(UserRateThrottle):
-    """Custom rate throttle for authenticated users"""
     scope = 'user_auth'
     rate = '30/min'
 
@@ -78,47 +71,22 @@ def create_success_response(success=True, message="", data=None, status_code=200
     }, status=status_code)
 
 class UserRegistrationView(RateLimitMixin, APIView):
-    """
-    User Registration View
-    
-    Handles user registration with phone number validation, subject submission, and optional email.
-    Creates user profile and sends welcome email (if email provided).
-    
-    POST /eduhub/auth/register/
-    """
     permission_classes = [AllowAny]
     throttle_classes = [CustomAnonRateThrottle]
     
     def post(self, request):
-        """
-        Register a new user with phone number and subjects
-        
-        Expected JSON payload:
-        {
-            "phone_number": "+254712345678",
-            "password": "moses123",
-            "password_confirm": "moses123",
-            "subjects": [
-                {"subject_id": "uuid1", "grade": "A"},
-                {"subject_id": "uuid2", "grade": "B"},
-                ...
-            ]
-        }
-        """
         try:
             ip_address = self.get_client_ip(request)
             logger.info(f"Registration attempt from IP: {ip_address}, payload: {request.data}")
             
-            # Check rate limiting
             if not self.check_rate_limit(request, 'registration', limit=5, window=3600):
                 return create_error_response(
                     message="Too many registration attempts. Please try again later.",
                     status_code=status.HTTP_429_TOO_MANY_REQUESTS
                 )
             
-            # Check if user already exists
             phone_number = request.data.get('phone_number')
-            if phone_number and User.objects.filter(phone_number=phone_number).exists():
+            if phone_number and User.objects.filter(phone_number=standardize_phone_number(phone_number)).exists():
                 logger.warning(f"Registration attempt with existing phone number: {phone_number}")
                 return create_error_response(
                     message="A user with this phone number already exists. Please log in.",
@@ -126,7 +94,6 @@ class UserRegistrationView(RateLimitMixin, APIView):
                     status_code=status.HTTP_400_BAD_REQUEST
                 )
             
-            # Validate input data
             serializer = UserRegistrationSerializer(data=request.data)
             if not serializer.is_valid():
                 logger.warning(f"Registration validation failed: {serializer.errors}")
@@ -136,17 +103,13 @@ class UserRegistrationView(RateLimitMixin, APIView):
                     status_code=status.HTTP_400_BAD_REQUEST
                 )
             
-            # Create user with transaction
             with transaction.atomic():
-                user = serializer.save()  # Creates user and subjects
-                # Create user profile if it doesn't exist
+                user = serializer.save()
                 UserProfile.objects.get_or_create(user=user)
                 
-                # Generate JWT tokens
                 refresh = RefreshToken.for_user(user)
                 access_token = refresh.access_token
                 
-                # Create user session
                 UserSession.objects.create(
                     user=user,
                     session_key=str(refresh),
@@ -155,7 +118,6 @@ class UserRegistrationView(RateLimitMixin, APIView):
                     is_active=True
                 )
                 
-                # Log successful registration
                 log_user_activity(
                     user=user,
                     action='USER_REGISTERED',
@@ -163,18 +125,9 @@ class UserRegistrationView(RateLimitMixin, APIView):
                     details={'registration_method': 'phone_number'}
                 )
                 
-                # Send welcome email if email provided
-                if user.email:
-                    try:
-                        self.send_welcome_email(user)
-                    except Exception as e:
-                        logger.error(f"Failed to send welcome email to {user.email}: {str(e)}")
-                
-                # Prepare response data
                 user_data = {
                     'id': user.id,
                     'phone_number': user.phone_number,
-                    'email': user.email,
                     'is_active': user.is_active,
                     'date_joined': user.date_joined.isoformat()
                 }
@@ -198,63 +151,26 @@ class UserRegistrationView(RateLimitMixin, APIView):
             logger.error(f"Registration error: {str(e)}", exc_info=True)
             return create_error_response(
                 message="Registration failed due to server error",
-                errors={'detail': str(e), 'stack_trace': traceback.format_exc()},
+                errors={'detail': str(e)},
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
-    
-    def send_welcome_email(self, user):
-        """Send welcome email to newly registered user"""
-        subject = 'Welcome to EduPathway!'
-        message = render_to_string('emails/welcome.html', {
-            'user': user,
-            'site_name': 'EduPathway',
-            'site_url': settings.FRONTEND_URL
-        })
-        
-        send_mail(
-            subject=subject,
-            message='',
-            html_message=message,
-            from_email=settings.DEFAULT_FROM_EMAIL,
-            recipient_list=[user.email],
-            fail_silently=True
-        )
-    
+
     def get_client_ip(self, request):
-        """Get client IP address from request"""
         x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
         if x_forwarded_for:
-            ip = x_forwarded_for.split(',')[0]
-        else:
-            ip = request.META.get('REMOTE_ADDR')
-        return ip
+            return x_forwarded_for.split(',')[0]
+        return request.META.get('REMOTE_ADDR')
+
 class UserLoginView(APIResponseMixin, RateLimitMixin, APIView):
-    """
-    User Login View
-    
-    Authenticates users using phone number and password (default: 'moses123').
-    
-    POST /eduhub/auth/login/
-    """
     permission_classes = [AllowAny]
     throttle_classes = [CustomAnonRateThrottle]
     
     def post(self, request):
-        """
-        Login user with phone number
-        
-        Expected JSON payload:
-        {
-            "phone_number": "+254712345678",
-            "password": "moses123"
-        }
-        """
         try:
             ip_address = self.get_client_ip(request)
-            phone_number = request.data.get('phone_number', '')
-            phone_number = standardize_phone_number(phone_number) if phone_number else ''
-            failed_attempts_key = f"failed_login_{phone_number}_{ip_address}"
-            failed_attempts = cache.get(failed_attempts_key, 0)
+            phone_number = standardize_phone_number(request.data.get('phone_number', ''))
+            failed_key = f"failed_login_{phone_number}_{ip_address}"
+            failed_attempts = cache.get(failed_key, 0)
 
             if failed_attempts >= 5:
                 return self.error_response(
@@ -264,19 +180,17 @@ class UserLoginView(APIResponseMixin, RateLimitMixin, APIView):
             
             serializer = UserLoginSerializer(data=request.data)
             if not serializer.is_valid():
-                cache.set(failed_attempts_key, failed_attempts + 1, 3600)
+                cache.set(failed_key, failed_attempts + 1, 3600)
                 return self.error_response(
-                    message="Invalid login credentials",
+                    message="REGISTER FIRST or INVALID CREDENTIALS",
                     errors=serializer.errors,
                     status_code=status.HTTP_400_BAD_REQUEST
                 )
             
-            phone_number = serializer.validated_data['phone_number']
-            password = serializer.validated_data['password']
-            user = authenticate(request, phone_number=phone_number, password=password)
-
-            if user is None:
-                cache.set(failed_attempts_key, failed_attempts + 1, 3600)
+            user = authenticate(request, phone_number=serializer.validated_data['phone_number'], password=serializer.validated_data['password'])
+            if not user:
+                cache.set(failed_key, failed_attempts + 1, 3600)
+                print(f"Login failed - phone: {phone_number}, password_provided: {'password' in request.data}")
                 return self.error_response(
                     message="Invalid phone number or password",
                     status_code=status.HTTP_401_UNAUTHORIZED
@@ -288,28 +202,22 @@ class UserLoginView(APIResponseMixin, RateLimitMixin, APIView):
                     status_code=status.HTTP_401_UNAUTHORIZED
                 )
 
-            cache.delete(failed_attempts_key)
+            cache.delete(failed_key)
 
             refresh = RefreshToken.for_user(user)
             access_token = refresh.access_token
             user_agent = request.META.get('HTTP_USER_AGENT', '')
 
-            session, created = UserSession.objects.get_or_create(
+            session, _ = UserSession.objects.get_or_create(
                 user=user,
                 ip_address=ip_address,
                 user_agent=user_agent,
-                defaults={
-                    'session_key': str(refresh),
-                    'is_active': True,
-                    'last_activity': timezone.now()
-                }
+                defaults={'session_key': str(refresh), 'is_active': True}
             )
-
-            if not created:
-                session.session_key = str(refresh)
-                session.is_active = True
-                session.last_activity = timezone.now()
-                session.save()
+            session.session_key = str(refresh)
+            session.is_active = True
+            session.last_activity = timezone.now()
+            session.save()
 
             user.last_login = timezone.now()
             user.save(update_fields=['last_login'])
@@ -322,15 +230,13 @@ class UserLoginView(APIResponseMixin, RateLimitMixin, APIView):
             )
 
             try:
-                profile = user.profile
-                profile_data = UserProfileSerializer(profile).data
+                profile_data = UserProfileSerializer(user.profile).data
             except UserProfile.DoesNotExist:
                 profile_data = None
 
             user_data = {
                 'id': user.id,
                 'phone_number': user.phone_number,
-                'email': user.email,
                 'is_active': user.is_active,
                 'last_login': user.last_login.isoformat() if user.last_login else None,
                 'profile': profile_data
@@ -360,35 +266,17 @@ class UserLoginView(APIResponseMixin, RateLimitMixin, APIView):
     def get_client_ip(self, request):
         x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
         if x_forwarded_for:
-            ip = x_forwarded_for.split(',')[0]
-        else:
-            ip = request.META.get('REMOTE_ADDR')
-        return ip
+            return x_forwarded_for.split(',')[0]
+        return request.META.get('REMOTE_ADDR')
 
 class UserLogoutView(APIResponseMixin, APIView):
-    """
-    User Logout View
-    
-    Logs out user by blacklisting their refresh token and deactivating session.
-    
-    POST /eduhub/auth/logout/
-    """
     permission_classes = [IsAuthenticated]
     throttle_classes = [CustomUserRateThrottle]
     
     def post(self, request):
-        """
-        Logout user and invalidate tokens
-        
-        Expected JSON payload:
-        {
-            "refresh": "refresh_token_here"
-        }
-        """
         try:
             ip_address = self.get_client_ip(request)
             user = request.user
-            
             refresh_token = request.data.get('refresh')
             
             if refresh_token:
@@ -400,13 +288,9 @@ class UserLogoutView(APIResponseMixin, APIView):
                         user=user,
                         session_key=refresh_token,
                         is_active=True
-                    ).update(
-                        is_active=False,
-                        logout_time=timezone.now()
-                    )
-                    
+                    ).update(is_active=False, logout_time=timezone.now())
                 except TokenError:
-                    logger.warning(f"Invalid refresh token provided for logout: {user.phone_number}")
+                    logger.warning(f"Invalid refresh token during logout: {user.phone_number}")
             
             log_user_activity(
                 user=user,
@@ -415,7 +299,6 @@ class UserLogoutView(APIResponseMixin, APIView):
                 details={'logout_method': 'manual'}
             )
             
-            logger.info(f"User logged out successfully: {user.phone_number}")
             return self.success_response(
                 message="Logout successful",
                 status_code=status.HTTP_200_OK
@@ -431,151 +314,74 @@ class UserLogoutView(APIResponseMixin, APIView):
     def get_client_ip(self, request):
         x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
         if x_forwarded_for:
-            ip = x_forwarded_for.split(',')[0]
-        else:
-            ip = request.META.get('REMOTE_ADDR')
-        return ip
+            return x_forwarded_for.split(',')[0]
+        return request.META.get('REMOTE_ADDR')
 
-class UserProfileView(APIResponseMixin, APIView):
-    """
-    User Profile Management View
-    
-    Handles user profile retrieval and updates.
-    
-    GET /eduhub/auth/profile/
-    PUT /eduhub/auth/profile/
-    """
+class UserUpdateView(APIResponseMixin, APIView):
     permission_classes = [IsAuthenticated]
-    throttle_classes = [CustomUserRateThrottle]
+    @extend_schema(
+        summary="Update current user's cluster points",
+        description="Partial update of the authenticated user's profile (currently only cluster_points)",
+        request=UserClusterPointsSerializer,
+        responses={
+            200: OpenApiResponse(
+                description="Cluster points updated",
+                response=OpenApiTypes.OBJECT,
+                examples=[{
+                    "message": "Cluster points updated successfully",
+                    "data": {
+                        "cluster_points": "45.670",
+                        "phone_number": "254713760749"
+                    }
+                }]
+            ),
+            400: OpenApiResponse(description="Validation failed"),
+            401: OpenApiResponse(description="Unauthorized")
+        },
+        methods=['PATCH']
+    )
+    def partial_update(self, request, *args, **kwargs):
+        user = request.user
+        ip_address = request.META.get('HTTP_X_FORWARDED_FOR', request.META.get('REMOTE_ADDR', 'unknown'))
     
-    def get(self, request):
-        """Get current user's profile"""
-        try:
-            user = request.user
-            profile, created = UserProfile.objects.get_or_create(user=user)
-            
-            user_data = {
-                'id': user.id,
-                'phone_number': user.phone_number,
-                'email': user.email,
-                'is_active': user.is_active,
-                'date_joined': user.date_joined.isoformat(),
-                'last_login': user.last_login.isoformat() if user.last_login else None
-            }
-            
-            profile_data = UserProfileSerializer(profile).data
-            
-            response_data = {
-                'user': user_data,
-                'profile': profile_data
-            }
-            
-            return self.success_response(
-                message="Profile retrieved successfully",
-                data=response_data,
+        print(f"DEBUG PATCH - Received: {request.data}")
+        print(f"DEBUG Before save - cluster_points: {user.cluster_points}")
+    
+        serializer = UserClusterPointsSerializer(user, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+    
+            user.refresh_from_db()  # ← this line is critical
+    
+            print(f"DEBUG After save - cluster_points: {user.cluster_points}")
+    
+            log_user_activity(
+                user=user,
+                action='CLUSTER_POINTS_UPDATED',
+                ip_address=ip_address,
+                details={'new_value': serializer.validated_data.get('cluster_points')}
+            )
+    
+            return standardize_response(
+                message="Cluster points updated",
+                data={
+                    'cluster_points': str(user.cluster_points) if user.cluster_points else "00.000",
+                    'phone_number': user.phone_number,
+                },
                 status_code=status.HTTP_200_OK
             )
-            
-        except Exception as e:
-            logger.error(f"Profile retrieval error: {str(e)}")
-            return self.error_response(
-                message="Failed to retrieve profile",
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR
-            )
-    
-    def put(self, request):
-        """Update user profile"""
-        try:
-            user = request.user
-            ip_address = self.get_client_ip(request)
-            
-            profile, created = UserProfile.objects.get_or_create(user=user)
-            
-            user_fields = ['email']
-            user_updated = False
-            
-            for field in user_fields:
-                if field in request.data:
-                    setattr(user, field, request.data[field])
-                    user_updated = True
-            
-            if user_updated:
-                user.save()
-            
-            serializer = UserProfileSerializer(profile, data=request.data, partial=True)
-            if serializer.is_valid():
-                serializer.save()
-                
-                log_user_activity(
-                    user=user,
-                    action='PROFILE_UPDATED',
-                    ip_address=ip_address,
-                    details={'updated_fields': list(request.data.keys())}
-                )
-                
-                user_data = {
-                    'id': user.id,
-                    'phone_number': user.phone_number,
-                    'email': user.email,
-                    'is_active': user.is_active,
-                    'date_joined': user.date_joined.isoformat(),
-                    'last_login': user.last_login.isoformat() if user.last_login else None
-                }
-                
-                response_data = {
-                    'user': user_data,
-                    'profile': serializer.data
-                }
-                
-                return self.success_response(
-                    message="Profile updated successfully",
-                    data=response_data,
-                    status_code=status.HTTP_200_OK
-                )
-            else:
-                return self.error_response(
-                    message="Validation failed",
-                    errors=serializer.errors,
-                    status_code=status.HTTP_400_BAD_REQUEST
-                )
-                
-        except Exception as e:
-            logger.error(f"Profile update error: {str(e)}")
-            return self.error_response(
-                message="Failed to update profile",
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR
-            )
-    
-    def get_client_ip(self, request):
-        x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
-        if x_forwarded_for:
-            ip = x_forwarded_for.split(',')[0]
         else:
-            ip = request.META.get('REMOTE_ADDR')
-        return ip
-
+            print(f"DEBUG Validation errors: {serializer.errors}")
+            return standardize_response(
+                message="Validation failed",
+                errors=serializer.errors,
+                status_code=status.HTTP_400_BAD_REQUEST
+            )
 class PasswordChangeView(APIResponseMixin, APIView):
-    """
-    Password Change View
-    
-    Allows authenticated users to change their password.
-    
-    POST /eduhub/auth/change-password/
-    """
     permission_classes = [IsAuthenticated]
     throttle_classes = [CustomUserRateThrottle]
     
     def post(self, request):
-        """
-        Change user password
-        
-        Expected JSON payload:
-        {
-            "old_password": "currentpassword",
-            "new_password": "newpassword123",
-            "new_password_confirm": "newpassword123"
-        }
-        """
         try:
             user = request.user
             ip_address = self.get_client_ip(request)
@@ -600,10 +406,7 @@ class PasswordChangeView(APIResponseMixin, APIView):
             current_session_key = request.data.get('current_session')
             UserSession.objects.filter(user=user).exclude(
                 session_key=current_session_key
-            ).update(
-                is_active=False,
-                logout_time=timezone.now()
-            )
+            ).update(is_active=False, logout_time=timezone.now())
             
             log_user_activity(
                 user=user,
@@ -612,7 +415,6 @@ class PasswordChangeView(APIResponseMixin, APIView):
                 details={'method': 'user_initiated'}
             )
             
-            logger.info(f"Password changed successfully for user: {user.phone_number}")
             return self.success_response(
                 message="Password changed successfully",
                 status_code=status.HTTP_200_OK
@@ -628,37 +430,19 @@ class PasswordChangeView(APIResponseMixin, APIView):
     def get_client_ip(self, request):
         x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
         if x_forwarded_for:
-            ip = x_forwarded_for.split(',')[0]
-        else:
-            ip = request.META.get('REMOTE_ADDR')
-        return ip
+            return x_forwarded_for.split(',')[0]
+        return request.META.get('REMOTE_ADDR')
 
 class TokenRefreshView(APIResponseMixin, APIView):
-    """
-    Token Refresh View
-    
-    Refreshes access token using refresh token.
-    
-    POST /eduhub/auth/refresh/
-    """
     permission_classes = [AllowAny]
     throttle_classes = [CustomUserRateThrottle]
     
     def post(self, request):
-        """
-        Refresh access token
-        
-        Expected JSON payload:
-        {
-            "refresh": "refresh_token_here"
-        }
-        """
         try:
             refresh_token = request.data.get('refresh')
             ip_address = self.get_client_ip(request)
             
             if not refresh_token:
-                logger.warning("Token refresh attempt without refresh token")
                 return self.error_response(
                     message="Refresh token is required",
                     status_code=status.HTTP_400_BAD_REQUEST
@@ -681,7 +465,6 @@ class TokenRefreshView(APIResponseMixin, APIView):
                     session.last_activity = timezone.now()
                     session.save()
                 else:
-                    logger.warning(f"No active session found for refresh token: user_id={user_id}")
                     return self.error_response(
                         message="No active session found for this token",
                         status_code=status.HTTP_401_UNAUTHORIZED
@@ -700,15 +483,12 @@ class TokenRefreshView(APIResponseMixin, APIView):
                     status_code=status.HTTP_200_OK
                 )
                 
-            except TokenError as e:
-                logger.warning(f"Invalid refresh token: {str(e)}")
+            except TokenError:
                 return self.error_response(
                     message="Invalid or expired refresh token",
                     status_code=status.HTTP_401_UNAUTHORIZED
                 )
-            
             except User.DoesNotExist:
-                logger.warning(f"User not found for refresh token: user_id={user_id}")
                 return self.error_response(
                     message="User not found",
                     status_code=status.HTTP_401_UNAUTHORIZED
@@ -724,23 +504,13 @@ class TokenRefreshView(APIResponseMixin, APIView):
     def get_client_ip(self, request):
         x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
         if x_forwarded_for:
-            ip = x_forwarded_for.split(',')[0]
-        else:
-            ip = request.META.get('REMOTE_ADDR')
-        return ip
+            return x_forwarded_for.split(',')[0]
+        return request.META.get('REMOTE_ADDR')
 
 class UserSubjectViewSet(APIResponseMixin, viewsets.ModelViewSet):
-    """
-    ViewSet to manage user subjects.
-    
-    GET /eduhub/auth/subjects/
-    POST /eduhub/auth/subjects/
-    POST /eduhub/auth/subjects/bulk_create/
-    """
     queryset = UserSubject.objects.all()
     serializer_class = UserSubjectSerializer
     permission_classes = [IsAuthenticated]
-    throttle_classes = [CustomUserRateThrottle]
     
     def get_queryset(self):
         return UserSubject.objects.filter(user=self.request.user).order_by('subject__name')
@@ -756,18 +526,6 @@ class UserSubjectViewSet(APIResponseMixin, viewsets.ModelViewSet):
     
     @action(detail=False, methods=['post'], url_path='bulk_create')
     def bulk_create(self, request):
-        """
-        Bulk create subjects for a user.
-        
-        Expected JSON payload:
-        {
-            "subjects": [
-                {"subject_id": "uuid1", "grade": "A"},
-                {"subject_id": "uuid2", "grade": "B"},
-                ...
-            ]
-        }
-        """
         try:
             subjects_data = request.data.get('subjects', [])
             if not subjects_data:
@@ -831,109 +589,153 @@ class UserSubjectViewSet(APIResponseMixin, viewsets.ModelViewSet):
     def get_client_ip(self, request):
         x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
         if x_forwarded_for:
-            ip = x_forwarded_for.split(',')[0]
-        else:
-            ip = request.META.get('REMOTE_ADDR')
-        return ip
+            return x_forwarded_for.split(',')[0].strip()
+        return request.META.get('REMOTE_ADDR', 'unknown')
 
-# In apps/authentication/user_views.py, update UserSelectedCoursesView
-class UserSelectedCoursesView(APIResponseMixin, GenericAPIView, ListModelMixin, CreateModelMixin):
-    permission_classes = [permissions.IsAuthenticated]
+class UserSelectedCoursesView(
+    APIResponseMixin,
+    generics.GenericAPIView,
+    mixins.ListModelMixin,
+    mixins.DestroyModelMixin,
+):
+    permission_classes = [IsAuthenticated]
     serializer_class = UserSelectedCourseSerializer
 
     def get_queryset(self):
-        try:
-            queryset = UserSelectedCourse.objects.filter(user=self.request.user)
-            print(f"Queryset for user {self.request.user.phone_number}: {list(queryset.values('id', 'course__id', 'course__name'))}")
-            return queryset
-        except Exception as e:
-            print(f"Error in get_queryset: {str(e)}")
-            return UserSelectedCourse.objects.none()
-
-    def perform_create(self, serializer):
-        print(f"Creating selected course for user: {self.request.user.phone_number}, course: {self.request.data.get('course')}")
-        serializer.save(user=self.request.user)
-        log_user_activity(
-            user=self.request.user,
-            action='COURSE_SELECTED',
-            ip_address=self.get_client_ip(self.request),
-            details={'course_code': str(self.request.data.get('course'))}
-        )
+        return UserSelectedCourse.objects.filter(user=self.request.user).order_by('-created_at')
 
     def get(self, request, *args, **kwargs):
-        try:
-            queryset = self.get_queryset()
-            serializer = self.get_serializer(queryset, many=True)
-            response_data = serializer.data or []
-            print(f"Listed selected courses for user: {request.user.phone_number}, response: {response_data}")
-            return self.success_response(
-                message="Selected courses retrieved successfully",
-                data=response_data,
-                status_code=status.HTTP_200_OK
+        return self.list(request, *args, **kwargs)
+
+    def post(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        if not serializer.is_valid():
+            logger.warning(f"Selected course validation failed for user {request.user.phone_number}: {serializer.errors}")
+            return create_error_response(
+                message="Invalid data",
+                errors=serializer.errors,
+                status_code=status.HTTP_400_BAD_REQUEST
             )
-        except Exception as e:
-            print(f"Error listing selected courses: {str(e)}")
-            return self.success_response(
-                message="Selected courses retrieved successfully",
-                data=[],
+
+        course_info = serializer.validated_data['course_info']
+
+        # Idempotent: get or create — no error if already selected
+        obj, created = UserSelectedCourse.objects.get_or_create(
+            user=request.user,
+            content_type=course_info['content_type'],
+            object_id=course_info['object_id'],
+            defaults={
+                'course_name': course_info['course_name'],
+                'institution': course_info['institution'],
+                'is_applied': False
+            }
+        )
+
+        if created:
+            message = "Course added to your selection"
+            status_code = status.HTTP_201_CREATED
+            logger.info(f"Course selected: {obj.course_name} ({obj.institution}) by {request.user.phone_number}")
+        else:
+            message = "Course already selected"
+            status_code = status.HTTP_200_OK
+            logger.info(f"Duplicate selection ignored: {obj.course_name} for {request.user.phone_number}")
+
+        log_user_activity(
+            user=request.user,
+            action='COURSE_SELECTED' if created else 'COURSE_ALREADY_SELECTED',
+            ip_address=self.get_client_ip(request),
+            details={
+                'course_code': request.data.get('course_code'),
+                'course_name': obj.course_name,
+                'institution': obj.institution,
+                'created': created
+            }
+        )
+
+        return create_success_response(
+            success=True,
+            message=message,
+            data=UserSelectedCourseSerializer(obj).data,
+            status_code=status_code
+        )
+
+    def delete(self, request, *args, **kwargs):
+    # If pk is provided in URL (e.g. /selected-courses/<uuid>/), use traditional delete
+        if 'pk' in kwargs:
+            instance = self.get_object()
+            log_user_activity(
+                user=request.user,
+                action='COURSE_DESELECTED',
+                ip_address=self.get_client_ip(request),
+                details={
+                    'course_name': instance.course_name,
+                    'institution': instance.institution
+                }
+            )
+            logger.info(f"Course deselected: {instance.course_name} ({instance.institution}) by {request.user.phone_number}")
+            self.perform_destroy(instance)
+            return create_success_response(
+                success=True,
+                message="Course removed from your selection",
+                data=None,
                 status_code=status.HTTP_200_OK
             )
 
-    def post(self, request, *args, **kwargs):
-        try:
-            serializer = self.get_serializer(data=request.data)
-            serializer.is_valid(raise_exception=True)
-            self.perform_create(serializer)
-            print(f"Course selected for user: {request.user.phone_number}, response: {serializer.data}")
-            return self.success_response(
-                message="Course selected successfully",
-                data=serializer.data,
-                status_code=status.HTTP_201_CREATED
-            )
-        except Exception as e:
-            print(f"Error creating selected course: {str(e)}")
-            return self.error_response(
-                message="Failed to select course",
-                errors={'detail': str(e)},
+        # New: Delete by course_name + institution (query params)
+        course_name = request.query_params.get('course_name')
+        institution = request.query_params.get('institution')
+
+        if not course_name or not institution:
+            return create_error_response(
+                message="course_name and institution required for deletion",
                 status_code=status.HTTP_400_BAD_REQUEST
             )
-    def delete(self, request, *args, **kwargs):
+
         try:
-            instance = self.get_object()
-            course_code = str(instance.course.code)
-            print(f"Deselecting course {course_code} for user: {request.user.phone_number}")
-            self.perform_destroy(instance)
+            instance = UserSelectedCourse.objects.get(
+                user=request.user,
+                course_name=course_name,
+                institution=institution
+            )
             log_user_activity(
-                user=self.request.user,
+                user=request.user,
                 action='COURSE_DESELECTED',
-                ip_address=self.get_client_ip(self.request),
-                details={'course_code': course_code}
+                ip_address=self.get_client_ip(request),
+                details={
+                    'course_name': instance.course_name,
+                    'institution': instance.institution
+                }
             )
-            return self.success_response(
-                message="Course deselected successfully",
+            logger.info(f"Course deselected by name: {instance.course_name} ({instance.institution}) by {request.user.phone_number}")
+            instance.delete()
+            return create_success_response(
+                success=True,
+                message="Course removed from your selection",
                 data=None,
-                status_code=status.HTTP_204_NO_CONTENT
+                status_code=status.HTTP_200_OK
+            )
+        except UserSelectedCourse.DoesNotExist:
+            # Idempotent: already gone → success
+            return create_success_response(
+                success=True,
+                message="Course already removed",
+                data=None,
+                status_code=status.HTTP_200_OK
             )
         except Exception as e:
-            print(f"Error deselecting course: {str(e)}")
-            return self.error_response(
-                message="Failed to deselect course",
-                errors={'detail': str(e)},
-                status_code=status.HTTP_400_BAD_REQUEST
+            logger.error(f"Delete error: {str(e)}")
+            return create_error_response(
+                message="Failed to remove course",
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
 
     def get_client_ip(self, request):
         x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
         if x_forwarded_for:
-            return x_forwarded_for.split(',')[0]
-        return request.META.get('REMOTE_ADDR')
-   
+            return x_forwarded_for.split(',')[0].strip()
+        return request.META.get('REMOTE_ADDR', 'unknown')
+
 class UserApplicationsView(APIResponseMixin, APIView):
-    """
-    View applications submitted by the user
-    
-    GET /eduhub/user/applications/
-    """
     permission_classes = [IsAuthenticated]
     throttle_classes = [CustomUserRateThrottle]
     
@@ -947,44 +749,24 @@ class UserApplicationsView(APIResponseMixin, APIView):
             status_code=status.HTTP_200_OK
         )
 
-# ----------------------------------------------------------------------
-#  CONTACT FORM – CLASS-BASED VIEW (replaces the old function)
-# ----------------------------------------------------------------------
 class ContactFormView(APIResponseMixin, RateLimitMixin, APIView):
-    """
-    Contact Form Submission
-
-    POST /eduhub/auth/contact/submit/
-    """
     permission_classes = [AllowAny]
-    throttle_classes = [CustomAnonRateThrottle]   # same as registration/login
+    throttle_classes = [CustomAnonRateThrottle]
 
     def post(self, request):
-        """
-        Expected JSON payload:
-        {
-            "name": "John Doe",
-            "email": "john@example.com",
-            "phone": "+254712345678",
-            "subject": "Need help",
-            "message": "I have a question..."
-        }
-        """
         try:
             ip_address = self.get_client_ip(request)
 
-            # ---- optional per-IP rate-limit (you already have the helper) ----
             if not self.check_rate_limit(request, 'contact', limit=5, window=3600):
                 return self.error_response(
                     message="Too many contact attempts. Try again later.",
                     status_code=status.HTTP_429_TOO_MANY_REQUESTS,
                 )
 
-            # ---- extract fields ------------------------------------------------
             data = request.data
-            name    = data.get('name')
-            email   = data.get('email')
-            phone   = data.get('phone', '')
+            name = data.get('name')
+            email = data.get('email')
+            phone = data.get('phone', '')
             subject = data.get('subject')
             message = data.get('message')
 
@@ -994,7 +776,6 @@ class ContactFormView(APIResponseMixin, RateLimitMixin, APIView):
                     status_code=status.HTTP_400_BAD_REQUEST,
                 )
 
-            # ---- admin email ---------------------------------------------------
             admin_subject = f"New Contact: {subject}"
             admin_body = f"""
             Name: {name}
@@ -1013,7 +794,6 @@ class ContactFormView(APIResponseMixin, RateLimitMixin, APIView):
                 fail_silently=False,
             )
 
-            # ---- auto-reply to the user ----------------------------------------
             user_subject = "Thank you for contacting EduHub!"
             user_body = (
                 f"Hi {name},\n\n"
@@ -1028,7 +808,6 @@ class ContactFormView(APIResponseMixin, RateLimitMixin, APIView):
                 fail_silently=True,
             )
 
-            # ---- logging -------------------------------------------------------
             logger.info(
                 f"Contact form submitted – IP: {ip_address} – Name: {name} – Email: {email}"
             )
@@ -1047,9 +826,6 @@ class ContactFormView(APIResponseMixin, RateLimitMixin, APIView):
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
 
-    # ----------------------------------------------------------------------
-    # Helper – same as in other views
-    # ----------------------------------------------------------------------
     def get_client_ip(self, request):
         x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
         if x_forwarded_for:

@@ -1,62 +1,70 @@
+# universities/admin.py — FINAL & GOLD STANDARD
 from django.contrib import admin
-from .models import University, Faculty, Department, UniversityRequirement
-
-
-class DepartmentInline(admin.TabularInline):
-    model = Department
-    extra = 1
-
-
-class FacultyInline(admin.TabularInline):
-    model = Faculty
-    extra = 1
-    show_change_link = True
-
-
-class UniversityRequirementInline(admin.TabularInline):
-    model = UniversityRequirement
-    extra = 1
+from django.utils.html import format_html
+from .models import (
+    University,
+    Faculty,
+    Department,
+    UniversityRequirement,
+)
 
 
 @admin.register(University)
 class UniversityAdmin(admin.ModelAdmin):
-    list_display = ('name', 'code', 'city','campus','accreditation','ranking', 'is_active')
-    list_filter = ('is_active', 'city')
-    search_fields = ('name', 'code','campus', 'description')
-    prepopulated_fields = {'slug': ('name',)}
-    inlines = [FacultyInline, UniversityRequirementInline]
-
+    list_display = ('name', 'code', 'city', 'type', 'ranking','description','is_active', 'get_courses_count')
+    list_filter = ('type', 'city', 'is_active', 'ranking')
+    search_fields = ('name', 'code', 'city', 'description')
     fieldsets = (
-        ('Basic Info', {
-            'fields': ('name', 'slug', 'code', 'city','campus')  # ✅ Add slug here
+        (None, {
+            'fields': ('name','code', 'type', 'city')
         }),
         ('Details', {
-            'fields': ('website', 'description', 'established_year','accreditation','logo')
+            'fields': ('description', 'website', 'accreditation', 'logo', 'ranking', 'established_year'),
+            'classes': ('collapse',)
         }),
-        ('Status & Metadata', {
-            'fields': ('is_active',)
+        ('Status', {
+            'fields': ('is_active',),
         }),
     )
 
+    def get_queryset(self, request):
+        qs = super().get_queryset(request)
+        # CHANGE THIS LINE
+        return qs.prefetch_related('offerings')  # or 'courseoffering_set' if no related_name
+        # OLD: return qs.prefetch_related('courses_offered')
+
+    def get_courses_count(self, obj):
+        return obj.offerings.count()  # or obj.courseoffering_set.count()
+    get_courses_count.short_description = "Courses Offered"
 @admin.register(Faculty)
 class FacultyAdmin(admin.ModelAdmin):
-    list_display = ('name', 'university', 'is_active')
-    list_filter = ('university', 'is_active')
-    search_fields = ('name', 'description')
-    prepopulated_fields = {'slug': ('name',)}
-    inlines = [DepartmentInline]
+    list_display = ('name', 'departments_count')
+    search_fields = ('name',)
+    readonly_fields = ('departments_count',)
+
+    def departments_count(self, obj):
+        count = obj.departments.count()
+        return format_html(f'<b>{count}</b> departments')
+    departments_count.short_description = "Departments"
 
 
 @admin.register(Department)
 class DepartmentAdmin(admin.ModelAdmin):
-    list_display = ('name', 'faculty', 'is_active')
-    list_filter = ('faculty', 'is_active')
-    search_fields = ('name', 'description')
-    prepopulated_fields = {'slug': ('name',)}
+    list_display = ('name', 'faculty', 'courses_count')
+    list_filter = ('faculty__name','slug')
+    search_fields = ('name', 'faculty__name')
 
+    def courses_count(self, obj):
+        count = obj.courses.count()
+        return format_html(f'<b>{count}</b> courses')
+    courses_count.short_description = "Courses"
+
+    def get_queryset(self, request):
+        return super().get_queryset(request).select_related('faculty')
 
 @admin.register(UniversityRequirement)
 class UniversityRequirementAdmin(admin.ModelAdmin):
-    list_display = ('title', 'university', 'min_grade', 'is_active')
-    list_filter = ('university', 'is_active')
-    search_fields = ('title', 'description')
+    list_display = ('university', 'title', 'min_grade')
+    list_filter = ('university__name', 'min_grade')
+    search_fields = ('university__name', 'title', 'description')
+    autocomplete_fields = ('university',)
