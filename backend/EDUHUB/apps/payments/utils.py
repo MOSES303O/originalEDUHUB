@@ -1,12 +1,7 @@
 # payments/utils.py — FINAL VERSION WITH 6-HOUR PLAN + 24-HOUR RENEWAL GRACE
 from django_daraja.mpesa.core import MpesaClient
 from django.conf import settings
-from django.utils import timezone
-from datetime import timedelta
-from decimal import Decimal
 import logging
-from apps.authentication.models import User, UserSubject, UserSelectedCourse
-from .models import Payment, Subscription
 from apps.core.utils import log_user_activity
 
 logger = logging.getLogger(__name__)

@@ -228,10 +228,15 @@ MPESA_CONSUMER_KEY = config('MPESA_CONSUMER_KEY')
 MPESA_CONSUMER_SECRET = config('MPESA_CONSUMER_SECRET')
 MPESA_SHORTCODE = config('MPESA_SHORTCODE')
 MPESA_PASSKEY = config('MPESA_PASSKEY')
-CALLBACK_URL = config('CALLBACK_URL')  # Full URL from .env
-
-# Optional: extract base URL
-BASE_URL = CALLBACK_URL.replace('/eduhub/payments/mpesa/callback/', '').rstrip('/')
+CALLBACK_URL = config(
+    'CALLBACK_URL',
+    default='https://brunilda-seminationalized-affinely.ngrok-free.dev/eduhub/payments/mpesa/callback/'
+)
+#if not DEBUG:
+    # Auto-detect Render domain if CALLBACK_URL not set
+    #if 'RENDER' in os.environ.get('HOSTNAME', ''):
+        #BASE_DOMAIN = f"https://{os.environ.get('RENDER_EXTERNAL_HOSTNAME', 'localhost')}"
+       # CALLBACK_URL = f"{BASE_DOMAIN}/eduhub/payments/mpesa/callback/"
 
 # Security
 SECURE_BROWSER_XSS_FILTER = True

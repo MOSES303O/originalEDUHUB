@@ -1,4 +1,3 @@
-// frontend/components/authentication-modal.tsx
 "use client";
 
 import React, { useState, useEffect } from "react";
@@ -21,16 +20,19 @@ interface AuthenticationModalProps {
 }
 
 export function AuthenticationModal({ onClose, canClose }: AuthenticationModalProps) {
-  const [phoneNumber, setPhoneNumber] = useState(""); // User types full 10 digits: 0712345678
+  const [phoneNumber, setPhoneNumber] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState("");
   const [noSubscription, setNoSubscription] = useState(false);
   const [countdown, setCountdown] = useState(10);
   const [mounted, setMounted] = useState(false);
   const [showFindCourseForm, setShowFindCourseForm] = useState(false);
+
   const { 
     renewalEligible, 
-    renewSubscription,   // from auth-context
+    renewSubscription,
+    user,               // ← added to detect changes
+    requirePayment      // ← added to detect subscription status
   } = useAuth();
 
   const { toast } = useToast();
@@ -38,7 +40,13 @@ export function AuthenticationModal({ onClose, canClose }: AuthenticationModalPr
 
   useEffect(() => setMounted(true), []);
 
- // authentication-modal.tsx — FINAL
+  // Re-trigger modal if auth state changes (e.g. logout, subscription expiry)
+  useEffect(() => {
+    if (!user || requirePayment) {
+      setNoSubscription(requirePayment && !!user); // Show renewal if user exists but expired
+    }
+  }, [user, requirePayment]);
+
   useEffect(() => {
     if (noSubscription && countdown > 0) {
       const timer = setTimeout(() => setCountdown(c => c - 1), 1000);
@@ -48,23 +56,18 @@ export function AuthenticationModal({ onClose, canClose }: AuthenticationModalPr
     }
   }, [noSubscription, countdown]);
 
-  // PERFECT KENYAN PHONE CLEANER
   const getCleanPhone = (input: string): string => {
-    if (input.startsWith("0")) {
-      return "254" + input.slice(1);        // 0712345678 → 254712345678
-    }
-    if (input.startsWith("254")) {
-      return input;                         // 254712345678 → 254712345678
-    }
-    return "254" + input;                   // 712345678 → 254712345678
+    if (input.startsWith("0")) return "254" + input.slice(1);
+    if (input.startsWith("254")) return input;
+    return "254" + input;
   };
+
   const handleRenew = async () => {
     setIsSubmitting(true);
     try {
-      await renewSubscription();  // calls /payments/renew/
+      await renewSubscription();
       toast({ title: "Renewed!", description: "Premium access restored." });
       onClose();
-      // Re-login automatically or redirect
       router.push("/courses");
     } catch (err: any) {
       toast({ title: "Renewal Failed", description: err.message, variant: "destructive" });
@@ -78,46 +81,44 @@ export function AuthenticationModal({ onClose, canClose }: AuthenticationModalPr
     setError("");
     setNoSubscription(false);
     setCountdown(10);
-  
+
     if (phoneNumber.length !== 10 || !/^0[71]/.test(phoneNumber)) {
       const msg = "Please enter a valid 10-digit Kenyan number (e.g., 0712345678)";
       setError(msg);
       toast({ title: "Invalid Number", description: msg, variant: "destructive" });
       return;
     }
-  
-    const cleanPhone = "254" + phoneNumber.slice(1); // 0712345678 → 254712345678
-  
+
+    const cleanPhone = getCleanPhone(phoneNumber);
+
     setIsSubmitting(true);
-  
+
     try {
       console.log("Modal: Logging in with:", cleanPhone);
       const loginResponse = await login(cleanPhone, "&mo1se2s3@");
-  
+
       console.log("Modal: Login SUCCESS:", loginResponse);
-  
-      // THIS IS THE MISSING MAGIC — SAME AS /login/page.tsx
+
       localStorage.setItem("token", loginResponse.tokens.access);
       if (loginResponse.tokens.refresh) {
         localStorage.setItem("refreshToken", loginResponse.tokens.refresh);
       }
       localStorage.setItem("phone_number", loginResponse.user.phone_number);
-  
-      // CRITICAL: FORCE AUTH CONTEXT TO UPDATE
+
+      // Force auth refresh across app
       window.dispatchEvent(new Event("storage"));
-      window.dispatchEvent(new Event("auth-change")); // if you have custom event
-  
+      window.dispatchEvent(new Event("auth-change"));
+
       const isPremium = loginResponse.user.is_premium === true;
-  
-       // In handleSubmit after login:
-       if (isPremium) {
-         toast({ title: "Welcome back!", description: "You have 6 hours of premium access" });
-         onClose();
-         router.push("/courses");
-       } else {
-         setNoSubscription(true);
-         toast({ title: "Subscription Expired", description: "Your access has ended. Renew now for 50 KES or pay 100 KES for new access." });
-       }
+
+      if (isPremium) {
+        toast({ title: "Welcome back!", description: "You have 6 hours of premium access" });
+        onClose();
+        router.push("/courses");
+      } else {
+        setNoSubscription(true);
+        toast({ title: "Subscription Expired", description: "Your access has ended. Renew now for 50 KES or pay 210 KES for new access." });
+      }
     } catch (err: any) {
       console.error("Modal: Login failed:", err);
       const msg = err.message || "Invalid phone number or password";
@@ -128,23 +129,50 @@ export function AuthenticationModal({ onClose, canClose }: AuthenticationModalPr
     }
   };
 
+  // Prevent modal from closing if auth is still required
+  const handleClose = () => {
+    if (!user || requirePayment) {
+      // Don't allow close if still unauthenticated or expired
+      toast({
+        title: "Action Required",
+        description: "Please login or renew to continue.",
+        variant: "destructive",
+      });
+      return;
+    }
+    onClose();
+  };
+
   if (!mounted) return null;
 
   const modalContent = showFindCourseForm ? (
-    <FindCourseForm onClose={onClose} setShowFindCourseForm={setShowFindCourseForm} />
+    <FindCourseForm 
+      onClose={() => {
+        setShowFindCourseForm(false);
+        // Re-open login modal if still required
+        if (!user || requirePayment) {
+          // Do nothing — keep modal open (prevents closing bug)
+        } else {
+          onClose();
+        }
+      }} 
+      setShowFindCourseForm={setShowFindCourseForm} 
+    />
   ) : (
-    <Card className="w-full max-w-md  bg-gray-900 ">
+    <Card className="w-full max-w-md bg-gray-900">
       <CardHeader>
         <div className="flex items-center justify-between">
-          <Button variant="ghost" size="icon" onClick={() => { router.push("/"); onClose(); }}>
+          <Button variant="ghost" size="icon" onClick={handleClose} disabled={!canClose}>
             <ArrowLeft className="h-5 w-5" />
           </Button>
           <CardTitle className="text-2xl">Login</CardTitle>
-          <Button variant="ghost" size="icon" onClick={onClose} disabled={!canClose}>
+          <Button variant="ghost" size="icon" onClick={handleClose} disabled={!canClose}>
             <X className="h-5 w-5" />
           </Button>
         </div>
-        <CardDescription>YOUR SUBSCRIPTION EXISTS.....??</CardDescription>
+        <CardDescription>
+          {noSubscription ? "Your subscription has expired" : "Enter your phone number to continue"}
+        </CardDescription>
       </CardHeader>
 
       <form onSubmit={handleSubmit}>
@@ -220,7 +248,7 @@ export function AuthenticationModal({ onClose, canClose }: AuthenticationModalPr
             </Button>
           </CardFooter>
         )}
-        {/* NEW: Renewal prompt when eligible */}
+
         {noSubscription && renewalEligible && (
           <CardFooter className="flex flex-col gap-4">
             <p className="text-center text-sm text-gray-400">
@@ -239,6 +267,7 @@ export function AuthenticationModal({ onClose, canClose }: AuthenticationModalPr
       </form>
     </Card>
   );
+
   return createPortal(
     <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
       {modalContent}
