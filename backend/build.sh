@@ -31,7 +31,6 @@ password = os.environ.get('DJANGO_SUPERUSER_PASSWORD')
 if phone and password and not User.objects.filter(phone_number=phone).exists():
     User.objects.create_superuser(
         phone_number=phone,
-        email=email or '',
         password=password
     )
     print(f"Superuser created: {phone}")
