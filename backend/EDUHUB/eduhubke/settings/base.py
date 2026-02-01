@@ -169,6 +169,7 @@ ALLOWED_HOSTS = [
     'localhost',
     '127.0.0.1',
     '.ngrok-free.dev',
+    'originaleduhub.onrender.com',
 ]
 # CORS
 CORS_ALLOWED_ORIGINS = [

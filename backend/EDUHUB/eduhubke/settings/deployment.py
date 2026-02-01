@@ -10,7 +10,7 @@ DEBUG = False
 SECRET_KEY = os.environ.get("SECRET_KEY")
 
 ALLOWED_HOSTS = [os.environ.get("RENDER_EXTERNAL_HOSTNAME") ,
-    'localhost',]
+    'localhost','originaleduhub.onrender.com',]
 
 CSRF_TRUSTED_ORIGINS =  CSRF_TRUSTED_ORIGINS +[
     f"https://{os.environ.get('RENDER_EXTERNAL_HOSTNAME')}",
