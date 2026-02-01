@@ -35,7 +35,8 @@ DATABASES = {
         conn_max_age=600
     )
 }
-
+print("===== USING DEPLOYMENT SETTINGS =====")
+print("DB ENGINE:", DATABASES['default']['ENGINE'])
 # Security
 SECURE_SSL_REDIRECT = True
 SESSION_COOKIE_SECURE = True

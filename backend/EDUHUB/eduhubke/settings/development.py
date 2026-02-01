@@ -22,6 +22,7 @@ if os.environ.get('RENDER_EXTERNAL_HOSTNAME'):
 # DO NOT redefine CORS settings — base.py already has them
 
 # Database
+#THIS IS TEMPORARY FOR DEVELOPMENT PURPOSES ONLY:::
 DATABASES = {
     'default': dj_database_url.config(
         default='sqlite:///' + str(BASE_DIR / 'db.sqlite3'),
