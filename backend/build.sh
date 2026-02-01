@@ -10,9 +10,12 @@ cd EDUHUB  # <-- THIS IS THE KEY LINE
 echo "Collecting static files..."
 python manage.py collectstatic --no-input
 
-echo "Running migrations..."
-python manage.py migrate
+echo "3. Running migrations (force apply)..."
+python manage.py makemigrations --noinput || true
+python manage.py migrate --noinput --verbosity 3
 
+echo "4. Verify database connection and tables..."
+echo "5. Superuser check/create..."
 echo "Build complete!"
 
 #if [[$CREATE_SUPERUSER]];"
@@ -20,6 +23,12 @@ echo "Build complete!"
 #    python manage.py createsuperuser --no-input
 #fi
 # Create superuser using CORRECT app path
+python manage.py dbshell << EOF
+\conninfo
+\dt courses_*
+SELECT count(*) FROM courses_subject;
+
+echo "5. Superuser check/create..."
 python manage.py shell << EOF
 from apps.authentication.models import User
 import os
