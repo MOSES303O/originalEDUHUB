@@ -28,10 +28,12 @@ def root_view(request):
                 <li style="margin: 0.8rem 0;"><a href="/admin/" style="color: #fff; text-decoration: underline;">Admin Panel</a></li>
                 <li style="margin: 0.8rem 0;"><a href="/api/docs/" style="color: #fff; text-decoration: underline;">API Documentation (Swagger)</a></li>
                 <li style="margin: 0.8rem 0;"><a href="/eduhub/auth/register/" style="color: #fff; text-decoration: underline;">Register User</a></li>
-                <li style="margin: 0.8rem 0;"><a href="/eduhub/courses/courses/" style="color: #fff; text-decoration: underline;">courses</a></li>
+                <li style="margin: 0.8rem 0;"><a href="/eduhub/courses/programs/" style="color: #fff; text-decoration: underline;">courses</a></li>
                 <li style="margin: 0.8rem 0;"><a href="/eduhub/universities/universities/" style="color: #fff; text-decoration: underline;">universities</a></li>
                 <li style="margin: 0.8rem 0;"><a href="/eduhub/auth/contact/submit/" style="color: #fff; text-decoration: underline;">Contact Form Test</a></li>
-                <li style="margin: 0.8rem 0;"><a href="/health/" style="color: #fff; text-decoration: underline;">Health Check</a></li>
+                <li style="margin: 0.8rem 0;"><a href="/courses/offerings/" style="color: #fff; text-decoration: underline;">courses offerings</a></li>
+                <li style="margin: 0.8rem 0;"><a href="/user/selected-courses/" style="color: #fff; text-decoration: underline;">selected courses</a></li>
+                <li style="margin: 0.8rem 0;"><a href="/kmtc/programmes" style="color: #fff; text-decoration: underline;">KMTC</a></li>       
             </ul>
         </div>
         <p style="margin-top: 2rem; font-size: 0.9rem; opacity: 0.9;">

@@ -17,14 +17,4 @@ else:
 
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", settings_module)
 
-# Add these debug prints – they will show in runtime logs on startup
-print("===== DJANGO SETTINGS DEBUG =====")
-print(f"Detected on Render: {is_on_render}")
-print(f"Loaded settings module: {settings_module}")
-print(f"RENDER: {os.environ.get('RENDER', 'NOT SET')}")
-print(f"RENDER_SERVICE_TYPE: {os.environ.get('RENDER_SERVICE_TYPE', 'NOT SET')}")
-print(f"RENDER_EXTERNAL_HOSTNAME: {os.environ.get('RENDER_EXTERNAL_HOSTNAME', 'NOT SET')}")
-print(f"RENDER_EXTERNAL_URL: {os.environ.get('RENDER_EXTERNAL_URL', 'NOT SET')}")
-print(f"DATABASE_URL present: {'DATABASE_URL' in os.environ}")
-
 application = get_asgi_application()

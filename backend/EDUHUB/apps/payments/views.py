@@ -60,11 +60,20 @@ class ActiveSubscriptionView(BaseAPIView):
             )
          # No active sub → check if renewal eligible
         latest_sub = Subscription.objects.filter(user=user).order_by('-end_date').first()
+        # In ActiveSubscriptionView.get()
         if latest_sub and latest_sub.is_renewal_eligible:
+            renewal_deadline = latest_sub.end_date + timedelta(hours=24)
+            hours_left = max(0, int((renewal_deadline - timezone.now()).total_seconds() // 3600))
+
             return standardize_response(
                 success=False,
-                message="Subscription expired but renewal eligible",
-                data={"renewal_eligible": True},
+                message=f"Premium expired. Renew for KSh 50 within {hours_left}h",
+                data={
+                    "renewal_eligible": True,
+                    "renewal_price": 50,
+                    "hours_remaining": hours_left,
+                    "renewal_deadline": renewal_deadline.isoformat()
+                },
                 status_code=402  # Payment Required
             )
 
@@ -326,7 +335,7 @@ class RenewSubscriptionView(APIView):
         # For testing: short durations
         now = timezone.now()
         user.is_premium = True
-        user.premium_expires_at = now + timedelta(minutes=5)   # ← change to hours=6 later
+        user.premium_expires_at = now + timedelta(minutes=6)   # ← change to hours=6 later
         user.account_expires_at = now + timedelta(minutes=10)  # ← change to hours=24 later
         user.save(update_fields=['is_premium', 'premium_expires_at', 'account_expires_at'])
 

@@ -288,3 +288,22 @@ export interface CourseSubjectRequirement {
   is_mandatory?: boolean;
   cluster_requirements?: string; // KUUCPS-style cluster text
 }
+export interface RecommendedCourse extends Course {
+  qualified: boolean;
+  qualification_details: {
+    user_points?: number;
+    required_points?: number;
+    points_source?: 'stored' | 'calculated';
+    subjects_count?: number;
+    reason?: string;
+    missing_mandatory?: Array<{ subject: string; required_grade: string }>;
+    unmet_grades?: Array<{ subject: string; user_grade: string; required_grade: string }>;
+    message?: string;
+    [key: string]: any;
+  };
+  user_points?: number;
+  required_points?: number;
+  points_source?: string;
+  cluster?: number;
+  match_score?: number;
+}

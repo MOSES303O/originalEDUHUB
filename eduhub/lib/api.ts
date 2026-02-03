@@ -2,7 +2,7 @@
 import axios, { AxiosError, InternalAxiosRequestConfig } from 'axios';
 import {
   University, ContactFormData, ContactFormResponse, Course,
-  SubjectGrades, KMTCCampus, KMTCCourse, Department, Programme
+  SubjectGrades, KMTCCampus, KMTCCourse, Department, Programme,RecommendedCourse
 } from '@/types';
 
 const isDevelopment = process.env.NODE_ENV === 'development';
@@ -328,23 +328,6 @@ export async function matchUniversityCampus(courseId: string ): Promise<string> 
   }
 }
 
-export async function matchCourses(subjectGrades: SubjectGrades, totalPoints: number) {
-  try {
-    const response = await apiClient.post<{ status: string; message: string; data: Course[] }>(
-      '/match-courses/',
-      { subjectGrades, totalPoints }
-    );
-    if (response.data.status !== 'success') {
-      console.warn('Invalid match courses data received:', response.data);
-      throw new Error('Invalid match courses data');
-    }
-    return response.data.data;
-  } catch (error: unknown) {
-    const errorDetails = extractErrorDetails(error);
-    console.error('Failed to match courses:', errorDetails);
-    throw new Error(`Failed to match courses: ${JSON.stringify(errorDetails)}`);
-  }
-}
 export async function fetchCoursesByUniversity(universityCode: string): Promise<Course[]> {
   try {
     const response = await apiClient.get('/courses/offerings/', {
@@ -861,6 +844,68 @@ export async function submitContactForm(data: ContactFormData): Promise<ContactF
   } catch (error: any) {
     console.error('Contact form submission failed:', extractErrorDetails(error));
     throw extractErrorDetails(error);
+  }
+}
+
+export async function fetchRecommendedCourses(params: {
+  limit?: number;
+  category?: string | string[];
+  max_fee?: number;
+} = {}): Promise<RecommendedCourse[]> {
+  try {
+    const response = await apiClient.get('/courses/recommendations/', {
+      params: {
+        limit: params.limit || 15,
+        category: params.category,
+        max_fee: params.max_fee,
+      },
+    });
+
+    const res = response.data;
+
+    if (!res.success || !Array.isArray(res.data)) {
+      console.warn('[fetchRecommendedCourses] Invalid response format:', res);
+      return [];
+    }
+
+    // Map backend response to frontend type
+    return res.data.map((item: any): RecommendedCourse => ({
+      id: item.id?.toString() || '',
+      name: item.program_name || item.program?.name || 'Unknown Program',
+      code: item.code || 'N/A',
+      category: item.program_category || item.program?.category || 'General',
+      university: {
+        id: item.university?.id?.toString() || '',
+        name: item.university_name || item.university?.name || 'Unknown',
+        code: item.university?.code || '',
+        logo: item.university?.logo || null,
+        slug: item.university?.name?.toLowerCase().replace(/\s+/g, '-') || 'unknown',
+      },
+      university_name: item.university_name || item.university?.name || 'Unknown',
+      minimum_grade: item.minimum_grade || 'N/A',
+      duration_years: item.duration_years || null,
+      tuition_fee_per_year: item.tuition_fee_per_year ? Number(item.tuition_fee_per_year) : undefined,
+      career_prospects: item.career_prospects || '',
+      intake_months: item.intake_months || [],
+      cluster_requirements: item.cluster_requirements || '',
+      required_subjects: item.program?.required_subjects || [],
+      is_selected: !!item.is_selected,
+      is_applied: !!item.is_applied,
+      // Engine-specific fields
+      qualified: !!item.qualified,
+      qualification_details: item.qualification_details || {},
+      user_points: item.user_points ?? null,
+      required_points: item.required_points ?? null,
+      points_source: item.points_source ?? null,
+      cluster: item.cluster ?? null,
+      match_score: item.match_score ?? 0,
+    }));
+  } catch (error: any) {
+    const errorDetails = extractErrorDetails(error);
+    console.error('[fetchRecommendedCourses] Failed:', errorDetails);
+    
+    // Show toast or handle in component
+    throw new Error(`Failed to fetch recommended courses: ${errorDetails.message}`);
   }
 }
 

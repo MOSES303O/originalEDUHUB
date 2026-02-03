@@ -129,7 +129,7 @@ export function FindCourseForm({ onClose, setShowFindCourseForm }: FindCourseFor
 
       const payload = {
         phone_number: formattedPhone,
-        amount: renewalEligible ? 50 : 210,  // 50 for renewal, 210 for new
+        amount: renewalEligible ? 50 : 1,  // 50 for renewal, 210 for new
         plan_type: renewalEligible ? "RENEWAL" : "PREMIUM",
         subjects: subjectsPayload,
       };

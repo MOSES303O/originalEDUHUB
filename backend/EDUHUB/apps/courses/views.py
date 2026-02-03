@@ -1,22 +1,69 @@
 # apps/courses/views.py
 from rest_framework import generics, status
 from apps.core.views import BaseModelViewSet
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.permissions import AllowAny
 from django.db.models import Q
 from apps.core.utils import standardize_response
 from .models import Subject, Program, CourseOffering
+from .utils import  CourseMatchingEngine
+from rest_framework.views import APIView
 from .serializers import (
     SubjectSerializer,
     ProgramSerializer,
     CourseOfferingListSerializer,
     CourseOfferingDetailSerializer,
     CourseSearchFilterSerializer,
-    CourseMatchSerializer
+    RecommendedCourseSerializer
 )
 import logging
 
 logger = logging.getLogger(__name__)
+class RecommendedCoursesView(APIView):
+    """
+    GET /courses/recommendations/
+    
+    Returns personalized list of recommended and qualified courses for the authenticated user.
+    Uses CourseMatchingEngine to qualify and rank based on subjects, cluster points, and requirements.
+    """
+    permission_classes = [IsAuthenticated]
 
+    def get(self, request, format=None):
+        user = request.user
+
+        try:
+            engine = CourseMatchingEngine()
+            recommended = engine.get_recommended_courses(user, limit=15)  # Adjust limit
+
+            if not recommended:
+                return standardize_response(
+                    success=True,
+                    message="No qualified or recommended courses found",
+                    data=[],
+                    status_code=status.HTTP_200_OK
+                )
+
+            serializer = RecommendedCourseSerializer(
+                recommended,
+                many=True,
+                context={'request': request}
+            )
+
+            return standardize_response(
+                success=True,
+                message=f"{len(serializer.data)} recommended courses found",
+                data=serializer.data,
+                status_code=status.HTTP_200_OK
+            )
+
+        except Exception as e:
+            logger.exception("Error in recommended courses view")
+            return standardize_response(
+                success=False,
+                message="Failed to fetch recommendations",
+                errors={"detail": str(e)},
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
 class SubjectViewSet(BaseModelViewSet):
     """
     Read-only endpoint to list all active subjects.
@@ -205,29 +252,5 @@ class CourseSearchAPIView(generics.CreateAPIView):
             success=True,
             message="Course offerings filtered successfully",
             data=results,
-            status_code=status.HTTP_200_OK
-        )
-
-class CourseMatchAPIView(generics.CreateAPIView):
-    """
-    POST /eduhub/courses/match/
-    Match courses based on user subjects and grades
-    """
-    serializer_class = CourseMatchSerializer
-    permission_classes = [AllowAny]
-
-    def create(self, request, *args, **kwargs):
-        serializer = self.get_serializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        data = serializer.validated_data
-
-        # Your matching logic here (similar to old version)
-        # Example placeholder:
-        matches = []  # Replace with real matching logic
-
-        return standardize_response(
-            success=True,
-            message="Course matching completed",
-            data={"matches": matches},
             status_code=status.HTTP_200_OK
         )

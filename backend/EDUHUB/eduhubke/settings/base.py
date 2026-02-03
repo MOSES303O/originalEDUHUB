@@ -9,6 +9,7 @@ from decouple import config
 from datetime import timedelta
 from dotenv import load_dotenv
 import dj_database_url
+from celery.schedules import crontab
 
 load_dotenv()  # ← Load .env file
 
@@ -18,6 +19,15 @@ BASE_DIR = Path(__file__).resolve().parent.parent.parent
 # SECURITY
 SECRET_KEY = config('SECRET_KEY')
 DEBUG = config('DEBUG', default=True, cast=bool)
+
+#
+
+CELERY_BEAT_SCHEDULE = {
+    'cleanup-expired-every-hour': {
+        'task': 'apps.core.tasks.cleanup_expired_subscriptions_and_users',
+        'schedule': crontab(minute=0, hour='*'),  # every hour
+    },
+}
 
 # Celery - FULLY SYNCHRONOUS MODE (NO BROKER, NO QUEUE)
 CELERY_BROKER_URL = None
@@ -76,8 +86,6 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'apps.core.middleware.RequestLoggingMiddleware',
     'apps.core.middleware.RateLimitMiddleware',
-    'apps.core.middleware.PremiumAccessMiddleware',
-    'apps.core.middleware.SubscriptionExpirationMiddleware',
 ]
 USE_X_FORWARDED_HOST = True
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')

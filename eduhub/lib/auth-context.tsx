@@ -65,6 +65,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         return {
           active: true,
           renewal_eligible: false,
+          hours_remaining: 0,
         };
       }
   
@@ -74,6 +75,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           return {
             active: false,
             renewal_eligible: true,
+            hours_remaining: response.data.data?.hours_remaining || 0,
           };
         }
         return {
@@ -82,10 +84,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         };
       }
   
-      return { active: false, renewal_eligible: false };
+      return { active: false, renewal_eligible: false , hours_remaining: 0 };
     } catch (error: any) {
       console.error("[checkActiveSubscription] Failed:", extractErrorDetails(error));
-      return { active: false, renewal_eligible: false };
+      return { active: false, renewal_eligible: false, hours_remaining: 0 };
     }
   };
 
