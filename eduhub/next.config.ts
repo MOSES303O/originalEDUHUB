@@ -1,13 +1,15 @@
 /** @type {import('next').NextConfig} */
+const isProd = process.env.NODE_ENV === "production";
+
 const nextConfig = {
-  output: "standalone",
+  output: isProd ? "standalone" : undefined,
+
   images: {
     unoptimized: true,
     remotePatterns: [
       {
         protocol: "https",
         hostname: "ochiengsenterprise.co.ke",
-        port: "8000",
         pathname: "/media/**",
       },
       {
@@ -21,9 +23,13 @@ const nextConfig = {
         hostname: "*.onrender.com",
         pathname: "/media/**",
       },
+      {
+        protocol: "https",
+        hostname: "eduhub254.com",
+        pathname: "/media/**",
+      }
     ],
   },
-  basePath: "",
 
   async rewrites() {
     const isVercel = process.env.NEXT_PUBLIC_VERCEL_ENV === "production";
@@ -34,17 +40,26 @@ const nextConfig = {
     console.log("Next.js rewrite destination:", destination);
 
     return [
-      // ONLY PROXY API CALLS — NOT YOUR NEXT.JS PAGES!
+      // SAFE API proxy (exclude Next internals)
       {
-        source: "/eduhub/:path*",
+        source: "/eduhub/:path((?!_next|static).*)",
         destination: `${destination}/:path*`,
       },
-      // Optional: proxy media files directly
+      // Media proxy
       {
         source: "/media/:path*",
         destination: `${destination.replace("/eduhub", "")}/media/:path*`,
       },
     ];
+  },
+
+  webpack: (config : any) => {
+    config.watchOptions = {
+      poll: 1000,
+      aggregateTimeout: 300,
+      ignored: /node_modules/,
+    };
+    return config;
   },
 };
 

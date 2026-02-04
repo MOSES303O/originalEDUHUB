@@ -60,9 +60,9 @@ build/
 .env.production.local
 
 # Logs
-logs
+logs/
 *.log
-*/logs/*.log
+logs/*.log
 *.gz
 *.tgz
 
@@ -113,3 +113,5 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+# migrations
+migrations/

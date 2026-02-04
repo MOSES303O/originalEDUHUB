@@ -243,8 +243,9 @@ MPESA_SHORTCODE = config('MPESA_SHORTCODE')
 MPESA_PASSKEY = config('MPESA_PASSKEY')
 CALLBACK_URL = config(
     'CALLBACK_URL',
-    default='https://brunilda-seminationalized-affinely.ngrok-free.dev/eduhub/payments/mpesa/callback/'
+    default='https://originaleduhub.onrender.com/eduhub/payments/mpesa/callback/'
 )
+print("MPESA CALLBACK URL:", CALLBACK_URL)
 #if not DEBUG:
     # Auto-detect Render domain if CALLBACK_URL not set
     #if 'RENDER' in os.environ.get('HOSTNAME', ''):
