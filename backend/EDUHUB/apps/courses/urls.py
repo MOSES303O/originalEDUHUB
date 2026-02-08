@@ -14,5 +14,4 @@ urlpatterns = [
     path('offerings/', views.CourseOfferingListView.as_view(), name='offering-list'),
     path('offerings/<uuid:id>/', views.CourseOfferingDetailView.as_view(), name='offering-detail'),
     path('search/', views.CourseSearchAPIView.as_view(), name='course-search'),
-    path('recommendations/', views.RecommendedCoursesView.as_view(), name='recommended-courses'),
 ]

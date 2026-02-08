@@ -16,7 +16,6 @@ interface UserInfoPanelProps {
 export function UserInfoPanel({ className = "" }: UserInfoPanelProps) {
   const { 
       user, 
-      loading: authLoading, 
       requirePayment, 
       setUser,           // ← FIXED: now destructured correctly
       validateToken 
@@ -135,7 +134,7 @@ export function UserInfoPanel({ className = "" }: UserInfoPanelProps) {
             >
               {(Number(user?.cluster_points) || 0).toFixed(3)}
             </Badge>
-            <span className="text-xs text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity">
+            <span className="text-xs text-red-400 ">
               Edit
             </span>
           </div>

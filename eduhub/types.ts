@@ -75,6 +75,29 @@ export interface Course {
   is_applied?: boolean; // To track if the user has applied
   created_at?: string; // To track when the course was added to selections
   updated_at?: string; // To track when the course selection was last updated
+  qualified?: boolean; // Added to track qualification status (from backend)
+  user_points?: number;
+  required_subjects_details?: Array<{
+    subject: Subject;
+    minimum_grade: string;
+    is_mandatory: boolean;
+    cluster_requirements?: string;
+  }>;
+  required_points?: number;
+  qualification_status?: string; // e.g., "Qualified", "Not Qualified", "Pending"
+  qualification_details?: {
+    reason?: string;
+    missing_mandatory?: Array<{ subject_or_group: string; min_grade: string }>;
+    missing_program_requirements?: Array<{ subject: string; required_grade: string }>;
+    unmet_program_grades?: Array<{ subject: string; user_grade: string; required_grade: string }>;
+    user_points?: number;
+    required_points?: number;
+    points_source?: 'stored' | 'calculated';
+    subjects_count?: number;
+    message?: string;
+    [key: string]: any;
+  };
+
 }
 export interface University {
   id: number | string; // Matches the API response
@@ -287,23 +310,4 @@ export interface CourseSubjectRequirement {
   minimum_grade?: string;
   is_mandatory?: boolean;
   cluster_requirements?: string; // KUUCPS-style cluster text
-}
-export interface RecommendedCourse extends Course {
-  qualified: boolean;
-  qualification_details: {
-    user_points?: number;
-    required_points?: number;
-    points_source?: 'stored' | 'calculated';
-    subjects_count?: number;
-    reason?: string;
-    missing_mandatory?: Array<{ subject: string; required_grade: string }>;
-    unmet_grades?: Array<{ subject: string; user_grade: string; required_grade: string }>;
-    message?: string;
-    [key: string]: any;
-  };
-  user_points?: number;
-  required_points?: number;
-  points_source?: string;
-  cluster?: number;
-  match_score?: number;
 }

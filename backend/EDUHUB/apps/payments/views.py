@@ -60,7 +60,6 @@ class ActiveSubscriptionView(BaseAPIView):
             )
          # No active sub → check if renewal eligible
         latest_sub = Subscription.objects.filter(user=user).order_by('-end_date').first()
-        # In ActiveSubscriptionView.get()
         if latest_sub and latest_sub.is_renewal_eligible:
             renewal_deadline = latest_sub.end_date + timedelta(hours=24)
             hours_left = max(0, int((renewal_deadline - timezone.now()).total_seconds() // 3600))
@@ -72,16 +71,21 @@ class ActiveSubscriptionView(BaseAPIView):
                     "renewal_eligible": True,
                     "renewal_price": 50,
                     "hours_remaining": hours_left,
-                    "renewal_deadline": renewal_deadline.isoformat()
+                    "renewal_deadline": renewal_deadline.isoformat(),
+                    "premium_expires_at": latest_sub.end_date.isoformat(),
                 },
-                status_code=402  # Payment Required
+                status_code=402
             )
 
-        # Fully expired → force new payment
+        # Fully expired → no renewal
         return standardize_response(
             success=False,
             message="No active subscription or renewal eligibility",
-            data={"renewal_eligible": False},
+            data={
+                "renewal_eligible": False,
+                "renewal_price": 210,
+                "hours_remaining": 0
+            },
             status_code=402
         )
 
@@ -164,7 +168,7 @@ class PaymentStatusView(APIView):
 class MpesaCallbackView(APIView):
     authentication_classes = []
     permission_classes = [AllowAny]
-
+ 
     def post(self, request):
         print("=== MPESA CALLBACK RECEIVED ===")
         print("RAW DATA:", request.data)
@@ -253,8 +257,8 @@ class MpesaCallbackView(APIView):
                 # 3. Activate premium + set expiration timers
                 now = timezone.now()
                 user.is_premium = True
-                user.premium_expires_at = now + timedelta(minutes=3)
-                user.account_expires_at = now + timedelta(minutes=5)
+                user.premium_expires_at = now + timedelta(hours=6)
+                user.account_expires_at = now + timedelta(hours=12)  # 24h renewal window after premium expires
                 user.save(update_fields=['is_premium', 'premium_expires_at', 'account_expires_at'])
 
                 # 4. Create/renew subscription record
@@ -335,8 +339,8 @@ class RenewSubscriptionView(APIView):
         # For testing: short durations
         now = timezone.now()
         user.is_premium = True
-        user.premium_expires_at = now + timedelta(minutes=6)   # ← change to hours=6 later
-        user.account_expires_at = now + timedelta(minutes=10)  # ← change to hours=24 later
+        user.premium_expires_at = now + timedelta(hours=6)   # ← change to hours=6 later
+        user.account_expires_at = now + timedelta(hours=12)  # ← change to hours=24 later
         user.save(update_fields=['is_premium', 'premium_expires_at', 'account_expires_at'])
 
         # Extend or create subscription (no subjects needed)

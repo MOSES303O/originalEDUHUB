@@ -18,7 +18,7 @@ export async function generateStaticParams() {
   }
 }
 
-async function fetchInitialData(universityCode: string){
+async function fetchInitialData(universityCode: string) {
   try {
     console.log("[fetchInitialData] Fetching data for universityCode:", universityCode);
 
@@ -27,39 +27,42 @@ async function fetchInitialData(universityCode: string){
       throw new Error("Invalid university code");
     }
 
-     // Fetch university basic info
+    // Fetch university basic info (public data, no auth needed)
     const uniResponse = await fetchUniversities({ code: universityCode });
     if (!uniResponse.length) throw new Error("University not found");
 
     const university = uniResponse[0];
 
-    // Fetch courses
-    const courses = await fetchCoursesByUniversity(universityCode);
+    // Fetch initial courses (public fallback - no qualification yet)
+    const initialCourses = await fetchCoursesByUniversity(universityCode);
 
     return {
       university: {
         ...university,
-        courseCount: courses.length,
+        courseCount: initialCourses.length,
       },
-      courses,
+      initialCourses,
       error: null,
     };
   } catch (err: any) {
-    const errorMessage = err.message || "Failed to load data";
+    const errorMessage = err.message || "Failed to load university data";
     console.error("[fetchInitialData] Error:", errorMessage);
-    return { university: null, courses: [], error: errorMessage };
+    return { university: null, initialCourses: [], error: errorMessage };
   }
 }
 
 const UniversityCoursesPage: NextPage<{ params: Promise<{ id: string }> }> = async ({ params }) => {
   const { id } = await params;
   console.log("[UniversityCoursesPage] Resolved params:", { id });
-  const { university, courses, error } = await fetchInitialData(id);
+
+  const { university, initialCourses, error } = await fetchInitialData(id);
+
   return (
     <Suspense fallback={<CoursesSkeleton />}>
       <UniversityCoursesClient
         initialUniversity={university}
-        initialCourses={courses}
+        universityCode={id}           // ← Pass code so client can re-fetch with auth
+        initialCourses={initialCourses}
         initialError={error}
       />
     </Suspense>

@@ -45,6 +45,7 @@ from .serializers import (
     UserClusterPointsSerializer,
 )
 import logging
+from decimal import Decimal
 
 logger = logging.getLogger(__name__)
 
@@ -342,40 +343,51 @@ class UserUpdateView(APIResponseMixin, APIView):
     )
     def partial_update(self, request, *args, **kwargs):
         user = request.user
-        ip_address = request.META.get('HTTP_X_FORWARDED_FOR', request.META.get('REMOTE_ADDR', 'unknown'))
+        ip = request.META.get('HTTP_X_FORWARDED_FOR', request.META.get('REMOTE_ADDR', 'unknown'))
     
-        print(f"DEBUG PATCH - Received: {request.data}")
-        print(f"DEBUG Before save - cluster_points: {user.cluster_points}")
+        print(f"DEBUG PATCH START - User: {user.phone_number}")
+        print(f"DEBUG Raw data: {request.data}")
+        print(f"DEBUG Before save - cluster_points: {user.cluster_points} (type: {type(user.cluster_points)})")
     
         serializer = UserClusterPointsSerializer(user, data=request.data, partial=True)
         if serializer.is_valid():
+            validated = serializer.validated_data
+            print(f"DEBUG Validated data: {validated}")
+    
+            # Force Decimal conversion
+            if 'cluster_points' in validated and isinstance(validated['cluster_points'], str):
+                try:
+                    validated['cluster_points'] = Decimal(validated['cluster_points'])
+                except Exception as e:
+                    print(f"DEBUG Coercion failed: {e}")
+    
             serializer.save()
+            user.refresh_from_db()
     
-            user.refresh_from_db()  # ← this line is critical
-    
-            print(f"DEBUG After save - cluster_points: {user.cluster_points}")
+            print(f"DEBUG After save & refresh - cluster_points: {user.cluster_points} (type: {type(user.cluster_points)})")
+            print(f"DEBUG DB query check: {User.objects.get(id=user.id).cluster_points}")
     
             log_user_activity(
                 user=user,
                 action='CLUSTER_POINTS_UPDATED',
-                ip_address=ip_address,
-                details={'new_value': serializer.validated_data.get('cluster_points')}
+                ip_address=ip,
+                details={'new_value': str(user.cluster_points)}
             )
     
             return standardize_response(
                 message="Cluster points updated",
                 data={
-                    'cluster_points': str(user.cluster_points) if user.cluster_points else "00.000",
+                    'cluster_points': str(user.cluster_points) if user.cluster_points is not None else "00.000",
                     'phone_number': user.phone_number,
                 },
-                status_code=status.HTTP_200_OK
+                status_code=200
             )
         else:
             print(f"DEBUG Validation errors: {serializer.errors}")
             return standardize_response(
                 message="Validation failed",
                 errors=serializer.errors,
-                status_code=status.HTTP_400_BAD_REQUEST
+                status_code=400
             )
 class PasswordChangeView(APIResponseMixin, APIView):
     permission_classes = [IsAuthenticated]

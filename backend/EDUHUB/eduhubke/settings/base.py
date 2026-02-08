@@ -60,7 +60,8 @@ THIRD_PARTY_APPS = [
     'django_filters',
     'phonenumber_field',
     'django_celery_beat',
-    'django_extensions',   
+    'django_extensions',
+    "drf_spectacular",   
 ]
 
 LOCAL_APPS = [
@@ -243,7 +244,7 @@ MPESA_SHORTCODE = config('MPESA_SHORTCODE')
 MPESA_PASSKEY = config('MPESA_PASSKEY')
 CALLBACK_URL = config(
     'CALLBACK_URL',
-    default='https://originaleduhub.onrender.com/eduhub/payments/mpesa/callback/'
+    default='https://brunilda-seminationalized-affinely.ngrok-free.dev/eduhub/payments/mpesa/callback/'
 )
 print("MPESA CALLBACK URL:", CALLBACK_URL)
 #if not DEBUG:

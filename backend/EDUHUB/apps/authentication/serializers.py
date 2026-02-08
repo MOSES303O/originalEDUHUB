@@ -8,6 +8,7 @@ from apps.kmtc.models import Programme
 from apps.courses.models import Subject, CourseOffering  # ← CHANGED: CourseOffering instead of Course
 from .models import User, UserProfile, UserSubject, UserSelectedCourse
 from apps.core.utils import validate_kenyan_phone, standardize_phone_number
+from decimal import Decimal, InvalidOperation
 
 class UserSubjectSerializer(serializers.Serializer):
     subject_id = serializers.UUIDField()
@@ -184,6 +185,18 @@ class UserClusterPointsSerializer(serializers.ModelSerializer):
         extra_kwargs = {
             'cluster_points': {'required': False, 'allow_null': True}
         }
+
+    def to_internal_value(self, data):
+        if 'cluster_points' in data:
+            value = data['cluster_points']
+            if isinstance(value, str):
+                try:
+                    data['cluster_points'] = Decimal(value)
+                except InvalidOperation:
+                    raise serializers.ValidationError({
+                        'cluster_points': 'Must be a valid decimal number (e.g. 44.000)'
+                    })
+        return super().to_internal_value(data)
 
 class UserDetailSerializer(serializers.ModelSerializer):
     profile = UserProfileSerializer(read_only=True)

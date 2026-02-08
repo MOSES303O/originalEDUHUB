@@ -39,18 +39,29 @@ class ProgramSerializer(serializers.ModelSerializer):
             'required_subjects'
         ]
 class CourseOfferingListSerializer(serializers.ModelSerializer):
-    """List view — matches your old style"""
     program = ProgramSerializer(read_only=True)
     university_name = serializers.CharField(source='university.name', read_only=True)
     university_code = serializers.CharField(source='university.code', read_only=True)
     is_selected = serializers.SerializerMethodField()
+
+    # ── ADD THESE EXPLICITLY ──
+    qualified = serializers.BooleanField(read_only=True, allow_null=True)
+    user_points = serializers.FloatField(read_only=True, allow_null=True)
+    required_points = serializers.FloatField(read_only=True, allow_null=True)
+    points_source = serializers.CharField(read_only=True, allow_null=True)
+    cluster = serializers.IntegerField(read_only=True, allow_null=True)
+    qualification_details = serializers.DictField(read_only=True, allow_null=True)
+    reason = serializers.CharField(read_only=True, allow_null=True)
 
     class Meta:
         model = CourseOffering
         fields = [
             'id', 'code', 'program', 'university_name', 'university_code',
             'duration_years', 'minimum_grade', 'tuition_fee_per_year',
-            'is_selected','cluster_requirements'
+            'is_selected', 'cluster_requirements',
+            # Qualification fields (must be here!)
+            'qualified', 'user_points', 'required_points', 'points_source',
+            'cluster', 'qualification_details', 'reason'
         ]
 
     def get_is_selected(self, obj):
@@ -62,6 +73,7 @@ class CourseOfferingListSerializer(serializers.ModelSerializer):
                 object_id=obj.id
             ).exists()
         return False
+    
 
 class CourseOfferingDetailSerializer(serializers.ModelSerializer):
     """Full detail — includes program requirements"""
@@ -97,76 +109,3 @@ class CourseSearchFilterSerializer(serializers.Serializer):
     max_fee = serializers.DecimalField(max_digits=10, decimal_places=2, required=False)
     duration = serializers.IntegerField(required=False)
     minimum_grade = serializers.CharField(required=False)
-
-class RecommendedCourseSerializer(serializers.Serializer):
-    """
-    Serializer for recommended/qualified courses from CourseMatchingEngine.
-    
-    Handles dict output from engine (e.g. get_recommended_courses, qualify_user_for_all_offerings).
-    Includes qualification status, points comparison, and selection info.
-    """
-    # Core identification
-    id = serializers.CharField(source='offering_id', read_only=True)
-    code = serializers.CharField(read_only=True, allow_null=True)
-    
-    # Program & University (nested)
-    program = ProgramSerializer(source='program', read_only=True, allow_null=True)
-    program_name = serializers.CharField(read_only=True, allow_null=True)
-    university = UniversityListSerializer(source='university', read_only=True, allow_null=True)
-    university_name = serializers.CharField(read_only=True, allow_null=True)
-    
-    # Course details (from engine or model)
-    duration_years = serializers.IntegerField(read_only=True, allow_null=True)
-    tuition_fee_per_year = serializers.DecimalField(max_digits=12, decimal_places=2, read_only=True, allow_null=True)
-    minimum_grade = serializers.CharField(read_only=True, allow_null=True)
-    cluster_requirements = serializers.CharField(read_only=True, allow_null=True)
-    intake_months = serializers.ListField(child=serializers.CharField(), read_only=True, allow_null=True)
-    career_prospects = serializers.CharField(read_only=True, allow_null=True)
-    
-    # Qualification & matching from engine
-    qualified = serializers.BooleanField(read_only=True)
-    qualification_details = serializers.DictField(read_only=True)
-    user_points = serializers.FloatField(read_only=True, allow_null=True)
-    required_points = serializers.FloatField(read_only=True, allow_null=True)
-    points_source = serializers.CharField(read_only=True, allow_null=True)
-    cluster = serializers.IntegerField(read_only=True, allow_null=True)
-    match_score = serializers.FloatField(read_only=True, default=0.0)
-    
-    # User-specific
-    is_selected = serializers.SerializerMethodField(read_only=True)
-
-    def get_is_selected(self, obj):
-        """
-        Check if the current user has selected this course offering.
-        Works with engine dict output (uses offering_id).
-        """
-        request = self.context.get('request')
-        if not request or not request.user.is_authenticated:
-            return False
-
-        offering_id = obj.get('offering_id')
-        if not offering_id:
-            return False
-
-        try:
-            return UserSelectedCourse.objects.filter(
-                user=request.user,
-                content_type=ContentType.objects.get_for_model(CourseOffering),
-                object_id=offering_id
-            ).exists()
-        except Exception:
-            return False
-
-    class Meta:
-        # This is a Serializer (not ModelSerializer) because input is dict from engine
-        fields = [
-            'id', 'code',
-            'program', 'program_name',
-            'university', 'university_name',
-            'duration_years', 'tuition_fee_per_year', 'minimum_grade',
-            'cluster_requirements', 'intake_months', 'career_prospects',
-            'qualified', 'qualification_details',
-            'user_points', 'required_points', 'points_source',
-            'cluster', 'match_score',
-            'is_selected'
-        ]

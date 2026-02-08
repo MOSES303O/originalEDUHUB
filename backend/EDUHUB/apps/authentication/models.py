@@ -60,9 +60,10 @@ class User(AbstractBaseUser, PermissionsMixin):
     cluster_points = models.DecimalField(
         max_digits=6,
         decimal_places=3,
-        default=0.000,
+        default=51.000,
         null=True,
         blank=True,
+        editable=True,
         help_text="User's KCSE cluster points (editable)"
     )
     

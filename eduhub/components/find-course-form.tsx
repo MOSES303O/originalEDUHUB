@@ -8,7 +8,7 @@ import { fetchSubjects } from "@/lib/api";
 import apiClient from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/lib/auth-context";
-import { login } from "@/lib/api";  // ← import login function
+import { login } from "@/lib/api";
 
 interface Subject {
   id: string;
@@ -55,52 +55,64 @@ export function FindCourseForm({ onClose, setShowFindCourseForm }: FindCourseFor
 
   const MIN_SUBJECTS = 7;
   const MAX_SUBJECTS = 9;
+  const INITIAL_PRICE = 1;
+  const RENEWAL_PRICE = 50;
 
+  // Load subjects once on mount
   useEffect(() => {
     async function loadSubjects() {
       try {
         const subjects = await fetchSubjects();
         setAvailableSubjects(subjects);
       } catch (err) {
-        setError("Failed to load subjects. Please try again.");
-        toast({
-          title: "Error",
-          description: "Failed to load subjects.",
-          variant: "destructive",
-        });
+        setError("Failed to load subjects.");
+        toast({ title: "Error", description: "Failed to load subjects.", variant: "destructive" });
       }
     }
     loadSubjects();
   }, [toast]);
 
+  // Real-time validation
   useEffect(() => {
+    const trimmed = phoneNumber.trim();
+
+    // Phone validation
+    if (trimmed) {
+      if (trimmed.length !== 10) {
+        setError("Phone number must be exactly 10 digits");
+      } else if (!trimmed.startsWith("0")) {
+        setError("Phone number must start with 0 (e.g., 0712345678)");
+      } else if (!/^[0][17][0-9]{8}$/.test(trimmed)) {
+        setError("Invalid format. Use digits only, start with 0 or 1");
+      } else {
+        setError(null);
+      }
+    }
+
+    // Subjects validation
+    if (selectedSubjects.length < MIN_SUBJECTS) {
+      setError(`Select at least ${MIN_SUBJECTS} subjects (${selectedSubjects.length}/${MIN_SUBJECTS})`);
+    } else if (selectedSubjects.length > MAX_SUBJECTS) {
+      setError(`Maximum ${MAX_SUBJECTS} subjects allowed`);
+    } else {
+      const missing = selectedSubjects.filter((s) => !s.grade);
+      if (missing.length > 0) {
+        setError(`Assign grades to all subjects (${missing.length} missing)`);
+      } else if (!error) {
+        setError(null);
+      }
+    }
+
+    // Calculate points
     const points = selectedSubjects.reduce((total, subject) => {
       const gradeInfo = grades.find((g) => g.value === subject.grade);
       return total + (gradeInfo?.points || 0);
     }, 0);
     setTotalPoints(points);
-
-    if (!phoneNumber.match(/^\d{9}$/)) {
-      setError("Please enter a valid Kenyan phone number WITHOUT THE FIRST ZERO(e.g., 712345678,112345678)");
-    } else if (selectedSubjects.length < MIN_SUBJECTS) {
-      setError(`Please select at least ${MIN_SUBJECTS} subjects (${selectedSubjects.length}/${MIN_SUBJECTS})`);
-    } else if (selectedSubjects.length > MAX_SUBJECTS) {
-      setError(`Maximum ${MAX_SUBJECTS} subjects allowed`);
-    } else {
-      const missingGrades = selectedSubjects.filter((s) => !s.grade);
-      if (missingGrades.length > 0) {
-        setError(`Please assign grades to all subjects (${missingGrades.length} missing)`);
-      } else {
-        setError(null);
-      }
-    }
   }, [selectedSubjects, phoneNumber]);
 
   const handleSubjectSelect = (subject: { id: string; name: string }) => {
-    if (
-      selectedSubjects.length < MAX_SUBJECTS &&
-      !selectedSubjects.some((s) => s.id === subject.id)
-    ) {
+    if (selectedSubjects.length < MAX_SUBJECTS && !selectedSubjects.some((s) => s.id === subject.id)) {
       setSelectedSubjects([...selectedSubjects, { ...subject, grade: "" }]);
     }
     setIsSubjectsDropdownOpen(false);
@@ -119,7 +131,15 @@ export function FindCourseForm({ onClose, setShowFindCourseForm }: FindCourseFor
     setPaymentStatus("processing");
     setError(null);
 
-    const formattedPhone = `+254${phoneNumber.trim()}`;
+    const trimmed = phoneNumber.trim();
+    if (trimmed.length !== 10 || !trimmed.startsWith("0") || !/^[0][17][0-9]{8}$/.test(trimmed)) {
+      setError("Invalid phone number: must be 10 digits starting with 0");
+      setIsSubmitting(false);
+      return;
+    }
+
+    const formattedPhone = `+254${trimmed.slice(1)}`;
+    const amount = renewalEligible ? RENEWAL_PRICE : INITIAL_PRICE;
 
     try {
       const subjectsPayload = selectedSubjects.map(s => ({
@@ -129,25 +149,19 @@ export function FindCourseForm({ onClose, setShowFindCourseForm }: FindCourseFor
 
       const payload = {
         phone_number: formattedPhone,
-        amount: renewalEligible ? 50 : 1,  // 50 for renewal, 210 for new
+        amount,
         plan_type: renewalEligible ? "RENEWAL" : "PREMIUM",
-        subjects: subjectsPayload,
+        subjects: renewalEligible ? [] : subjectsPayload, // No subjects needed for renewal
       };
 
-      console.log("Initiating payment:", payload);
-
       const response = await apiClient.post("/payments/initiate/", payload);
+      const ref = response.data?.data?.reference || response.data?.checkout_request_id || null;
 
-      const innerData = response.data?.data || response.data || {};
-      const ref = innerData.reference || innerData.checkout_request_id || null;
-
-      if (ref) {
-        setPaymentReference(ref);
-      }
+      if (ref) setPaymentReference(ref);
 
       toast({
-        title: "Payment Requested!",
-        description: "Complete on your phone, then click COMPLETE below.",
+        title: "Payment Requested",
+        description: `Complete ${renewalEligible ? `${RENEWAL_PRICE} KES renewal` : `${INITIAL_PRICE} KES`} on your phone, then click COMPLETE.`,
       });
     } catch (err: any) {
       const msg = err.response?.data?.message || "Failed to initiate payment";
@@ -168,7 +182,6 @@ export function FindCourseForm({ onClose, setShowFindCourseForm }: FindCourseFor
       let isConfirmed = false;
 
       if (paymentReference) {
-        console.log("Checking payment status:", paymentReference);
         const res = await apiClient.get(`/payments/status/${paymentReference}/`);
         const status = res.data?.status;
 
@@ -184,21 +197,17 @@ export function FindCourseForm({ onClose, setShowFindCourseForm }: FindCourseFor
           return;
         }
       } else {
-        // No reference → assume callback already succeeded
-        console.warn("No reference — assuming payment completed via callback");
+        // Assume callback already succeeded if no reference
         isConfirmed = true;
       }
 
       if (isConfirmed) {
-        // AUTO-LOGIN with hardcoded password
-        console.log("Payment confirmed — auto-logging in user...");
-        const formattedPhone = `+254${phoneNumber.trim()}`;
+        const trimmed = phoneNumber.trim();
+        const formattedPhone = `+254${trimmed.slice(1)}`;
 
         try {
           const loginResponse = await login(formattedPhone, "&mo1se2s3@");
-          console.log("Auto-login success:", loginResponse);
 
-          // Save tokens & trigger auth refresh
           localStorage.setItem("token", loginResponse.tokens.access);
           if (loginResponse.tokens.refresh) {
             localStorage.setItem("refreshToken", loginResponse.tokens.refresh);
@@ -206,17 +215,14 @@ export function FindCourseForm({ onClose, setShowFindCourseForm }: FindCourseFor
           localStorage.setItem("phone_number", loginResponse.user.phone_number);
 
           window.dispatchEvent(new Event("auth-change"));
-          window.dispatchEvent(new Event("storage"));
-
-          await validateToken();  // ← refresh auth context
+          await validateToken();
 
           setPaymentStatus("success");
           toast({
             title: "Success!",
-            description: "You're now logged in with premium access. Redirecting...",
+            description: `You're now logged in with premium access. Redirecting...`,
           });
 
-          // Redirect to courses after short delay
           setTimeout(() => {
             router.push("/courses");
             onClose();
@@ -244,15 +250,10 @@ export function FindCourseForm({ onClose, setShowFindCourseForm }: FindCourseFor
 
   const handleRetryPayment = async () => {
     if (reinitiateCount >= MAX_REINITIATE) {
-      setError("Maximum retries reached.");
+      setError("Maximum retries reached. Please try again later.");
       return;
     }
     setReinitiateCount(reinitiateCount + 1);
-    await initiatePayment();
-  };
-
-  const handleSubmit = async () => {
-    if (error || isSubmitting) return;
     await initiatePayment();
   };
 
@@ -265,30 +266,23 @@ export function FindCourseForm({ onClose, setShowFindCourseForm }: FindCourseFor
             <div className="text-center space-y-1 flex-1">
               <h2 className="text-2xl md:text-3xl font-bold">Find Your Course</h2>
               <p className="text-sm md:text-base text-gray-600 dark:text-gray-400">
-                Select your subjects to discover matching university & KMTC programmes
+                Select subjects to discover matching university & KMTC programmes
               </p>
             </div>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => {
-                router.push("/");
-                onClose();
-              }}
-            >
+            <Button variant="ghost" size="icon" onClick={onClose}>
               <X className="h-6 w-6" />
             </Button>
           </div>
 
           {/* Error */}
           {error && paymentStatus === "idle" && (
-            <div className="bg-red-50 dark:bg-red-950 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-300 px-4 py-3 rounded-lg flex items-center gap-3">
-              <AlertCircle className="h-5 w-5 flex-shrink-0" />
-              <span>{error}</span>
-            </div>
+              <div className="flex items-center justify-center space-x-2 text-red-500">
+                <AlertCircle className="h-4 w-4" />
+                <span className="text-sm">{error}</span>
+              </div>
           )}
 
-          {/* Processing / Verifying / Success */}
+          {/* Payment Processing / Success */}
           {(paymentStatus === "processing" || paymentStatus === "verifying" || paymentStatus === "success") && (
             <div className="text-center space-y-8 py-12">
               <div className="relative mx-auto w-32 h-32">
@@ -347,13 +341,13 @@ export function FindCourseForm({ onClose, setShowFindCourseForm }: FindCourseFor
             </div>
           )}
 
-          {/* Idle Form */}
+          {/* Main Form – Idle State */}
           {paymentStatus === "idle" && (
             <>
               {/* Phone Number */}
               <div className="space-y-2">
                 <label htmlFor="phone" className="block text-sm font-medium">
-                  M-Pesa Phone Number
+                  M-Pesa Phone Number (10 digits)
                 </label>
                 <div className="flex">
                   <span className="inline-flex items-center px-4 rounded-l-md border border-r-0 bg-emerald-800 text-white font-semibold">
@@ -362,18 +356,24 @@ export function FindCourseForm({ onClose, setShowFindCourseForm }: FindCourseFor
                   <input
                     id="phone"
                     type="tel"
-                    placeholder="712345678"
+                    placeholder="0712345678"
                     className="rounded-l-none bg-gray-900 border border-emerald-700 text-white px-3 py-2 w-full"
                     value={phoneNumber}
                     onChange={(e) => {
-                      const value = e.target.value.replace(/[^\d]/g, "");
-                      if (value.length <= 9) setPhoneNumber(value);
+                      const val = e.target.value.replace(/\D/g, "");
+                      if (val.length <= 10) setPhoneNumber(val);
                     }}
                     maxLength={10}
+                    pattern="0[17][0-9]{8}"
+                    title="Enter your 10-digit number starting with 0 (e.g., 0712345678)"
                     disabled={isSubmitting}
                     required
+                    autoFocus
                   />
                 </div>
+                <p className="text-xs text-gray-400">
+                  Enter your full 10-digit number starting with 0 (e.g., 0712345678)
+                </p>
               </div>
 
               {/* Subjects Selection */}
@@ -457,33 +457,36 @@ export function FindCourseForm({ onClose, setShowFindCourseForm }: FindCourseFor
                   Select between {MIN_SUBJECTS} and {MAX_SUBJECTS} subjects and assign grades.
                 </div>
               </div>
-
-              {/* Submit Button */}
+              {/* Action Button */}
               <Button
-                onClick={handleSubmit}
-                disabled={!!error || isSubmitting || selectedSubjects.length < MIN_SUBJECTS}
+                onClick={initiatePayment}
+                disabled={
+                  !!error ||
+                  isSubmitting ||
+                  selectedSubjects.length < MIN_SUBJECTS ||
+                  phoneNumber.length !== 10 ||
+                  !/^[0][17][0-9]{8}$/.test(phoneNumber.trim())
+                }
                 className="w-full bg-emerald-600 hover:bg-emerald-700 text-white py-6 text-lg font-medium relative"
               >
                 {isSubmitting ? (
-                  <span className="flex items-center gap-2">
-                    <Loader2 className="h-5 w-5 animate-spin" />
+                  <>
+                    <Loader2 className="mr-2 h-5 w-5 animate-spin" />
                     Processing...
-                  </span>
-                ) : isPremiumActive ? (
-                  "Update Subjects & Access Courses"
+                  </>
                 ) : renewalEligible ? (
-                  "Renew Premium Access (KES 50)"
+                  `Renew Access (KES ${RENEWAL_PRICE})`
                 ) : (
-                  "Submit Subjects & Pay"
+                  `Submit & Pay KES ${INITIAL_PRICE}`
                 )}
               </Button>
 
-              {/* Login Link */}
+              {/* Login Option */}
               {!isPremiumActive && (
                 <Button
                   type="button"
                   variant="outline"
-                  className="w-full border-emerald-600 text-emerald-600 hover:bg-emerald-600 hover:text-white"
+                  className="w-full border-emerald-600 text-emerald-600 hover:bg-emerald-50"
                   onClick={() => {
                     if (setShowFindCourseForm) setShowFindCourseForm(false);
                     onClose();
@@ -491,7 +494,7 @@ export function FindCourseForm({ onClose, setShowFindCourseForm }: FindCourseFor
                   }}
                   disabled={isSubmitting}
                 >
-                  Already subscribed? Login
+                  Already have access? Login
                 </Button>
               )}
             </>

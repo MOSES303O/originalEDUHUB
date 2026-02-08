@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { Header } from "@/components/header";
 import { Footer } from "@/components/footer";
 import { CourseRow } from "@/components/course-row";
@@ -16,31 +16,57 @@ import { FindCourseForm } from "@/components/find-course-form";
 import { useAuth } from "@/lib/auth-context";
 import { Course } from "@/types";
 import { useDebounce } from "use-debounce";
+import { fetchCoursesByUniversity } from "@/lib/api";
 
 interface UniversityCoursesClientProps {
   initialUniversity: { name: string } | null;
+  universityCode: string;
   initialCourses: Course[];
-  initialError: string | null;
+  initialError?: string | null;
 }
 
 export default function UniversityCoursesClient({
   initialUniversity,
+  universityCode,
   initialCourses,
-  initialError,
+  initialError = null,
 }: UniversityCoursesClientProps) {
   const { toast } = useToast();
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
 
+  const [courses, setCourses] = useState<Course[]>(initialCourses); // Start with server fallback
+  const [loading, setLoading] = useState(false); // Client fetch starts false if using initial
+  const [error, setError] = useState<string | null>(initialError);
   const [searchTerm, setSearchTerm] = useState("");
   const [debouncedSearchTerm] = useDebounce(searchTerm, 300);
   const [categoryFilter, setCategoryFilter] = useState("all");
-  const [courses] = useState<Course[]>(initialCourses);
-  const [error] = useState<string | null>(initialError);
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [showFindCourseForm, setShowFindCourseForm] = useState(false);
 
   const universityName = initialUniversity?.name || "Unknown University";
-  const totalCourses = courses.length;
+
+  // Fetch fresh authenticated data after auth is ready
+  useEffect(() => {
+    async function refreshCourses() {
+      if (authLoading) return;
+
+      setLoading(true);
+      setError(null);
+
+      try {
+        const freshCourses = await fetchCoursesByUniversity(universityCode);
+        setCourses(freshCourses.length > 0 ? freshCourses : initialCourses); // Prefer fresh
+      } catch (err: any) {
+        console.error("Client fetch failed:", err);
+        setError("Failed to refresh courses with your qualification status.");
+        // Keep initialCourses as fallback
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    refreshCourses();
+  }, [universityCode, authLoading, user]); // Re-run on auth/user change
 
   const handleGetStarted = () => {
     if (!user) {
@@ -64,7 +90,6 @@ export default function UniversityCoursesClient({
     }
   };
 
-  // Extract unique categories safely
   const categories = useMemo(() => {
     const unique = [
       ...new Set(
@@ -77,12 +102,14 @@ export default function UniversityCoursesClient({
   }, [courses]);
 
   const filteredCourses = useMemo(() => {
+    const searchLower = debouncedSearchTerm.toLowerCase();
+
     return courses.filter((course) => {
       const matchesSearch =
-        debouncedSearchTerm === "" ||
-        course.name?.toLowerCase().includes(debouncedSearchTerm.toLowerCase()) ||
+        searchLower === "" ||
+        course.name?.toLowerCase().includes(searchLower) ||
         course.code ||
-        (course.category && course.category.toLowerCase().includes(debouncedSearchTerm.toLowerCase()));
+        course.university?.name?.toLowerCase().includes(searchLower);
 
       const matchesCategory =
         categoryFilter === "all" ||
@@ -118,7 +145,7 @@ export default function UniversityCoursesClient({
             Available Courses - {universityName}
           </h1>
           <p className="text-gray-600 dark:text-gray-400 text-sm sm:text-base">
-            Browse through {totalCourses} course{totalCourses !== 1 ? "s" : ""} offered by {universityName}
+            {loading ? "Loading courses..." : `Browse through ${courses.length} course${courses.length !== 1 ? "s" : ""} offered by ${universityName}`}
           </p>
         </div>
 
@@ -130,10 +157,11 @@ export default function UniversityCoursesClient({
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="pl-10 h-10 sm:h-12 w-full rounded-md border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800"
+              disabled={loading}
             />
           </div>
 
-          <Select value={categoryFilter} onValueChange={setCategoryFilter}>
+          <Select value={categoryFilter} onValueChange={setCategoryFilter} disabled={loading}>
             <SelectTrigger className="w-full sm:w-[220px] bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700">
               <SelectValue placeholder="All Categories" />
             </SelectTrigger>
@@ -148,7 +176,11 @@ export default function UniversityCoursesClient({
           </Select>
         </div>
 
-        {error ? (
+        {loading || authLoading ? (
+          <div className="text-center py-12">
+            <p className="text-gray-600 dark:text-gray-400">Loading courses...</p>
+          </div>
+        ) : error ? (
           <div className="text-center py-12 rounded-lg border bg-red-50 dark:bg-red-900/20">
             <p className="text-red-600 dark:text-red-400 mb-4">{error}</p>
             <Button variant="outline" onClick={() => window.location.reload()}>
@@ -170,7 +202,7 @@ export default function UniversityCoursesClient({
                   <TableHead>Course Code</TableHead>
                   <TableHead>Course Name</TableHead>
                   <TableHead>Cut-off Grade</TableHead>
-                  <TableHead>Duration</TableHead>
+                  <TableHead>Qualification</TableHead>
                   <TableHead>Select</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
                 </TableRow>

@@ -1,69 +1,22 @@
 # apps/courses/views.py
 from rest_framework import generics, status
+from urllib3 import request
 from apps.core.views import BaseModelViewSet
-from rest_framework.permissions import IsAuthenticated
-from rest_framework.permissions import AllowAny
+from rest_framework.permissions import AllowAny, IsAuthenticated
 from django.db.models import Q
 from apps.core.utils import standardize_response
 from .models import Subject, Program, CourseOffering
 from .utils import  CourseMatchingEngine
-from rest_framework.views import APIView
 from .serializers import (
     SubjectSerializer,
     ProgramSerializer,
     CourseOfferingListSerializer,
     CourseOfferingDetailSerializer,
     CourseSearchFilterSerializer,
-    RecommendedCourseSerializer
 )
 import logging
 
 logger = logging.getLogger(__name__)
-class RecommendedCoursesView(APIView):
-    """
-    GET /courses/recommendations/
-    
-    Returns personalized list of recommended and qualified courses for the authenticated user.
-    Uses CourseMatchingEngine to qualify and rank based on subjects, cluster points, and requirements.
-    """
-    permission_classes = [IsAuthenticated]
-
-    def get(self, request, format=None):
-        user = request.user
-
-        try:
-            engine = CourseMatchingEngine()
-            recommended = engine.get_recommended_courses(user, limit=15)  # Adjust limit
-
-            if not recommended:
-                return standardize_response(
-                    success=True,
-                    message="No qualified or recommended courses found",
-                    data=[],
-                    status_code=status.HTTP_200_OK
-                )
-
-            serializer = RecommendedCourseSerializer(
-                recommended,
-                many=True,
-                context={'request': request}
-            )
-
-            return standardize_response(
-                success=True,
-                message=f"{len(serializer.data)} recommended courses found",
-                data=serializer.data,
-                status_code=status.HTTP_200_OK
-            )
-
-        except Exception as e:
-            logger.exception("Error in recommended courses view")
-            return standardize_response(
-                success=False,
-                message="Failed to fetch recommendations",
-                errors={"detail": str(e)},
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR
-            )
 class SubjectViewSet(BaseModelViewSet):
     """
     Read-only endpoint to list all active subjects.
@@ -91,7 +44,7 @@ class ProgramViewSet(BaseModelViewSet):
     GET /eduhub/courses/programs/ - List all active programs
     """
     serializer_class = ProgramSerializer
-    permission_classes = [AllowAny]
+    permission_classes = [IsAuthenticated]
     lookup_field = 'id'  # UUID primary key
 
     def get_queryset(self):
@@ -117,17 +70,23 @@ class ProgramViewSet(BaseModelViewSet):
             data=serializer.data
         )
 class CourseOfferingListView(generics.ListAPIView):
+    """
+    GET /courses/offerings/
+    
+    List all active course offerings with qualification status for authenticated users.
+    Uses CourseMatchingEngine to add qualified/not-qualified info per course.
+    """
     serializer_class = CourseOfferingListSerializer
-    permission_classes = [AllowAny]
+    permission_classes = [AllowAny]  # Allow unauth users to browse, but qualify for auth users
 
     def get_queryset(self):
         queryset = CourseOffering.objects.filter(is_active=True).select_related(
             'program', 'university'
         ).prefetch_related(
-            'program__subject_requirements__subject'  # Include program requirements
+            'program__subject_requirements__subject'
         )
 
-        # Filters
+        # Apply existing filters (unchanged)
         university_code = self.request.query_params.get('university_code')
         if university_code:
             queryset = queryset.filter(university__code__iexact=university_code)
@@ -169,11 +128,59 @@ class CourseOfferingListView(generics.ListAPIView):
 
     def list(self, request, *args, **kwargs):
         queryset = self.filter_queryset(self.get_queryset())
+        
+        qualified_data = {}
+        user_identifier = "anonymous"  # fallback
+
+        if request.user.is_authenticated:
+            try:
+                user_identifier = request.user.phone_number or request.user.id
+                engine = CourseMatchingEngine()
+                for offering in queryset:
+                    qualified, details = engine.check_user_qualification_for_course_offering(
+                        request.user, offering
+                    )
+                    qualified_data[str(offering.id)] = {
+                        "qualified": qualified,
+                        "user_points": details.get("user_points"),
+                        "required_points": details.get("required_points"),
+                        "points_source": details.get("points_source"),
+                        "cluster": details.get("cluster"),
+                        "qualification_details": details,
+                        "reason": details.get("reason"),
+                    }
+            except Exception as e:
+                logger.exception(f"Qualification failed for user {user_identifier}")
+                # Optionally continue without qualification data
+        else:
+            logger.info("Anonymous user - skipping qualification")
+
+        # Serialize base data
         serializer = self.get_serializer(queryset, many=True, context={'request': request})
+        data = serializer.data
+
+        # Enrich with qualification (only for authenticated users)
+        for item in data:
+            off_id = str(item['id'])
+            if off_id in qualified_data:
+                item.update(qualified_data[off_id])
+
+        # Logging – safe for anonymous
+        logger.info(f"Qualification results for user {user_identifier} - {len(qualified_data)} courses evaluated")
+
+        for offering_id, qdata in qualified_data.items():
+            logger.info(f"Course {offering_id}: qualified={qdata['qualified']}, "
+                        f"user_points={qdata.get('user_points')}, "
+                        f"required_points={qdata.get('required_points')}, "
+                        f"reason={qdata.get('reason', 'None')}")
+
+        logger.info(f"Serialized data sample: {data[0] if data else 'Empty'}")
+
         return standardize_response(
             success=True,
             message="Course offerings retrieved successfully",
-            data=serializer.data
+            data=data,
+            status_code=status.HTTP_200_OK
         )
 
 class CourseOfferingDetailView(generics.RetrieveAPIView):

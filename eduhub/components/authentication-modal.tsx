@@ -5,26 +5,26 @@ import { createPortal } from "react-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { X, Loader2, ArrowLeft, Clock } from "lucide-react";
+import { X, Loader2, Clock, AlertCircle } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useToast } from "@/hooks/use-toast";
 import { login } from "@/lib/api";
-import { FindCourseForm } from "@/components/find-course-form";
 import { useAuth } from "@/lib/auth-context";
+import { FindCourseForm } from "@/components/find-course-form"; // ← import it
 
 interface AuthenticationModalProps {
   onClose: () => void;
-  canClose?: boolean; // defaults to true
+  canClose?: boolean;
 }
 
 export function AuthenticationModal({ onClose, canClose = true }: AuthenticationModalProps) {
   const [phoneNumber, setPhoneNumber] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState("");
-  const [showFindCourseForm, setShowFindCourseForm] = useState(false);
   const [countdown, setCountdown] = useState(10);
+  const [showFindCourseForm, setShowFindCourseForm] = useState(false);
 
   const { 
     user, 
@@ -38,20 +38,18 @@ export function AuthenticationModal({ onClose, canClose = true }: Authentication
   const { toast } = useToast();
   const router = useRouter();
 
-  // Auto-validate on mount and state changes
+  // Auto-validate on mount
   useEffect(() => {
     validateToken();
   }, []);
 
-  // Handle countdown → show full form only if NOT renewal eligible
+  // Countdown for renewal grace period
   useEffect(() => {
-    if (requirePayment && countdown > 0) {
+    if (requirePayment && renewalEligible && countdown > 0) {
       const timer = setTimeout(() => setCountdown(c => c - 1), 1000);
       return () => clearTimeout(timer);
-    } else if (requirePayment && countdown === 0 && !renewalEligible) {
-      setShowFindCourseForm(true);
     }
-  }, [requirePayment, countdown, renewalEligible]);
+  }, [requirePayment, renewalEligible, countdown]);
 
   const handleRenew = async () => {
     setIsSubmitting(true);
@@ -59,15 +57,15 @@ export function AuthenticationModal({ onClose, canClose = true }: Authentication
       await renewSubscription();
       await validateToken();
       toast({ 
-        title: "Renewed Successfully", 
-        description: "Premium access restored for another 6 hours!" 
+        title: "Renewed!", 
+        description: "Premium restored for another 6 hours (50 KES)" 
       });
       onClose();
       router.push("/courses");
     } catch (err: any) {
       toast({ 
         title: "Renewal Failed", 
-        description: err.message || "Please try again later", 
+        description: err.message || "Try again", 
         variant: "destructive" 
       });
     } finally {
@@ -80,15 +78,14 @@ export function AuthenticationModal({ onClose, canClose = true }: Authentication
     setError("");
     setIsSubmitting(true);
 
-    const cleanPhone = phoneNumber.startsWith("0") 
-      ? "254" + phoneNumber.slice(1) 
-      : phoneNumber.startsWith("254") ? phoneNumber : "254" + phoneNumber;
-
-    if (cleanPhone.length !== 12 || !/^254[17]/.test(cleanPhone)) {
-      setError("Invalid Kenyan phone number (e.g., 0712345678)");
+    const trimmed = phoneNumber.trim();
+    if (!/^\d{10}$/.test(trimmed) || !trimmed.startsWith("0")) {
+      setError("Enter a valid 10-digit Kenyan number starting with 0 (e.g., 0712345678)");
       setIsSubmitting(false);
       return;
     }
+
+    const cleanPhone = "254" + trimmed.slice(1);
 
     try {
       const response = await login(cleanPhone, "&mo1se2s3@");
@@ -100,38 +97,42 @@ export function AuthenticationModal({ onClose, canClose = true }: Authentication
       window.dispatchEvent(new Event("auth-change"));
       await validateToken();
 
-      if (response.user.is_premium) {
-        toast({ 
-          title: "Welcome back!", 
-          description: "Premium active for 6 hours" 
-        });
+      // After login, check subscription status
+      if (response.user.is_premium || isPremiumActive) {
+        toast({ title: "Welcome!", description: "Premium is active – redirecting..." });
         onClose();
         router.push("/courses");
       } else if (renewalEligible) {
         toast({ 
           title: "Premium Expired", 
-          description: "Renew now for 50 KES" 
+          description: "Renew now for 50 KES (grace period remaining)" 
         });
+        // Stay in modal → renewal button is shown
       } else {
+        // Expired and NOT renewal eligible → force open FindCourseForm
         setShowFindCourseForm(true);
         toast({ 
-          title: "No Active Access", 
-          description: "Register or pay 210 KES to continue" 
+          title: "Subscription Expired", 
+          description: "Please complete payment of 210 KES to continue" 
         });
       }
     } catch (err: any) {
-      setError(err.message || "Login failed");
-      toast({ title: "Error", description: err.message, variant: "destructive" });
+      setError(err.message || "Login failed. Please check your number.");
+      toast({ 
+        title: "Login Error", 
+        description: err.message || "Something went wrong", 
+        variant: "destructive" 
+      });
     } finally {
       setIsSubmitting(false);
     }
   };
 
   const handleClose = () => {
-    if (requirePayment) {
+    if (requirePayment && !renewalEligible && !showFindCourseForm) {
       toast({
-        title: "Cannot Close",
-        description: "Please login or renew to continue",
+        title: "Action Required",
+        description: "Please login, renew, or subscribe to continue",
         variant: "destructive",
       });
       return;
@@ -139,6 +140,7 @@ export function AuthenticationModal({ onClose, canClose = true }: Authentication
     onClose();
   };
 
+  // Show FindCourseForm when needed
   if (showFindCourseForm) {
     return (
       <FindCourseForm 
@@ -152,52 +154,50 @@ export function AuthenticationModal({ onClose, canClose = true }: Authentication
   }
 
   return createPortal(
-    <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
+    <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
       <Card className="w-full max-w-md bg-gray-900 border-emerald-800 shadow-2xl">
         <CardHeader className="relative pb-2">
           <div className="flex items-center justify-between">
             <CardTitle className="text-2xl font-bold">
-              {renewalEligible ? "Renew Premium Access" : "Login"}
+              {renewalEligible ? "Renew Premium (50 KES)" : "Login / Register"}
             </CardTitle>
             <Button 
               variant="ghost" 
               size="icon" 
               onClick={handleClose}
-              disabled={requirePayment}
+              disabled={requirePayment && !canClose}
             >
               <X className="h-5 w-5" />
             </Button>
           </div>
           <CardDescription className="text-base mt-1">
             {renewalEligible 
-              ? "Your 6-hour premium has ended – renew now for 50 KES" 
-              : "Enter your phone number to login or register"}
+              ? `Premium expired – renew now for 50 KES (grace period: ${countdown}s remaining)` 
+              : "Enter your 10-digit phone number starting with 0"}
           </CardDescription>
         </CardHeader>
 
         <CardContent className="space-y-6 pt-4">
           {error && (
             <Alert variant="destructive">
+              <AlertCircle className="h-4 w-4" />
               <AlertDescription>{error}</AlertDescription>
             </Alert>
           )}
 
           {renewalEligible ? (
-            <div className="space-y-6 text-center py-6">
-              <div className="flex flex-col items-center gap-2">
-                <Clock className="h-12 w-12 text-emerald-500" />
-                <p className="text-lg font-medium text-emerald-400">
-                  Renew now for only 50 KES
-                </p>
-                <p className="text-sm text-gray-300">
-                  Get another 6 hours of full premium access
-                </p>
-              </div>
-
+            <div className="space-y-6 text-center py-8">
+              <Clock className="h-16 w-16 mx-auto text-emerald-500 animate-pulse" />
+              <h3 className="text-xl font-bold text-emerald-400">
+                Renew for 50 KES
+              </h3>
+              <p className="text-gray-300">
+                Restore full premium access for another 6 hours
+              </p>
               <Button
                 onClick={handleRenew}
                 disabled={isSubmitting}
-                className="w-full bg-emerald-600 hover:bg-emerald-700 text-white text-lg py-6 font-semibold"
+                className="w-full bg-emerald-600 hover:bg-emerald-700 text-white py-6 text-lg font-semibold"
               >
                 {isSubmitting ? (
                   <>
@@ -208,15 +208,14 @@ export function AuthenticationModal({ onClose, canClose = true }: Authentication
                   "Renew Now – 50 KES"
                 )}
               </Button>
-
               <p className="text-sm text-gray-400">
-                Or login with existing credentials to check status
+                Or login to check your current status
               </p>
             </div>
           ) : (
             <form onSubmit={handleLogin} className="space-y-6">
               <div className="space-y-2">
-                <Label htmlFor="phone" className="text-base">M-Pesa Phone Number</Label>
+                <Label htmlFor="phone" className="text-base">Phone Number</Label>
                 <div className="flex">
                   <span className="inline-flex items-center px-5 rounded-l-md border border-r-0 bg-emerald-900 text-white font-semibold text-lg">
                     +254
@@ -224,27 +223,30 @@ export function AuthenticationModal({ onClose, canClose = true }: Authentication
                   <Input
                     id="phone"
                     type="tel"
-                    placeholder="712345678"
+                    placeholder="0712345678"
                     className="rounded-l-none border-emerald-700 focus:border-emerald-500 bg-gray-950 text-white text-lg py-6"
                     value={phoneNumber}
                     onChange={(e) => {
                       const val = e.target.value.replace(/\D/g, '');
-                      if (val.length <= 9) setPhoneNumber(val);
+                      if (val.length <= 10) setPhoneNumber(val);
                     }}
-                    maxLength={9}
+                    maxLength={10}
+                    pattern="0[17][0-9]{8}"
+                    title="Enter 10-digit number starting with 0 (e.g., 0712345678)"
                     disabled={isSubmitting}
                     required
+                    autoFocus
                   />
                 </div>
                 <p className="text-xs text-gray-400">
-                  Enter your 9-digit number (e.g., 712345678)
+                  Enter your full 10-digit number starting with 0 (e.g., 0712345678)
                 </p>
               </div>
 
               <Button
                 type="submit"
                 className="w-full bg-emerald-600 hover:bg-emerald-700 text-white text-lg py-6 font-semibold"
-                disabled={isSubmitting}
+                disabled={isSubmitting || phoneNumber.length !== 10}
               >
                 {isSubmitting ? (
                   <>
@@ -256,14 +258,17 @@ export function AuthenticationModal({ onClose, canClose = true }: Authentication
                 )}
               </Button>
 
+              {/* Always-visible button to start new subscription */}
               <Button
                 type="button"
                 variant="outline"
                 className="w-full border-emerald-700 text-emerald-400 hover:bg-emerald-950"
-                onClick={() => setShowFindCourseForm(true)}
+                onClick={() => {
+                  setShowFindCourseForm(true);
+                }}
                 disabled={isSubmitting}
               >
-                New here? Register (210 KES first access)
+                New here? Pay 210 KES to start
               </Button>
             </form>
           )}
@@ -271,8 +276,8 @@ export function AuthenticationModal({ onClose, canClose = true }: Authentication
 
         <CardFooter className="flex justify-center text-sm text-gray-400 pt-2 border-t border-emerald-800">
           {renewalEligible 
-            ? "Renewal window closes in 24 hours from expiry" 
-            : "New users: First premium access is 210 KES"}
+            ? "Renewal window: 24 hours after expiry" 
+            : "First premium access: 210 KES | Renewal: 50 KES"}
         </CardFooter>
       </Card>
     </div>,

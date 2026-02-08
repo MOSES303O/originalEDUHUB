@@ -262,7 +262,7 @@ export default function CoursesPage() {
                       <TableHead>Course Name</TableHead>
                       <TableHead>University</TableHead>
                       <TableHead>Cut-off Points</TableHead>
-                      <TableHead>Duration</TableHead>
+                      <TableHead>Qualification</TableHead>
                       <TableHead>Select</TableHead>
                       <TableHead className="text-right">Actions</TableHead>
                     </TableRow>

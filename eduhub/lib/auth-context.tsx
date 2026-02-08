@@ -63,9 +63,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (response.data.success === true) {
         const data = response.data.data || {};
         return {
-          active: true,
-          renewal_eligible: false,
-          hours_remaining: 0,
+          active: data.active || false,
+          renewal_eligible: data.renewal_eligible || false,
+          hours_remaining: data.hours_remaining || 0,
         };
       }
   
