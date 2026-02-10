@@ -21,15 +21,11 @@ class CourseMatchingEngine:
     - Structural checks (≥7 subjects, cluster rules, program reqs) always run
     - Points comparison only after all structural checks pass
     """
-
-    # Canonical grade-to-points mapping
     GRADE_POINTS = {
         'A': 12, 'A-': 11, 'B+': 10, 'B': 9, 'B-': 8,
         'C+': 7, 'C': 6, 'C-': 5, 'D+': 4, 'D': 3,
         'D-': 2, 'E': 1,
     }
-
-    # Subject name normalization (handles common variations)
     SUBJECT_NORMALIZATION = {
         'english': 'English',
         'kiswahili': 'Kiswahili',
@@ -246,10 +242,6 @@ class CourseMatchingEngine:
         'any_from': [{'groups': ['GROUP_III', 'GROUP_IV', 'GROUP_V'], 'count': 2, 'min_grade': 'C+'}],
         'min_points_floor': 46,
     },
-    # ──────────────────────────────────────────────────────────────
-    # Clusters 19–48: Mostly Education, Social Sciences, Religious, Community, Special Needs, Early Childhood, Library, Peace, Security
-    # Most are very flexible: ENG/KIS C+, MAT C+, +3–4 from groups III–V
-    # ──────────────────────────────────────────────────────────────
     19: {
         'name': 'Cluster 19 – Education (Arts / Science / Primary / Special Needs)',
         'mandatory': [{'group': 'GROUP_I', 'min_grade': 'C+'}],

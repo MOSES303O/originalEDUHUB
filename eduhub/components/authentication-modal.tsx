@@ -27,13 +27,13 @@ export function AuthenticationModal({ onClose, canClose = true }: Authentication
   const [showFindCourseForm, setShowFindCourseForm] = useState(false);
 
   const { 
-    user, 
-    isPremiumActive, 
-    renewalEligible, 
-    requirePayment,
-    renewSubscription,
-    validateToken 
-  } = useAuth();
+  checkActiveSubscription,
+  renewalEligible,
+  requirePayment,
+  initiatePayment,
+  validateToken
+} = useAuth();
+
 
   const { toast } = useToast();
   const router = useRouter();
@@ -54,24 +54,18 @@ export function AuthenticationModal({ onClose, canClose = true }: Authentication
   const handleRenew = async () => {
     setIsSubmitting(true);
     try {
-      await renewSubscription();
-      await validateToken();
-      toast({ 
-        title: "Renewed!", 
-        description: "Premium restored for another 6 hours (50 KES)" 
+      await initiatePayment(50);
+
+      toast({
+        title: "Complete Payment",
+        description: "Confirm the M-Pesa prompt on your phone",
       });
-      onClose();
-      router.push("/courses");
-    } catch (err: any) {
-      toast({ 
-        title: "Renewal Failed", 
-        description: err.message || "Try again", 
-        variant: "destructive" 
-      });
+
     } finally {
       setIsSubmitting(false);
     }
   };
+
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -98,24 +92,22 @@ export function AuthenticationModal({ onClose, canClose = true }: Authentication
       await validateToken();
 
       // After login, check subscription status
-      if (response.user.is_premium || isPremiumActive) {
-        toast({ title: "Welcome!", description: "Premium is active – redirecting..." });
+      await validateToken();
+
+      const sub = await checkActiveSubscription();
+
+      if (sub.active) {
         onClose();
         router.push("/courses");
-      } else if (renewalEligible) {
-        toast({ 
-          title: "Premium Expired", 
-          description: "Renew now for 50 KES (grace period remaining)" 
+      } else if (sub.renewal_eligible) {
+        toast({
+          title: "Premium Expired",
+          description: "Renew for 50 KES to continue",
         });
-        // Stay in modal → renewal button is shown
       } else {
-        // Expired and NOT renewal eligible → force open FindCourseForm
         setShowFindCourseForm(true);
-        toast({ 
-          title: "Subscription Expired", 
-          description: "Please complete payment of 210 KES to continue" 
-        });
       }
+
     } catch (err: any) {
       setError(err.message || "Login failed. Please check your number.");
       toast({ 

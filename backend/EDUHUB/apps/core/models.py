@@ -72,15 +72,12 @@ class RequestLoggingMiddleware(MiddlewareMixin):
             logger.info(f"API Request: {request.method} {request.path} from {self._get_client_ip(request)}")
     
     def process_response(self, request, response):
-        # Calculate response time
         if hasattr(request, 'start_time'):
             duration = time.time() - request.start_time
             
-            # Log slow requests
-            if duration > 2.0:  # Log requests taking more than 2 seconds
+            if duration > 2.0: 
                 logger.warning(f"Slow request: {request.method} {request.path} took {duration:.2f}s")
             
-            # Add response time header
             response['X-Response-Time'] = f"{duration:.3f}s"
         
         return response

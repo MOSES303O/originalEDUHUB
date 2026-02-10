@@ -87,7 +87,7 @@ class OfferedAtAdmin(admin.ModelAdmin):
     list_display = ('programme', 'campus_display')
     list_filter = ('offered_everywhere', 'campuses__city')
     autocomplete_fields = ('programme', 'campuses')
-    filter_horizontal = ('campuses',)  # Beautiful multi-select
+    filter_horizontal = ('campuses',)  
 
     def campus_display(self, obj):
         if obj.offered_everywhere:

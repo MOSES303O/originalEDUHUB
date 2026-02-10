@@ -12,7 +12,7 @@ class ProgramSubjectRequirementInline(admin.TabularInline):
     autocomplete_fields = ['subject']
 @admin.register(Program)
 class ProgramAdmin(admin.ModelAdmin):
-    list_display = ('name', 'category', 'typical_duration_years','details','is_active')  # ← Remove 'detail'
+    list_display = ('name', 'category', 'typical_duration_years','details','is_active') 
     list_filter = ('category', 'is_active', 'typical_duration_years')
     search_fields = ('name', 'category')
     inlines = [ProgramSubjectRequirementInline]

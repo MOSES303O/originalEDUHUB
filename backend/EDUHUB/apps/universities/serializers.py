@@ -36,7 +36,6 @@ class UniversityListSerializer(serializers.ModelSerializer):
 
 class UniversityDetailSerializer(serializers.ModelSerializer):
     requirements = UniversityRequirementSerializer(many=True, read_only=True)
-    #courses_offered = OfferedAtSerializer(many=True, read_only=True)
 
     class Meta:
         model = University

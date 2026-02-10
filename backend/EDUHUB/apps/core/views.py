@@ -64,7 +64,6 @@ class BaseAPIView(APIView, APIResponseMixin, RateLimitMixin):
         if self.authentication_required:
             permissions.append(IsAuthenticated())
         return permissions
-# BaseModelViewSet remains unchanged (as provided previously)
 class BaseModelViewSet(ModelViewSet, APIResponseMixin, RateLimitMixin):
     """
     Base ModelViewSet with standardized functionality for CRUD operations.
@@ -76,8 +75,6 @@ class BaseModelViewSet(ModelViewSet, APIResponseMixin, RateLimitMixin):
     - Error handling
     - Pagination support
     """
-    
-    # Rate limiting settings
     rate_limit_scope = 'crud'
     rate_limit_count = 100
     rate_limit_window = 3600
@@ -327,7 +324,7 @@ class HealthCheckView(BaseAPIView):
             'status': 'healthy',
             'timestamp': timezone.now().isoformat(),
             'version': '1.0.0',
-            'environment': 'development',  # This should come from settings
+            'environment': 'development', 
             'services': {
                 'database': self.check_database(),
                 'cache': self.check_cache(),

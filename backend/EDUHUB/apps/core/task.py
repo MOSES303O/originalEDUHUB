@@ -13,7 +13,6 @@ def cleanup_expired_subscriptions_and_users():
     now = timezone.now()
     logger.info(f"Starting cleanup task at {now}")
 
-    # === PHASE 1: 6-hour cleanup (payment & subscription data only) ===
     expired_subscriptions = Subscription.objects.filter(
         end_date__lt=now - timedelta(hours=6),
         end_date__isnull=False

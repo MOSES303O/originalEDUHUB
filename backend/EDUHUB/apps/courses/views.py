@@ -45,7 +45,7 @@ class ProgramViewSet(BaseModelViewSet):
     """
     serializer_class = ProgramSerializer
     permission_classes = [IsAuthenticated]
-    lookup_field = 'id'  # UUID primary key
+    lookup_field = 'id'
 
     def get_queryset(self):
         return Program.objects.filter(is_active=True).prefetch_related(
@@ -77,7 +77,7 @@ class CourseOfferingListView(generics.ListAPIView):
     Uses CourseMatchingEngine to add qualified/not-qualified info per course.
     """
     serializer_class = CourseOfferingListSerializer
-    permission_classes = [AllowAny]  # Allow unauth users to browse, but qualify for auth users
+    permission_classes = [AllowAny] 
 
     def get_queryset(self):
         queryset = CourseOffering.objects.filter(is_active=True).select_related(
@@ -85,8 +85,6 @@ class CourseOfferingListView(generics.ListAPIView):
         ).prefetch_related(
             'program__subject_requirements__subject'
         )
-
-        # Apply existing filters (unchanged)
         university_code = self.request.query_params.get('university_code')
         if university_code:
             queryset = queryset.filter(university__code__iexact=university_code)
@@ -130,7 +128,7 @@ class CourseOfferingListView(generics.ListAPIView):
         queryset = self.filter_queryset(self.get_queryset())
         
         qualified_data = {}
-        user_identifier = "anonymous"  # fallback
+        user_identifier = "anonymous" 
 
         if request.user.is_authenticated:
             try:
@@ -151,21 +149,15 @@ class CourseOfferingListView(generics.ListAPIView):
                     }
             except Exception as e:
                 logger.exception(f"Qualification failed for user {user_identifier}")
-                # Optionally continue without qualification data
         else:
             logger.info("Anonymous user - skipping qualification")
 
-        # Serialize base data
         serializer = self.get_serializer(queryset, many=True, context={'request': request})
         data = serializer.data
-
-        # Enrich with qualification (only for authenticated users)
         for item in data:
             off_id = str(item['id'])
             if off_id in qualified_data:
                 item.update(qualified_data[off_id])
-
-        # Logging – safe for anonymous
         logger.info(f"Qualification results for user {user_identifier} - {len(qualified_data)} courses evaluated")
 
         for offering_id, qdata in qualified_data.items():
@@ -197,7 +189,7 @@ class CourseOfferingDetailView(generics.RetrieveAPIView):
         return super().get_queryset().select_related(
             'program', 'university'
         ).prefetch_related(
-            'program__subject_requirements__subject'  # Critical: program-level requirements
+            'program__subject_requirements__subject' 
         )
 
     def retrieve(self, request, *args, **kwargs):

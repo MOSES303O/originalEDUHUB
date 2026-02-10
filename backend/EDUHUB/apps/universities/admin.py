@@ -7,8 +7,6 @@ from .models import (
     Department,
     UniversityRequirement,
 )
-
-
 @admin.register(University)
 class UniversityAdmin(admin.ModelAdmin):
     list_display = ('name', 'code', 'city', 'type', 'ranking','description','is_active', 'get_courses_count')
@@ -29,12 +27,9 @@ class UniversityAdmin(admin.ModelAdmin):
 
     def get_queryset(self, request):
         qs = super().get_queryset(request)
-        # CHANGE THIS LINE
-        return qs.prefetch_related('offerings')  # or 'courseoffering_set' if no related_name
-        # OLD: return qs.prefetch_related('courses_offered')
-
+        return qs.prefetch_related('offerings') 
     def get_courses_count(self, obj):
-        return obj.offerings.count()  # or obj.courseoffering_set.count()
+        return obj.offerings.count() 
     get_courses_count.short_description = "Courses Offered"
 @admin.register(Faculty)
 class FacultyAdmin(admin.ModelAdmin):

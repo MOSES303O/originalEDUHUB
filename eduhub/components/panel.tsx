@@ -17,7 +17,7 @@ export function UserInfoPanel({ className = "" }: UserInfoPanelProps) {
   const { 
       user, 
       requirePayment, 
-      setUser,           // ← FIXED: now destructured correctly
+      setUser,          
       validateToken 
     } = useAuth();
   const { toast } = useToast();

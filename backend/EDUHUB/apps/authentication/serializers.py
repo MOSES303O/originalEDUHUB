@@ -8,7 +8,7 @@ from apps.kmtc.models import Programme
 from apps.courses.models import Subject, CourseOffering  # ← CHANGED: CourseOffering instead of Course
 from .models import User, UserProfile, UserSubject, UserSelectedCourse
 from apps.core.utils import validate_kenyan_phone, standardize_phone_number
-from decimal import Decimal, InvalidOperation
+from decimal import Decimal, InvalidOperation, ROUND_HALF_UP
 
 class UserSubjectSerializer(serializers.Serializer):
     subject_id = serializers.UUIDField()
@@ -177,26 +177,25 @@ class PasswordChangeSerializer(serializers.Serializer):
                 'new_password_confirm': "Password confirmation doesn't match."
             })
         return attrs
-    
-class UserClusterPointsSerializer(serializers.ModelSerializer):
+
+class UserClusterPointsUpdateSerializer(serializers.ModelSerializer):
+    cluster_points = serializers.DecimalField(
+        max_digits=6,
+        decimal_places=3,
+        min_value=Decimal("0.000"),
+        max_value=Decimal("84.000"),
+        required=True
+    )
+
     class Meta:
         model = User
-        fields = ['cluster_points']
-        extra_kwargs = {
-            'cluster_points': {'required': False, 'allow_null': True}
-        }
+        fields = ("cluster_points",)
 
-    def to_internal_value(self, data):
-        if 'cluster_points' in data:
-            value = data['cluster_points']
-            if isinstance(value, str):
-                try:
-                    data['cluster_points'] = Decimal(value)
-                except InvalidOperation:
-                    raise serializers.ValidationError({
-                        'cluster_points': 'Must be a valid decimal number (e.g. 44.000)'
-                    })
-        return super().to_internal_value(data)
+    def validate_cluster_points(self, value):
+        # Normalize to 3 decimal places
+        value = value.quantize(Decimal("0.000"), rounding=ROUND_HALF_UP)
+        return value
+
 
 class UserDetailSerializer(serializers.ModelSerializer):
     profile = UserProfileSerializer(read_only=True)

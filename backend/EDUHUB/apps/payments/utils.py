@@ -2,14 +2,13 @@
 from django_daraja.mpesa.core import MpesaClient
 from django.conf import settings
 import logging
-from apps.core.utils import log_user_activity
 
 logger = logging.getLogger(__name__)
 
 class MpesaService:
     def __init__(self):
         self.client = MpesaClient()
-        self.callback_url = settings.CALLBACK_URL  # ← This now exists
+        self.callback_url = settings.CALLBACK_URL  
 
     def stk_push(self, phone_number: str, amount: int, account_reference: str = "EduHub Premium"):
         try:

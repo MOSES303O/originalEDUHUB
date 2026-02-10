@@ -10,7 +10,7 @@ from .user_views import (
     UserSelectedCoursesView,
     UserApplicationsView,
     ContactFormView,
-    UserUpdateView,
+    UserProfileUpdateView,
 )
 from .views import (
     UserProfileViewSet,
@@ -30,7 +30,7 @@ urlpatterns = [
     path('refresh/', TokenRefreshView.as_view(), name='token_refresh'),
     path('password/change/', PasswordChangeView.as_view(), name='password_change'),
     path('contact/submit/', ContactFormView.as_view(), name='contact_submit'), 
-    path('/profile/update/', UserUpdateView.as_view(), name='user_update'),
+    path('profile/update/', UserProfileUpdateView.as_view(), name='user_profile_update'),
     # Router endpoints (profile, subjects) — mounted at root
     path('', include(router.urls)),
     

@@ -101,15 +101,14 @@ apiClient.interceptors.response.use(
 
 // ERROR EXTRACTOR
 export const extractErrorDetails = (error: any) => {
-  const axiosError = error as AxiosError<any>;
-  if (axiosError.response?.data) {
-    return {
-      message: axiosError.response.data.message || axiosError.response.data.detail || "Request failed",
-      status: axiosError.response.status,
-      data: axiosError.response.data,
-    };
-  }
-  return { message: axiosError.message || "Network error" };
+  if (!error) return { message: "Unknown error" };
+  return {
+    status: error.response?.status,
+    data: error.response?.data,
+    message: error.message,
+    code: error.code,
+    detail: error.response?.data?.detail || error.response?.data?.non_field_errors?.[0],
+  };
 };
 
 // REFRESH TOKEN

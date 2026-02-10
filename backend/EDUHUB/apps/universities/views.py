@@ -21,7 +21,7 @@ class UniversityViewSet(viewsets.ReadOnlyModelViewSet):
     - GET /eduhub/universities/{code}/courses/ → List all course offerings at this university
     """
     queryset = University.objects.filter(is_active=True).prefetch_related(
-        'offerings__program'  # Preload offerings and their programs
+        'offerings__program' 
     )
     lookup_field = 'code'
 

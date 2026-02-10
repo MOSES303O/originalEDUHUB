@@ -14,9 +14,10 @@ interface AuthContextType {
   requirePayment: boolean;
   setRequirePayment: (value: boolean) => void;
   validateToken: () => Promise<void>;
-  renewSubscription: () => Promise<void>;
+  initiatePayment: (amount: number, subjects?: string[]) => Promise<void>;
   isPremiumActive: boolean;
   renewalEligible: boolean;
+  checkActiveSubscription: () => Promise<any>;
   setUser: React.Dispatch<React.SetStateAction<any | null>>;
 }
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -30,66 +31,54 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const { toast } = useToast();
   const router = useRouter();
 
-  const renewSubscription = async () => {
-    try {
-      const response = await apiClient.post("/payments/renew/");
-      console.log("Renewal success:", response.data);
+  const initiatePayment = async (amount: number, subjects: string[] = []) => {
+  try {
+    const phone = localStorage.getItem("phone_number");
+    if (!phone) throw new Error("Phone number missing");
 
-      // Refresh auth state
-      await validateToken();
+    const response = await apiClient.post("/payments/initiate/", {
+      phone_number: phone,
+      amount,
+      subjects,
+    });
 
-      toast({
-        title: "Renewal Successful",
-        description: "Premium access renewed for another 6 hours!",
-      });
+    toast({
+      title: "Payment Initiated",
+      description: "Check your phone to complete M-Pesa payment",
+    });
 
-      setRequirePayment(false);
-      setIsPremiumActive(true);
+  } catch (error: any) {
+    toast({
+      title: "Payment Failed",
+      description:"IMEKATAA",
+      variant: "destructive",
+    });
+    throw error;
+  }
+};
 
-    } catch (error: any) {
-      console.error("Renewal failed:", extractErrorDetails(error));
-      toast({
-        title: "Renewal Failed",
-        description: error.response?.data?.error || "Could not renew subscription",
-        variant: "destructive",
-      });
-    }
-  };
   const checkActiveSubscription = async () => {
     try {
       const response = await apiClient.get("/payments/my-subscriptions/active");
-      console.log("[checkActiveSubscription] Raw response:", response.data);
-  
-      if (response.data.success === true) {
-        const data = response.data.data || {};
-        return {
-          active: data.active || false,
-          renewal_eligible: data.renewal_eligible || false,
-          hours_remaining: data.hours_remaining || 0,
-        };
+
+      if (response.data.success) {
+        return response.data.data;
       }
-  
-      // Handle 402 (Payment Required)
-      if (response.status === 402) {
-        if (response.data.data?.renewal_eligible) {
-          return {
-            active: false,
-            renewal_eligible: true,
-            hours_remaining: response.data.data?.hours_remaining || 0,
-          };
-        }
-        return {
-          active: false,
-          renewal_eligible: false,
-        };
-      }
-  
-      return { active: false, renewal_eligible: false , hours_remaining: 0 };
-    } catch (error: any) {
-      console.error("[checkActiveSubscription] Failed:", extractErrorDetails(error));
-      return { active: false, renewal_eligible: false, hours_remaining: 0 };
+
+      return {
+        active: false,
+        renewal_eligible: false,
+        hours_remaining: 0,
+      };
+    } catch {
+      return {
+        active: false,
+        renewal_eligible: false,
+        hours_remaining: 0,
+      };
     }
   };
+
 
   const checkUserHasSubjects = async (): Promise<boolean> => {
     try {
@@ -104,6 +93,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const storedToken = localStorage.getItem("token");
 
     if (!storedToken) {
+      console.log("[validateToken] No token → anonymous");
       setUser(null);
       setRequirePayment(true);
       setIsPremiumActive(false);
@@ -113,37 +103,54 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
 
     try {
+      // 1. Get user profile
       const profileResponse = await apiClient.get("/auth/profile/me/");
       const userData = profileResponse.data.data?.user || profileResponse.data.user || profileResponse.data;
       setUser(userData);
 
-      const { active, renewal_eligible } = await checkActiveSubscription();
-      setIsPremiumActive(active);
-      setRenewalEligible(renewal_eligible);
-      setRequirePayment(!active && !renewal_eligible);
+      // 2. Check subscription
+      const sub = await checkActiveSubscription();
+      setIsPremiumActive(sub.active);
+      setRenewalEligible(sub.renewal_eligible);
+      setRequirePayment(!sub.active && !sub.renewal_eligible);
 
-      if (active) {
+      console.log("[validateToken] Success:", {
+        user: userData?.phone_number,
+        active: sub.active,
+        renewal: sub.renewal_eligible,
+      });
+
+      // Only trigger subjects check if premium active
+      if (sub.active) {
         const hasSubjects = await checkUserHasSubjects();
         if (!hasSubjects) {
           window.dispatchEvent(new Event("require-subjects"));
         }
-      } else {
-        // Not active → show form (either new or renewal)
-        window.dispatchEvent(new Event("require-subjects"));
       }
 
     } catch (error: any) {
-      console.error("Auth validation failed:", extractErrorDetails(error));
-      localStorage.clear();
-      setUser(null);
-      setRequirePayment(true);
-      setIsPremiumActive(false);
-      setRenewalEligible(false);
+      const status = error.response?.status;
+      const details = extractErrorDetails(error);
+      console.error("Auth validation failed:", { status, details });
+
+      // ONLY clear on explicit auth failure (401/403)
+      if (status === 401 || status === 403) {
+        console.warn("[validateToken] Auth failure → clearing token");
+        localStorage.removeItem("token");
+        localStorage.removeItem("refreshToken");
+        // Keep phone_number for auto-fill
+        setUser(null);
+        setRequirePayment(true);
+        setIsPremiumActive(false);
+        setRenewalEligible(false);
+      } else {
+        // Network/500/empty response → keep token, don't clear
+        console.warn("[validateToken] Non-auth error, keeping token");
+      }
     } finally {
       setLoading(false);
     }
   };
-
   useEffect(() => {
     validateToken();
 
@@ -176,16 +183,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setUser(userData);
   
       // Check subscription after login
-      const hasActiveSub = await checkActiveSubscription();
-      setRequirePayment(!hasActiveSub);
-  
-      toast({
-        title: "Login Successful",
-        description: hasActiveSub 
-          ? "Welcome back! Premium access active." 
-          : "Please subscribe to access premium features.",
-      });
-  
+      const sub = await checkActiveSubscription();
+      setIsPremiumActive(sub.active);
+      setRenewalEligible(sub.renewal_eligible);
+      setRequirePayment(!sub.active && !sub.renewal_eligible);  
     } catch (error: any) {
       console.error("[AuthProvider] Login failed:", extractErrorDetails(error));
       
@@ -223,8 +224,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         signIn,
         signOut,
         requirePayment,
-        renewSubscription,
+        initiatePayment,
         setRequirePayment,
+        checkActiveSubscription,
         validateToken,
         isPremiumActive,
         renewalEligible,

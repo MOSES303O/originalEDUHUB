@@ -49,14 +49,11 @@ class Program(models.Model):
     )
     is_active = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
-
-    # SUBJECT REQUIREMENTS ARE DEFINED HERE — SAME FOR ALL OFFERINGS
     required_subjects = models.ManyToManyField(
         Subject,
         through='ProgramSubjectRequirement',
         related_name='programs'
     )
-
     class Meta:
         ordering = ['name']
 

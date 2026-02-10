@@ -19,8 +19,7 @@ class RequestLoggingMiddleware(MiddlewareMixin):
     def process_request(self, request):
         """Log incoming requests."""
         request.start_time = time.time()
-        
-        # Log request details
+
         logger.info(f"Request: {request.method} {request.path}")
         if request.user.is_authenticated:
             logger.info(f"User: {request.user.phone_number}")
@@ -45,10 +44,8 @@ class RateLimitMiddleware(MiddlewareMixin):
         if not getattr(settings, 'RATE_LIMIT_ENABLE', True):
             return None
         
-        # Get client IP
         ip = self.get_client_ip(request)
         
-        # Rate limit per IP
         ip_key = f"rate_limit_ip_{ip}"
         ip_requests = cache.get(ip_key, 0)
         
@@ -58,10 +55,8 @@ class RateLimitMiddleware(MiddlewareMixin):
                 'code': 'RATE_LIMIT_EXCEEDED'
             }, status=429)
         
-        # Increment counter
-        cache.set(ip_key, ip_requests + 1, 60)  # 1 minute window
-        
-        # Rate limit per user (if authenticated)
+        cache.set(ip_key, ip_requests + 1, 60)  
+
         if request.user.is_authenticated:
             user_key = f"rate_limit_user_{request.user.id}"
             user_requests = cache.get(user_key, 0)

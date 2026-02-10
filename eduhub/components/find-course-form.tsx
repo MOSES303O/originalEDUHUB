@@ -1,14 +1,20 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import {
+  X,
+  ChevronDown,
+  AlertCircle,
+  Loader2,
+  Phone,
+  RotateCw,
+  CheckCircle2,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { X, ChevronDown, AlertCircle, Loader2, Phone, RotateCw, CheckCircle2 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { fetchSubjects } from "@/lib/api";
-import apiClient from "@/lib/api";
+import apiClient, { fetchSubjects, login } from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/lib/auth-context";
-import { login } from "@/lib/api";
 
 interface Subject {
   id: string;
@@ -37,121 +43,120 @@ interface FindCourseFormProps {
 }
 
 export function FindCourseForm({ onClose, setShowFindCourseForm }: FindCourseFormProps) {
-  const [availableSubjects, setAvailableSubjects] = useState<Array<{ id: string; name: string }>>([]);
+  const router = useRouter();
+  const { toast } = useToast();
+  const { renewalEligible, validateToken, isPremiumActive, checkActiveSubscription } = useAuth();
+
+  const [availableSubjects, setAvailableSubjects] = useState<
+    { id: string; name: string }[]
+  >([]);
   const [selectedSubjects, setSelectedSubjects] = useState<Subject[]>([]);
   const [isSubjectsDropdownOpen, setIsSubjectsDropdownOpen] = useState(false);
   const [totalPoints, setTotalPoints] = useState(0);
   const [phoneNumber, setPhoneNumber] = useState("");
+  const [paymentStatus, setPaymentStatus] = useState<
+    "idle" | "processing" | "verifying" | "success" | "failed"
+  >("idle");
+  const [paymentReference, setPaymentReference] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [paymentStatus, setPaymentStatus] = useState<"idle" | "processing" | "verifying" | "success" | "failed">("idle");
-  const [paymentReference, setPaymentReference] = useState<string | null>(null);
   const [reinitiateCount, setReinitiateCount] = useState(0);
-  const MAX_REINITIATE = 3;
-
-  const router = useRouter();
-  const { toast } = useToast();
-  const { isPremiumActive, renewalEligible, validateToken } = useAuth();
 
   const MIN_SUBJECTS = 7;
   const MAX_SUBJECTS = 9;
-  const INITIAL_PRICE = 1;
+  const PREMIUM_PRICE = 1;
   const RENEWAL_PRICE = 50;
+  const MAX_REINITIATE = 3;
 
-  // Load subjects once on mount
+  // Load subjects
   useEffect(() => {
-    async function loadSubjects() {
-      try {
-        const subjects = await fetchSubjects();
-        setAvailableSubjects(subjects);
-      } catch (err) {
-        setError("Failed to load subjects.");
-        toast({ title: "Error", description: "Failed to load subjects.", variant: "destructive" });
-      }
-    }
-    loadSubjects();
+    fetchSubjects()
+      .then(setAvailableSubjects)
+      .catch(() => {
+        toast({
+          title: "Error",
+          description: "Failed to load subjects.",
+          variant: "destructive",
+        });
+      });
   }, [toast]);
 
-  // Real-time validation
+  // Real-time validation & points calculation
   useEffect(() => {
     const trimmed = phoneNumber.trim();
 
     // Phone validation
     if (trimmed) {
-      if (trimmed.length !== 10) {
-        setError("Phone number must be exactly 10 digits");
-      } else if (!trimmed.startsWith("0")) {
-        setError("Phone number must start with 0 (e.g., 0712345678)");
-      } else if (!/^[0][17][0-9]{8}$/.test(trimmed)) {
-        setError("Invalid format. Use digits only, start with 0 or 1");
-      } else {
-        setError(null);
+      if (trimmed.length !== 10 || !trimmed.startsWith("0") || !/^[0][17][0-9]{8}$/.test(trimmed)) {
+        setError("Phone must be 10 digits starting with 0 (e.g. 0712345678)");
+        return;
       }
     }
 
     // Subjects validation
     if (selectedSubjects.length < MIN_SUBJECTS) {
       setError(`Select at least ${MIN_SUBJECTS} subjects (${selectedSubjects.length}/${MIN_SUBJECTS})`);
-    } else if (selectedSubjects.length > MAX_SUBJECTS) {
+      return;
+    }
+    if (selectedSubjects.length > MAX_SUBJECTS) {
       setError(`Maximum ${MAX_SUBJECTS} subjects allowed`);
-    } else {
-      const missing = selectedSubjects.filter((s) => !s.grade);
-      if (missing.length > 0) {
-        setError(`Assign grades to all subjects (${missing.length} missing)`);
-      } else if (!error) {
-        setError(null);
-      }
+      return;
+    }
+    if (selectedSubjects.some((s) => !s.grade)) {
+      setError("Assign grades to all subjects");
+      return;
     }
 
-    // Calculate points
-    const points = selectedSubjects.reduce((total, subject) => {
-      const gradeInfo = grades.find((g) => g.value === subject.grade);
-      return total + (gradeInfo?.points || 0);
+    setError(null);
+
+    // Calculate total points
+    const points = selectedSubjects.reduce((sum, s) => {
+      const g = grades.find((x) => x.value === s.grade);
+      return sum + (g?.points || 0);
     }, 0);
     setTotalPoints(points);
-  }, [selectedSubjects, phoneNumber]);
+  }, [phoneNumber, selectedSubjects]);
 
   const handleSubjectSelect = (subject: { id: string; name: string }) => {
-    if (selectedSubjects.length < MAX_SUBJECTS && !selectedSubjects.some((s) => s.id === subject.id)) {
+    if (
+      selectedSubjects.length < MAX_SUBJECTS &&
+      !selectedSubjects.some((s) => s.id === subject.id)
+    ) {
       setSelectedSubjects([...selectedSubjects, { ...subject, grade: "" }]);
     }
     setIsSubjectsDropdownOpen(false);
   };
 
-  const handleRemoveSubject = (id: string) => {
+  const handleRemoveSubject = (id: string) =>
     setSelectedSubjects(selectedSubjects.filter((s) => s.id !== id));
-  };
 
-  const handleGradeChange = (id: string, grade: string) => {
-    setSelectedSubjects(selectedSubjects.map((s) => (s.id === id ? { ...s, grade } : s)));
-  };
+  const handleGradeChange = (id: string, grade: string) =>
+    setSelectedSubjects(
+      selectedSubjects.map((s) => (s.id === id ? { ...s, grade } : s))
+    );
 
   const initiatePayment = async () => {
+    if (error) return;
+
     setIsSubmitting(true);
     setPaymentStatus("processing");
-    setError(null);
-
-    const trimmed = phoneNumber.trim();
-    if (trimmed.length !== 10 || !trimmed.startsWith("0") || !/^[0][17][0-9]{8}$/.test(trimmed)) {
-      setError("Invalid phone number: must be 10 digits starting with 0");
-      setIsSubmitting(false);
-      return;
-    }
-
-    const formattedPhone = `+254${trimmed.slice(1)}`;
-    const amount = renewalEligible ? RENEWAL_PRICE : INITIAL_PRICE;
 
     try {
-      const subjectsPayload = selectedSubjects.map(s => ({
+      const trimmed = phoneNumber.trim();
+      const formattedPhone = `+254${trimmed.slice(1)}`;
+
+      const subjectsPayload = selectedSubjects.map((s) => ({
         subject_id: s.id,
         grade: s.grade,
       }));
+
+      const amount = renewalEligible ? RENEWAL_PRICE : PREMIUM_PRICE;
 
       const payload = {
         phone_number: formattedPhone,
         amount,
         plan_type: renewalEligible ? "RENEWAL" : "PREMIUM",
-        subjects: renewalEligible ? [] : subjectsPayload, // No subjects needed for renewal
+        subjects: renewalEligible ? [] : subjectsPayload,
       };
 
       const response = await apiClient.post("/payments/initiate/", payload);
@@ -161,7 +166,7 @@ export function FindCourseForm({ onClose, setShowFindCourseForm }: FindCourseFor
 
       toast({
         title: "Payment Requested",
-        description: `Complete ${renewalEligible ? `${RENEWAL_PRICE} KES renewal` : `${INITIAL_PRICE} KES`} on your phone, then click COMPLETE.`,
+        description: `Complete ${renewalEligible ? `${RENEWAL_PRICE} KES renewal` : `${PREMIUM_PRICE} KES`} on your phone, then click COMPLETE.`,
       });
     } catch (err: any) {
       const msg = err.response?.data?.message || "Failed to initiate payment";
@@ -197,8 +202,7 @@ export function FindCourseForm({ onClose, setShowFindCourseForm }: FindCourseFor
           return;
         }
       } else {
-        // Assume callback already succeeded if no reference
-        isConfirmed = true;
+        isConfirmed = true; // Assume callback already succeeded
       }
 
       if (isConfirmed) {
@@ -220,13 +224,20 @@ export function FindCourseForm({ onClose, setShowFindCourseForm }: FindCourseFor
           setPaymentStatus("success");
           toast({
             title: "Success!",
-            description: `You're now logged in with premium access. Redirecting...`,
+            description: "Premium activated. Redirecting...",
           });
 
-          setTimeout(() => {
-            router.push("/courses");
-            onClose();
-          }, 2500);
+          setTimeout(async () => {
+            await validateToken();
+            const sub = await checkActiveSubscription();
+            if (sub.active) {
+              toast({ title: "Success", description: "Premium activated!" });
+              router.push("/courses");
+              onClose();
+            } else {
+              toast({ title: "Still Pending", description: "Waiting for subscription to activate..." });
+            }
+          }, 2500); // Give backend callback time to process
         } catch (loginErr: any) {
           console.error("Auto-login failed:", loginErr);
           toast({
@@ -253,7 +264,7 @@ export function FindCourseForm({ onClose, setShowFindCourseForm }: FindCourseFor
       setError("Maximum retries reached. Please try again later.");
       return;
     }
-    setReinitiateCount(reinitiateCount + 1);
+    setReinitiateCount((c) => c + 1);
     await initiatePayment();
   };
 
@@ -276,10 +287,10 @@ export function FindCourseForm({ onClose, setShowFindCourseForm }: FindCourseFor
 
           {/* Error */}
           {error && paymentStatus === "idle" && (
-              <div className="flex items-center justify-center space-x-2 text-red-500">
-                <AlertCircle className="h-4 w-4" />
-                <span className="text-sm">{error}</span>
-              </div>
+            <div className="flex items-center justify-center space-x-2 text-red-500">
+              <AlertCircle className="h-4 w-4" />
+              <span className="text-sm">{error}</span>
+            </div>
           )}
 
           {/* Payment Processing / Success */}
@@ -457,7 +468,8 @@ export function FindCourseForm({ onClose, setShowFindCourseForm }: FindCourseFor
                   Select between {MIN_SUBJECTS} and {MAX_SUBJECTS} subjects and assign grades.
                 </div>
               </div>
-              {/* Action Button */}
+
+              {/* Action Button – Dynamic based on renewal eligibility */}
               <Button
                 onClick={initiatePayment}
                 disabled={
@@ -475,9 +487,9 @@ export function FindCourseForm({ onClose, setShowFindCourseForm }: FindCourseFor
                     Processing...
                   </>
                 ) : renewalEligible ? (
-                  `Renew Access (KES ${RENEWAL_PRICE})`
+                  `Renew Access – KES ${RENEWAL_PRICE}`
                 ) : (
-                  `Submit & Pay KES ${INITIAL_PRICE}`
+                  `Submit & Pay KES ${PREMIUM_PRICE}`
                 )}
               </Button>
 

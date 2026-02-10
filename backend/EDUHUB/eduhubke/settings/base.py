@@ -247,12 +247,6 @@ CALLBACK_URL = config(
     default='https://brunilda-seminationalized-affinely.ngrok-free.dev/eduhub/payments/mpesa/callback/'
 )
 print("MPESA CALLBACK URL:", CALLBACK_URL)
-#if not DEBUG:
-    # Auto-detect Render domain if CALLBACK_URL not set
-    #if 'RENDER' in os.environ.get('HOSTNAME', ''):
-        #BASE_DOMAIN = f"https://{os.environ.get('RENDER_EXTERNAL_HOSTNAME', 'localhost')}"
-       # CALLBACK_URL = f"{BASE_DOMAIN}/eduhub/payments/mpesa/callback/"
-
 # Security
 SECURE_BROWSER_XSS_FILTER = True
 SECURE_CONTENT_TYPE_NOSNIFF = True

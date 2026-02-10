@@ -43,8 +43,6 @@ class CourseOfferingListSerializer(serializers.ModelSerializer):
     university_name = serializers.CharField(source='university.name', read_only=True)
     university_code = serializers.CharField(source='university.code', read_only=True)
     is_selected = serializers.SerializerMethodField()
-
-    # ── ADD THESE EXPLICITLY ──
     qualified = serializers.BooleanField(read_only=True, allow_null=True)
     user_points = serializers.FloatField(read_only=True, allow_null=True)
     required_points = serializers.FloatField(read_only=True, allow_null=True)
@@ -59,7 +57,6 @@ class CourseOfferingListSerializer(serializers.ModelSerializer):
             'id', 'code', 'program', 'university_name', 'university_code',
             'duration_years', 'minimum_grade', 'tuition_fee_per_year',
             'is_selected', 'cluster_requirements',
-            # Qualification fields (must be here!)
             'qualified', 'user_points', 'required_points', 'points_source',
             'cluster', 'qualification_details', 'reason'
         ]
@@ -77,7 +74,7 @@ class CourseOfferingListSerializer(serializers.ModelSerializer):
 
 class CourseOfferingDetailSerializer(serializers.ModelSerializer):
     """Full detail — includes program requirements"""
-    program = ProgramSerializer(read_only=True)  # ← Now includes required_subjects
+    program = ProgramSerializer(read_only=True)
     university = UniversityListSerializer(read_only=True)
     is_selected = serializers.SerializerMethodField()
 
