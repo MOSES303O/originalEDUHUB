@@ -277,8 +277,10 @@ export default function CourseDetailClient({ initialCourse, initialError }: Cour
                     </>
                   )}
                 </Button>
-                <Button size="lg" className="bg-emerald-600 hover:bg-emerald-700" onClick={handleApplyNow}>
-                  Apply Now
+                <Button size="lg" className="bg-emerald-600 hover:bg-emerald-700">
+                  <a href="https://chat.whatsapp.com/LJxPGhfopYCD82r5AY0mHy?mode=gi_t" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2">  
+                    Apply Now
+                    </a>                
                 </Button>
               </div>
             </div>
@@ -414,10 +416,12 @@ export default function CourseDetailClient({ initialCourse, initialError }: Cour
                     <CardTitle>Ready to Apply?</CardTitle>
                     <CardDescription>Join thousands of students</CardDescription>
                   </CardHeader>
-                  <CardContent>
-                    <Button size="lg" className="w-full bg-emerald-600 hover:bg-emerald-700" onClick={handleApplyNow}>
+                  <CardContent>                    
+                    <Button size="lg" className="bg-emerald-600 hover:bg-emerald-700">
+                    <a href="https://chat.whatsapp.com/LJxPGhfopYCD82r5AY0mHy?mode=gi_t" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2">  
                       Start Your Application
-                    </Button>
+                    </a>                
+                </Button>
                   </CardContent>
                 </Card>
               </div>

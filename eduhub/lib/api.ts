@@ -121,6 +121,16 @@ export const refreshToken = async (): Promise<string> => {
   localStorage.setItem("token", newAccess);
   return newAccess;
 }
+apiClient.interceptors.request.use((config) => {
+  const token = localStorage.getItem("token");
+
+  // Skip adding token for payment initiation (expired users won't have valid one)
+  if (token && !config.url?.includes('/payments/initiate/')) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+
+  return config;
+});
 
 // AUTH
 export const login = async (phone: string, password: string) => {
@@ -219,6 +229,10 @@ export async function fetchSubjects(): Promise<Array<{ id: string; name: string 
   try {
     const response = await apiClient.get('/courses/subjects/');
     const list = getResponseData(response.data);
+    for (let i = list.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [list[i], list[j]] = [list[j], list[i]];
+    }
     return list.map((s: any) => ({
       id: s.value || s.id || '',
       name: s.label || s.name || 'Unknown',
@@ -261,6 +275,10 @@ export async function fetchUniversities(params: Record<string, any> = {}): Promi
   try {
     const response = await apiClient.get('/universities/universities/', { params });
     const data = getResponseData(response.data);
+    for (let i = data.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [data[i], data[j]] = [data[j], data[i]];
+    }
 
     if (!Array.isArray(data)) {
         console.warn("[fetchUniversities] Invalid universities data received:", response.data);
@@ -337,6 +355,10 @@ export async function fetchCoursesByUniversity(universityCode: string): Promise<
     if (!res.success || !Array.isArray(res.data)) return [];
 
     const list = res.data;
+    for (let i = list.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [list[i], list[j]] = [list[j], list[i]];
+    }
 
     return list.map((offering: any) => {
       const program = offering.program || {};
@@ -407,6 +429,11 @@ export async function fetchCourses(params: Record<string, any> = {}): Promise<Co
     if (!res.success || !Array.isArray(res.data)) return [];
 
     const list = res.data;
+    // Shuffle the array (Fisher-Yates / modern shuffle)
+    for (let i = list.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [list[i], list[j]] = [list[j], list[i]];
+    }
 
     return list.map((offering: any) => {
       const program = offering.program || {};
@@ -499,6 +526,11 @@ export async function fetchCourseById(id: string): Promise<Course | null> {
     }
 
     const data = res.data;  // ← This is the course offering object
+    // Shuffle the array (Fisher-Yates / modern shuffle)
+    for (let i = data.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [data[i], data[j]] = [data[j], data[i]];
+    }
 
     const program = data.program || {};
     const university = data.university || {};
@@ -621,6 +653,10 @@ export async function fetchSelectedCourses(): Promise<Course[]> {
   try {
     const response = await apiClient.get('/user/selected-courses/');
     const list = response.data.data || response.data || [];
+    for (let i = list.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [list[i], list[j]] = [list[j], list[i]];
+    }
 
     if (!Array.isArray(list)) return [];
 
@@ -711,6 +747,10 @@ export async function fetchKMTCProgrammes(): Promise<Programme[]> {
   try {
     const response = await apiClient.get('/kmtc/programmes');
     const list = getResponseData(response.data);
+    for (let i = list.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [list[i], list[j]] = [list[j], list[i]];
+    }
 
     if (!Array.isArray(list)) {
       console.warn('[fetchKMTCProgrammes] Expected array but got:', list);
@@ -746,6 +786,10 @@ export async function fetchKMTCProgrammeByCode(code: string): Promise<Programme 
     const response = await apiClient.get(`/kmtc/programmes/${code}`);
 
     const prog = response.data;
+    for (let i = prog.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [prog[i], prog[j]] = [prog[j], prog[i]];
+    }
     if (!prog || !prog.code) {
       console.warn("[fetchKMTCProgrammeByCode] Invalid data:", prog);
       return null;
@@ -798,6 +842,10 @@ export async function fetchKMTCCampuses(params = {}): Promise<KMTCCampus[]> {
   try {
     const response = await apiClient.get('/kmtc/campuses', { params });
     const list = getResponseData(response.data);
+    for (let i = list.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [list[i], list[j]] = [list[j], list[i]];
+    }
     return list.map((c: any) => ({
       id: c.id,
       name: c.name,

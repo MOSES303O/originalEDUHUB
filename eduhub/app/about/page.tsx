@@ -219,7 +219,7 @@ export default function AboutPage() {
                   size="lg"
                   asChild
                 >
-                  <Link href="/courses">Start Now</Link>
+                  <Link href="https://chat.whatsapp.com/LJxPGhfopYCD82r5AY0mHy?mode=gi_t">Start Now</Link>
                 </Button>
               </div>
             </div>

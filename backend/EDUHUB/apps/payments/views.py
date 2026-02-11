@@ -103,6 +103,9 @@ class PaymentInitiationView(APIView):
     serializer_class = PaymentInitiationSerializer
 
     def post(self, request):
+        print("===== PAYMENT INITIATION HIT =====")           # debug
+        print(f"User authenticated? {request.user.is_authenticated}")
+        print(f"Request data: {request.data}")
         serializer = self.serializer_class(data=request.data)
         if not serializer.is_valid():
             return standardize_response(
