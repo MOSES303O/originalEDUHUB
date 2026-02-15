@@ -7,8 +7,6 @@ class Campus(models.Model):
     name = models.CharField(max_length=255)
     code = models.CharField(max_length=20, unique=True)  # e.g., NAIROBI, KISUMU
     city = models.CharField(max_length=100)
-    description = models.TextField(blank=True)
-    requirements = models.TextField(blank=True)
     is_active = models.BooleanField(default=True)
 
     class Meta:
@@ -100,7 +98,6 @@ class OfferedAt(models.Model):
         default=False,
         help_text="Check if this programme is offered at ALL KMTC campuses"
     )
-    notes = models.TextField(blank=True)
 
     class Meta:
         unique_together = ('programme',)  # No campus constraint when offered everywhere

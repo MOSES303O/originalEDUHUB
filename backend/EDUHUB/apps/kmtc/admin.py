@@ -8,15 +8,11 @@ from .models import Campus, Faculty, Department, Programme, OfferedAt
 class CampusAdmin(admin.ModelAdmin):
     list_display = ('name', 'code', 'city', 'programmes_count', 'is_active')
     list_filter = ('city', 'is_active')
-    search_fields = ('name', 'code', 'city', 'description')
+    search_fields = ('name', 'code', 'city')
     readonly_fields = ('programmes_count',)
     fieldsets = (
         (None, {
             'fields': ('name','code', 'city', 'is_active')
-        }),
-        ('Details', {
-            'fields': ('description', 'requirements'),
-            'classes': ('collapse',)
         }),
     )
 

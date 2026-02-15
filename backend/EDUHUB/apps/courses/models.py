@@ -74,7 +74,11 @@ class CourseOffering(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     program = models.ForeignKey(Program, on_delete=models.CASCADE, related_name='offerings')
     university = models.ForeignKey('universities.University', on_delete=models.CASCADE, related_name='offerings')
-    code = models.PositiveIntegerField(unique=True)   
+    code = models.CharField(
+    max_length=20,
+    unique=True,
+    db_index=True
+    )
     # University-specific details
     duration_years = models.PositiveIntegerField(
         validators=[MinValueValidator(1), MaxValueValidator(10)],

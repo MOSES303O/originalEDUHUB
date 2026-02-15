@@ -12,7 +12,7 @@ class OfferedAtSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = OfferedAt
-        fields = ['campuses', 'offered_everywhere', 'notes']
+        fields = ['campuses', 'offered_everywhere']
 
 class ProgrammeSerializer(serializers.ModelSerializer):
     department_name = serializers.CharField(source='department.name', read_only=True)

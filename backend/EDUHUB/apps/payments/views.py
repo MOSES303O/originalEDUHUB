@@ -118,8 +118,7 @@ class PaymentInitiationView(APIView):
         data = serializer.validated_data
 
         phone = standardize_phone_number(data["phone_number"])
-        requested_amount = int(data["amount"])   # frontend-provided (will be validated)
-        subjects = data.get("subjects", [])
+        requested_amount = int(data["amount"])  
 
         # -------------------------------------------------
         # 1. RESOLVE USER (JWT FIRST, PHONE FALLBACK)
@@ -136,32 +135,73 @@ class PaymentInitiationView(APIView):
         # -------------------------------------------------
         # 2. DECIDE ALLOWED AMOUNT & PLAN TYPE (AUTHORITATIVE)
         # -------------------------------------------------
-        if user and user.premium_expires_at:
-            # Within 24h grace window after premium expiry
-            if now <= user.premium_expires_at + timedelta(hours=24):
-                allowed_amount = 50
-                plan_type = "RENEWAL"
+        allowed_amount = 1           
+        plan_type = "PREMIUM"
+
+        if user:
+            latest_sub = (
+                Subscription.objects
+                .filter(user=user)
+                .order_by("-end_date")
+                .first()
+            )
+
+            if latest_sub:
+                if latest_sub.end_date >= now:
+                    # Still active — should not reach payment, but safety net
+                    return standardize_response(
+                        success=False,
+                        message="Active premium subscription found. No payment needed.",
+                        status_code=400
+                    )
+
+                # Expired — check grace period
+                grace_end = latest_sub.end_date + timedelta(hours=24)  # Adjust hours/days as needed
+
+                if now <= grace_end:
+                    allowed_amount = 50
+                    plan_type = "RENEWAL"
+                else:
+                    # Expired > grace period → full price
+                    allowed_amount = 1
+                    plan_type = "PREMIUM"
             else:
+                # No previous subscription → new user, full price
                 allowed_amount = 1
                 plan_type = "PREMIUM"
         else:
+            # No user found by phone → treat as new
             allowed_amount = 1
             plan_type = "PREMIUM"
 
         # -------------------------------------------------
-        # 3. ENFORCE AMOUNT (SECURITY CRITICAL)
+        # 3. ENFORCE / CORRECT AMOUNT (AUTHORITATIVE & FORGIVING)
         # -------------------------------------------------
-        if requested_amount != allowed_amount:
-            return standardize_response(
-                success=False,
-                message=f"Invalid payment amount. Required: {allowed_amount} KES",
-                status_code=403
+        requested_amount = int(data["amount"])
+        requested_plan = data.get("plan_type", "PREMIUM")
+
+        # Log mismatch for debugging (keep this!)
+        if requested_amount != allowed_amount or requested_plan != plan_type:
+            logger.warning(
+                f"Amount/plan mismatch! "
+                f"Frontend sent amount={requested_amount}, plan={requested_plan} | "
+                f"Backend decided amount={allowed_amount}, plan={plan_type} | "
+                f"User phone: {phone}"
             )
 
+        # Always use backend's decided amount & plan (override frontend)
+        final_amount = allowed_amount
+        final_plan_type = plan_type
+        if final_amount not in [1,50]:
+            return standardize_response(
+                success=False,
+                message="Invalid payment configuration. Contact support.",
+                status_code=400
+            )
         # -------------------------------------------------
         # 4. SUBJECT RULES
         # -------------------------------------------------
-        if plan_type == "RENEWAL":
+        if final_plan_type == "RENEWAL":
             subjects = []  # renewal NEVER accepts subjects
 
         # -------------------------------------------------
@@ -172,12 +212,12 @@ class PaymentInitiationView(APIView):
         payment = Payment.objects.create(
             user=user,
             phone_number=phone,
-            amount=allowed_amount,
+            amount=final_amount,
             reference=reference,
             payment_method="mpesa",
             status="pending",
-            subscription_type=plan_type,
-            pending_subjects=subjects if plan_type == "PREMIUM" else None
+            subscription_type=final_plan_type,
+            pending_subjects=subjects if final_plan_type == "PREMIUM" else None
         )
 
         # -------------------------------------------------
@@ -188,7 +228,7 @@ class PaymentInitiationView(APIView):
         try:
             result = mpesa.stk_push(
                 phone_number=phone,
-                amount=allowed_amount,
+                amount=final_amount,
                 account_reference=reference
             )
         except Exception as exc:
@@ -212,14 +252,13 @@ class PaymentInitiationView(APIView):
                 data={
                     "reference": reference,
                     "checkout_request_id": payment.checkout_request_id,
-                    "amount": allowed_amount,
-                    "plan_type": plan_type
+                    "amount": final_amount,
+                    "plan_type": final_plan_type
                 },
                 status_code=200
             )
 
         payment.mark_failed(result.get("error", "M-Pesa error"))
-
         return standardize_response(
             success=False,
             message=result.get("error", "M-Pesa request failed"),

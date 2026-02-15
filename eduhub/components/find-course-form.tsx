@@ -8,7 +8,6 @@ import {
   Loader2,
   Phone,
   RotateCw,
-  CheckCircle2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useRouter } from "next/navigation";
@@ -489,7 +488,7 @@ export function FindCourseForm({ onClose, setShowFindCourseForm }: FindCourseFor
                 ) : renewalEligible ? (
                   `Renew Access – KES ${RENEWAL_PRICE}`
                 ) : (
-                  `Submit & Pay KES ${PREMIUM_PRICE}`
+                  `Submit & Pay `
                 )}
               </Button>
 

@@ -25,6 +25,7 @@ export function AuthenticationModal({ onClose, canClose = true }: Authentication
   const [error, setError] = useState("");
   const [countdown, setCountdown] = useState(10);
   const [showFindCourseForm, setShowFindCourseForm] = useState(false);
+  const RENEWAL_PRICE = 50;
 
   const { 
   checkActiveSubscription,
@@ -54,7 +55,7 @@ export function AuthenticationModal({ onClose, canClose = true }: Authentication
   const handleRenew = async () => {
     setIsSubmitting(true);
     try {
-      await initiatePayment(50);
+      await initiatePayment(RENEWAL_PRICE);
 
       toast({
         title: "Complete Payment",
@@ -197,7 +198,7 @@ export function AuthenticationModal({ onClose, canClose = true }: Authentication
                     Renewing...
                   </>
                 ) : (
-                  "Renew Now – 50 KES"
+                  `Renew Now – ${RENEWAL_PRICE} KES`
                 )}
               </Button>
               <p className="text-sm text-gray-400">

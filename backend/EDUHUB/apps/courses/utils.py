@@ -79,7 +79,7 @@ class CourseMatchingEngine:
             'required_one_of': [
                 {'group': 'GROUP_II', 'min_grade': 'B'},
             ],
-            'any_from_count': 3,
+            'any_from_count': 2,
             'any_from_groups': ['GROUP_III', 'GROUP_IV', 'GROUP_V'],
             'min_grade_any': 'C+',
             'min_points_floor': 46,
