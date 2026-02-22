@@ -310,48 +310,57 @@ export default function CourseDetailClient({ initialCourse, initialError }: Cour
                       </p>
                     </div>
 
-                    {program.required_subjects && program.required_subjects.length > 0 ? (
-                      <div>
-                        <h3 className="font-semibold text-lg mb-3">Required Subjects</h3>
-                        <ul className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                          {program.required_subjects.map((req: any, i: number) => (
-                            <li key={i} className="flex flex-col p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
-                              <span className="font-medium text-gray-900 dark:text-gray-100">
-                                {req.subject?.label || req.subject?.value || req.subject?.name || "Unknown Subject"}
-                              </span>
-                              <div className="flex items-center gap-2 mt-1">
-                                <Badge variant="outline" className="text-xs">
-                                  Min Grade: {req.minimum_grade || "N/A"}
+                    {course.required_subjects && course.required_subjects.length > 0 ? (
+                    <div>
+                      <h3 className="font-semibold text-lg mb-3">Required Subjects</h3>
+                      <ul className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {course.required_subjects.map((req: any, i: number) => (
+                          <li key={i} className="flex flex-col p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                            <span className="font-medium text-gray-900 dark:text-gray-100">
+                              {req.subject?.label || req.subject?.value || req.subject?.name || "Unknown Subject"}
+                            </span>
+                            <div className="flex items-center gap-2 mt-1">
+                              <Badge variant="outline" className="text-xs">
+                                Min Grade: {req.minimum_grade || "N/A"}
+                              </Badge>
+                              {req.is_mandatory && (
+                                <Badge variant="default" className="text-xs bg-red-500">
+                                  Mandatory
                                 </Badge>
-                                {req.is_mandatory && (
-                                  <Badge variant="default" className="text-xs bg-red-500">
-                                    Mandatory
-                                  </Badge>
-                                )}
-                              </div>
-                              {req.cluster_requirements && (
-                                <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">
-                                  Cluster: {req.cluster_requirements}
-                                </p>
                               )}
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
-                    ) : (
-                      <p className="text-gray-500">No specific subject requirements listed.</p>
-                    )}
+                            </div>
+                            {/* You can remove or keep cluster_requirements if it's useful */}
+                            {/* {req.cluster_requirements && ( ... )} */}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  ) : (
+                    <p className="text-gray-500">No specific subject requirements listed.</p>
+                  )}
                   </CardContent>
                 </Card>
-
                 <Card>
                   <CardHeader>
                     <CardTitle className="text-2xl">Career Prospects</CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <p className="text-gray-700 dark:text-gray-300 leading-relaxed">
-                      Graduates can pursue careers as: {course.career_prospects || "Information not available"}
-                    </p>
+                    {course.career_prospects && course.career_prospects.trim() !== "" ? (
+                      <div className="text-gray-700 dark:text-gray-300 leading-relaxed space-y-2">
+                        <p className="font-medium">Graduates can pursue careers as:</p>
+                        {course.career_prospects
+                          .split(',')
+                          .map(item => item.trim())
+                          .filter(item => item.length > 0)
+                          .map((career, index) => (
+                            <p key={index}>• {career}</p>
+                          ))}
+                      </div>
+                    ) : (
+                      <p className="text-gray-500 dark:text-gray-400">
+                        Information not available
+                      </p>
+                    )}
                   </CardContent>
                 </Card>
               </div>

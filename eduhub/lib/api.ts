@@ -122,7 +122,10 @@ export const refreshToken = async (): Promise<string> => {
   return newAccess;
 }
 apiClient.interceptors.request.use((config) => {
-  const token = localStorage.getItem("token");
+  let token = null;
+  if (typeof window !== "undefined") {
+    token = localStorage.getItem("token");
+  }
 
   // Skip adding token for payment initiation (expired users won't have valid one)
   if (token && !config.url?.includes('/payments/initiate/')) {
@@ -525,8 +528,7 @@ export async function fetchCourseById(id: string): Promise<Course | null> {
       return null;
     }
 
-    const data = res.data;  // ← This is the course offering object
-    // Shuffle the array (Fisher-Yates / modern shuffle)
+    const data = res.data;
     for (let i = data.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1));
       [data[i], data[j]] = [data[j], data[i]];

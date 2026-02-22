@@ -43,8 +43,6 @@ export default function UniversityCoursesClient({
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [showFindCourseForm, setShowFindCourseForm] = useState(false);
 
-  const universityName = initialUniversity?.name || "Unknown University";
-
   // Fetch fresh authenticated data after auth is ready
   useEffect(() => {
     async function refreshCourses() {
@@ -142,10 +140,10 @@ export default function UniversityCoursesClient({
 
         <div className="mb-8 sm:mb-10">
           <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold gradient-text mb-3">
-            Available Courses - {universityName}
+            Available Courses  {initialUniversity?.name}
           </h1>
           <p className="text-gray-600 dark:text-gray-400 text-sm sm:text-base">
-            {loading ? "Loading courses..." : `Browse through ${courses.length} course${courses.length !== 1 ? "s" : ""} offered by ${universityName}`}
+            {loading ? "Loading courses..." : `Browse through ${courses.length} course${courses.length !== 1 ? "s" : ""} offered by ${initialUniversity?.name}`}
           </p>
         </div>
 

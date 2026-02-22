@@ -58,7 +58,7 @@ class CampusDetailSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Campus
-        fields = ['id', 'code', 'name', 'city', 'description', 'requirements', 'programmes_offered']
+        fields = ['id', 'code', 'name', 'city', 'programmes_offered']
 
     def get_programmes_offered(self, obj):
         offered = OfferedAt.objects.filter(campus=obj).select_related('programme__department__faculty')
