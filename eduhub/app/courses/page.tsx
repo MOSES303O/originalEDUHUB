@@ -6,8 +6,15 @@ import { ArrowLeft, Heart, Search } from "lucide-react";
 import Link from "next/link";
 import { useSearchParams, useRouter } from "next/navigation";
 import { Table, TableBody, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
 import { fetchCourses } from "@/lib/api";
-import apiClient from "@/lib/api";
 import { CoursesSkeleton } from "@/components/courses-skeleton";
 import { Course } from "@/types";
 import { useSelectedCourses } from "@/lib/course-store";
@@ -17,7 +24,6 @@ import { FindCourseForm } from "@/components/find-course-form";
 import { useAuth } from "@/lib/auth-context";
 import { Header } from "@/components/header";
 import { Footer } from "@/components/footer";
-import { Input } from "@/components/ui/input";
 import { CourseRow } from "@/components/course-row";
 import { debounce } from "lodash";
 import { UserInfoPanel } from "@/components/panel";
@@ -29,72 +35,29 @@ export default function CoursesPage() {
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [showFindCourseForm, setShowFindCourseForm] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
-  const [editingClusterPoints, setEditingClusterPoints] = useState(false);
-  const [tempClusterPoints, setTempClusterPoints] = useState("00.000");
+  const [categoryFilter, setCategoryFilter] = useState("all");
 
   const router = useRouter();
-  const { 
-    user, 
-    loading: authLoading, 
-    requirePayment, 
-    setUser,           // ← FIXED: now destructured correctly
-    validateToken 
-  } = useAuth();
+  const { user, loading: authLoading, requirePayment } = useAuth();
   const searchParams = useSearchParams();
   const { toast } = useToast();
   const { selectedCourses } = useSelectedCourses();
-
-  const userPoints = Number(searchParams.get("points") || "0");
   const subjectParams = useMemo(() => searchParams.getAll("subjects"), [searchParams]);
 
   const setSearchTermDebounced = useMemo(
     () => debounce((value: string) => setSearchTerm(value), 300),
     []
   );
-
-  const saveClusterPoints = async () => {
-    const newValue = parseFloat(tempClusterPoints);
-
-    if (isNaN(newValue) || newValue < 0 || newValue > 84) {
-      toast({
-        title: "Invalid Value",
-        description: "Cluster points must be between 0.000 and 84.000",
-        variant: "destructive",
-      });
-      setTempClusterPoints("00.000");
-      setEditingClusterPoints(false);
-      return;
-    }
-
-    const payload = { cluster_points: newValue.toFixed(3) };
-    console.log("Sending PATCH:", payload);
-
-    try {
-      await apiClient.patch("/auth/profile/update/", payload);
-      console.log("PATCH RESPONSE FROM BACKEND:", apiClient.patch("/auth/profile/update/", payload));
-      // Optimistic UI update with proper typing
-      setUser((prev: any) => ({
-        ...prev,
-        cluster_points: newValue.toFixed(3),
-      }));
-
-      // Full backend sync
-      await validateToken();
-
-      toast({
-        title: "Saved",
-        description: `Cluster points set to ${newValue.toFixed(3)}`,
-      });
-      setEditingClusterPoints(false);
-    } catch (err: any) {
-      console.error("PATCH error:", err.response?.data || err.message);
-      toast({
-        title: "Failed",
-        description: "Could not save cluster points",
-        variant: "destructive",
-      });
-    }
-  };
+  const categories = useMemo(() => {
+    const unique = [
+      ...new Set(
+        coursesData
+          .map((course) => course.category)
+          .filter((cat): cat is string => typeof cat === "string" && cat.trim() !== "")
+      ),
+    ];
+    return unique.sort();
+  }, [coursesData]);
 
   const handleGetStarted = () => {
     if (!user) {
@@ -130,7 +93,6 @@ export default function CoursesPage() {
 
         const params: Record<string, any> = {};
         if (subjects.length > 0) params.subjects = subjects;
-        if (userPoints > 0) params.min_points = userPoints.toString();
 
         const data = await fetchCourses(params);
         setCoursesData(Array.isArray(data) ? data : []);
@@ -143,7 +105,7 @@ export default function CoursesPage() {
     }
 
     loadData();
-  }, [subjectParams, userPoints, user, authLoading, requirePayment]);
+  }, [subjectParams ,user, authLoading, requirePayment]);
 
   useEffect(() => {
     if (!authLoading && (!user || requirePayment)) {
@@ -157,14 +119,19 @@ export default function CoursesPage() {
     const searchLower = searchTerm.toLowerCase();
 
     return coursesData.filter((course) => {
-      return (
-        searchTerm === "" ||
+      const matchesSearch =
+        searchLower === "" ||
         (course.name && course.name.toLowerCase().includes(searchLower)) ||
         (course.code) ||
-        (course.university?.name && course.university.name.toLowerCase().includes(searchLower))
-      );
+        (course.university?.name && course.university.name.toLowerCase().includes(searchLower));
+
+      const matchesCategory =
+        categoryFilter === "all" ||
+        (course.category && course.category.toLowerCase() === categoryFilter.toLowerCase());
+
+      return matchesSearch && matchesCategory;
     });
-  }, [coursesData, searchTerm]);
+  }, [coursesData, searchTerm, categoryFilter]);
 
   return (
     <div className="flex min-h-screen flex-col bg-gradient-to-b from-blue-50 to-white dark:from-gray-900 dark:to-gray-800">
@@ -191,7 +158,6 @@ export default function CoursesPage() {
                 </div>
 
                 <div className="flex flex-col gap-4 md:items-end">
-                  {/* USER INFO PANEL — ONLY FOR LOGGED IN USERS */}
                   {user && <UserInfoPanel className="w-full md:w-auto" />}
 
                   <Button
@@ -221,15 +187,38 @@ export default function CoursesPage() {
                 </div>
               </div>
 
-              {/* SEARCH BAR */}
-              <div className="flex-1 relative w-full mb-6">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                <Input
-                  placeholder="Search courses by name, code, or university..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTermDebounced(e.target.value)}
-                  className="pl-10 bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-700"
-                />
+              {/* SEARCH + CATEGORY FILTER ROW */}
+              <div className="flex flex-col sm:flex-row gap-4 w-full mb-6">
+                {/* Search */}
+                <div className="flex-1 relative">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                  <Input
+                    placeholder="Search courses by name, code, or university..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTermDebounced(e.target.value)}
+                    className="pl-10 bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-700"
+                    disabled={loading}
+                  />
+                </div>
+
+                {/* Category Dropdown – identical to university page style */}
+                <Select
+                  value={categoryFilter}
+                  onValueChange={setCategoryFilter}
+                  disabled={loading}
+                >
+                  <SelectTrigger className="w-full sm:w-[220px] bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700">
+                    <SelectValue placeholder="All Categories" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 max-h-60 overflow-auto">
+                    <SelectItem value="all">All Categories</SelectItem>
+                    {categories.map((cat) => (
+                      <SelectItem key={cat} value={cat} className="capitalize">
+                        {cat.charAt(0).toUpperCase() + cat.slice(1)}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
             </div>
 

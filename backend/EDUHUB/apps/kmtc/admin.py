@@ -1,7 +1,17 @@
 # kmtc/admin.py — FINAL GOLD STANDARD (2025)
 from django.contrib import admin
 from django.utils.html import format_html
-from .models import Campus, Faculty, Department, Programme, OfferedAt
+
+from .models import Campus, Faculty, Department, Programme, OfferedAt, ProgramEntryRequirement
+
+
+# Inline for managing entry requirements directly from Programme
+class ProgramEntryRequirementInline(admin.TabularInline):
+    model = ProgramEntryRequirement
+    extra = 1
+    autocomplete_fields = ['subject']
+    fields = ('subject', 'min_grade', 'is_mandatory')
+    readonly_fields = ('id',)
 
 
 @admin.register(Campus)
@@ -12,7 +22,7 @@ class CampusAdmin(admin.ModelAdmin):
     readonly_fields = ('programmes_count',)
     fieldsets = (
         (None, {
-            'fields': ('name','code', 'city', 'is_active')
+            'fields': ('name', 'code', 'city', 'is_active')
         }),
     )
 
@@ -58,6 +68,7 @@ class ProgrammeAdmin(admin.ModelAdmin):
     search_fields = ('name', 'code', 'description', 'department__name', 'department__faculty__name')
     autocomplete_fields = ('department',)
     readonly_fields = ('campuses_count',)
+    inlines = [ProgramEntryRequirementInline]  # ← FIXED: now inside class
 
     fieldsets = (
         (None, {
@@ -83,7 +94,7 @@ class OfferedAtAdmin(admin.ModelAdmin):
     list_display = ('programme', 'campus_display')
     list_filter = ('offered_everywhere', 'campuses__city')
     autocomplete_fields = ('programme', 'campuses')
-    filter_horizontal = ('campuses',)  
+    filter_horizontal = ('campuses',)  # ← Nice for selecting many campuses
 
     def campus_display(self, obj):
         if obj.offered_everywhere:
@@ -91,3 +102,12 @@ class OfferedAtAdmin(admin.ModelAdmin):
         count = obj.campuses.count()
         return f"{count} campus(es)"
     campus_display.short_description = "Offered At"
+
+
+@admin.register(ProgramEntryRequirement)
+class ProgramEntryRequirementAdmin(admin.ModelAdmin):
+    list_display = ('programme', 'subject', 'min_grade',)
+    list_filter = ('programme__department__faculty', 'min_grade', 'is_mandatory')
+    search_fields = ('programme__name', 'subject__name')
+    autocomplete_fields = ('programme', 'subject')
+    list_select_related = ('programme', 'subject')

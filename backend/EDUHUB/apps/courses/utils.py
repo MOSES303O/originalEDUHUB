@@ -3,7 +3,9 @@ from django.db.models import Q, Count, Avg
 from rest_framework.response import Response
 from rest_framework import status
 from .models import ProgramSubjectRequirement, CourseOffering
-from apps.authentication.models import UserSubject,User
+from apps.authentication.models import User
+from apps.kmtc.models import Programme,ProgramEntryRequirement
+
 from typing import  Tuple, Dict, Any
 import logging
 from decimal import Decimal
@@ -787,8 +789,133 @@ class CourseMatchingEngine:
         details["reason"] = None
         details["message"] = f"Qualified for {offering.program.name}"
         return True, details
+    
+class KMTCCourseMatchingEngine:
+    """
+    KMTC-specific qualification engine (2025/2026 rules)
+    Uses only ProgramSubjectRequiremen (subject_name + min_grade).
+    Handles mandatory subjects + common KMTC alternatives (English/Kiswahili, etc.).
+    No mean grade field on Programme — subject-based only.
+    """
 
-    # ... (keep qualify_user_for_all_offerings and get_recommended_courses as before)
+    # KCSE grade points (official)
+    GRADE_POINTS = {
+        'A': 12.0, 'A-': 11.0, 'B+': 10.0, 'B': 9.0, 'B-': 8.0,
+        'C+': 7.0, 'C': 6.0, 'C-': 5.0, 'D+': 4.0, 'D': 3.0,
+        'D-': 2.0, 'E': 1.0,
+    }
+
+    # Subject normalization + common KMTC aliases
+    SUBJECT_NORMALIZATION = {
+        k.lower(): v for k, v in {
+            'english': 'English', 'eng': 'English',
+            'kiswahili': 'Kiswahili', 'kisw': 'Kiswahili', 'swahili': 'Kiswahili',
+            'mathematics': 'Mathematics', 'math': 'Mathematics', 'maths': 'Mathematics',
+            'physics': 'Physics', 'phy': 'Physics',
+            'chemistry': 'Chemistry', 'chem': 'Chemistry',
+            'biology': 'Biology', 'bio': 'Biology',
+            'biological sciences': 'Biology',
+            'physical sciences': 'Physical Sciences',
+            'physical science': 'Physical Sciences',
+            'general science': 'General Science',
+            'home science': 'Home Science',
+            'agriculture': 'Agriculture',
+            'business studies': 'Business Studies',
+        }.items()
+    }
+
+    # KMTC common alternative groups (used to match "English or Kiswahili", etc.)
+    SUBJECT_GROUPS = {
+        'English or Kiswahili': ['English', 'Kiswahili'],
+        'Biology or Biological Sciences': ['Biology'],
+        'Chemistry or Physical Sciences': ['Chemistry', 'Physical Sciences'],
+        'Mathematics or Physics': ['Mathematics', 'Physics'],
+        'Physics or Physical Sciences': ['Physics', 'Physical Sciences'],
+        'Physics/Physical Sciences or Mathematics': ['Physics', 'Physical Sciences', 'Mathematics'],
+    }
+
+    def normalize_subject_name(self, name: str) -> str:
+        if not name:
+            return ""
+        name = name.strip().lower()
+        return self.SUBJECT_NORMALIZATION.get(name, name.title())
+
+    def get_user_grade_map(self, user: User) -> Dict[str, str]:
+        """Returns {normalized_subject_name: grade.upper()}"""
+        user_subjects = user.subjects.filter(grade__isnull=False).select_related('subject')
+        return {
+            self.normalize_subject_name(us.subject.name): us.grade.upper()
+            for us in user_subjects
+        }
+
+    def has_subject_or_group(self, grade_map: Dict[str, str], required: str, min_grade: str) -> bool:
+        """True if user has the subject OR any in its group at >= min_grade"""
+        min_points = self.GRADE_POINTS.get(min_grade.upper(), 0)
+
+        # Direct match
+        norm = self.normalize_subject_name(required)
+        if norm in grade_map and self.GRADE_POINTS.get(grade_map[norm], 0) >= min_points:
+            return True
+
+        # Check groups for alternatives
+        for group_name, alts in self.SUBJECT_GROUPS.items():
+            if required in group_name or any(required.lower() in alt.lower() for alt in alts):
+                for alt in alts:
+                    alt_norm = self.normalize_subject_name(alt)
+                    if alt_norm in grade_map and self.GRADE_POINTS.get(grade_map[alt_norm], 0) >= min_points:
+                        return True
+        return False
+
+    def check_user_qualification_for_kmtc_programme(
+        self,
+        user: User,
+        programme: Programme
+    ) -> Tuple[bool, Dict[str, Any]]:
+        """
+        Main qualification check.
+        Uses ProgramSubjectRequiremen.subject_name and .min_grade.
+        Returns detailed qualification result compatible with frontend.
+        """
+        details: Dict[str, Any] = {
+            "qualified": False,
+            "reason": "",
+            "subjects_count": 0,
+            "missing_mandatory": [],
+            "programme_name": programme.name,
+            "programme_code": programme.code,
+            "programme_level": programme.level,
+            "message": "",
+        }
+
+        grade_map = self.get_user_grade_map(user)
+        details["subjects_count"] = len(grade_map)
+
+        if details["subjects_count"] < 7:
+            details["reason"] = f"Only {details['subjects_count']}/7 KCSE subjects uploaded (mean grade requires 7)"
+            return False, details
+
+        # Get all subject requirements for this programme
+        reqs = ProgramEntryRequirement.objects.filter(programme=programme)
+
+        missing = []
+        for req in reqs:
+            subj_name = req.subject_name.strip()
+            min_g = req.min_grade.upper() if req.min_grade else 'D'
+
+            # Check if user meets this requirement (direct or via group alternative)
+            if not self.has_subject_or_group(grade_map, subj_name, min_g):
+                missing.append(f"{subj_name} ≥ {min_g}")
+
+        if missing:
+            details["reason"] = "Missing mandatory subject(s) or minimum grade"
+            details["missing_mandatory"] = missing
+            return False, details
+
+        # If we reach here → qualified
+        details["qualified"] = True
+        details["reason"] = None
+        details["message"] = f"Qualified for {programme.name} ({programme.level})"
+        return True, details
 class CourseAnalytics:
     """
     Analytics utilities for course offerings

@@ -13,6 +13,7 @@ ALLOWED_HOSTS = [
     'brunilda-seminationalized-affinely.ngrok-free.dev',  # ← exact current ngrok subdomain
     '.ngrok-free.dev',
     'originaleduhub.onrender.com',
+    'api.safaricom.co.ke',
 ]
 
 if os.environ.get('RENDER_EXTERNAL_HOSTNAME'):

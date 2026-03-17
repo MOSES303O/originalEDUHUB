@@ -52,27 +52,48 @@ class Subscription(models.Model):
 
     def update_status(self):
         now = timezone.now()
-        if self.end_date < now:
+        if self.end_date < now and self.active:
             self.active = False
-            grace_end = self.end_date + timedelta(days=7)
-            self.is_renewal_eligible = now <= grace_end
+    
+            grace_end = self.end_date + timedelta(hours=24)
+            if now > grace_end:
+                self.is_renewal_eligible = False
+            else:
+                self.is_renewal_eligible = True
+    
             self.save(update_fields=['active', 'is_renewal_eligible'])
-
-    def save(self, *args, **kwargs):
-        super().save(*args, **kwargs)
-        # Auto-deactivate if expired
-        if self.end_date < timezone.now() and self.active:
-            self.active = False
-            self.is_renewal_eligible = timezone.now() <= (self.end_date + timedelta(hours=24))
-            self.save(update_fields=['active', 'is_renewal_eligible'])
-
-            # Delete all related payment data after expiry
+    
+            # Cleanup (same as above)
             Payment.objects.filter(subscription=self).delete()
             Transaction.objects.filter(payment__subscription=self).delete()
             MpesaCallback.objects.filter(payment__subscription=self).delete()
 
-            logger.info(f"Expired subscription {self.id} cleaned - payment data deleted for user {self.user.phone_number}")
+    def save(self, *args, **kwargs):
+        now = timezone.now()
 
+        # If this subscription has already expired and grace period is over → lock eligibility off
+        if self.end_date < now:
+            grace_end = self.end_date + timedelta(hours=24)
+            if now > grace_end:
+                # Grace is over → permanently disable eligibility
+                self.is_renewal_eligible = False
+
+            # If grace is still active → allow eligibility (but only if not already locked off)
+            elif self.is_renewal_eligible is None or self.is_renewal_eligible is True:
+                self.is_renewal_eligible = True
+
+        # Auto-deactivate if expired
+        if self.end_date < now and self.active:
+            self.active = False
+
+            # Cleanup only once (optional: you can move this to a signal or celery task)
+            Payment.objects.filter(subscription=self).delete()
+            Transaction.objects.filter(payment__subscription=self).delete()
+            MpesaCallback.objects.filter(payment__subscription=self).delete()
+
+            logger.info(f"Expired subscription {self.id} cleaned for user {self.user.phone_number}")
+
+        super().save(*args, **kwargs)
 
 class Payment(models.Model):
     user = models.ForeignKey(

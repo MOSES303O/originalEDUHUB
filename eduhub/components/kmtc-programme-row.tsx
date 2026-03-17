@@ -1,14 +1,20 @@
 "use client";
 
-import { useState } from "react";
+import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { ChevronRight, ChevronDown, MapPin, GraduationCap, Clock, Trash2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { Programme } from "@/types";
+import { ChevronRight, ChevronDown, MapPin, GraduationCap, Trash2, CheckCircle, XCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/lib/auth-context";
 import { useSelectedCourses } from "@/lib/course-store";
+import { Programme } from "@/types"; // ← Assuming Programme type includes qualified & qualification_details from engine
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 interface KMTCProgrammeRowProps {
   programme: Programme;
@@ -21,26 +27,21 @@ export function KMTCProgrammeRow({ programme, onAuthRequired, onViewDetails }: K
   const router = useRouter();
   const { toast } = useToast();
   const { user, requirePayment } = useAuth();
-  const { toggleCourseSelection, selectedCourses } = useSelectedCourses();
-  // Check if this programme is already selected (by code)
-  const isSelected = selectedCourses.some((c) => c.code === programme.code);
+  const { toggleCourseSelection, isCourseSelected } = useSelectedCourses();
 
-  const toggleExpanded = (e: React.MouseEvent | React.KeyboardEvent) => {
-    if (e.type === "keydown" && (e as React.KeyboardEvent).key !== "Enter" && (e as React.KeyboardEvent).key !== " ") {
-      return;
-    }
-    e.stopPropagation();
-    setIsExpanded(!isExpanded);
-  };
+  // Live selected state from store (using code as identifier)
+  const isSelected = isCourseSelected(String(programme.code));
+  const missingMandatory = programme.qualification_details?.missing_mandatory ?? [];
 
   const handleSelect = async (e: React.MouseEvent) => {
     e.stopPropagation();
 
+    // Auth & payment checks
     if (!user) {
       onAuthRequired();
       toast({
         title: "Login Required",
-        description: "Please log in to select programmes.",
+        description: "Please log in to select KMTC programmes.",
         variant: "destructive",
       });
       return;
@@ -50,64 +51,98 @@ export function KMTCProgrammeRow({ programme, onAuthRequired, onViewDetails }: K
       onAuthRequired();
       toast({
         title: "Subscription Required",
-        description: "Please complete your subscription to select programmes.",
+        description: "Complete your subscription to select KMTC programmes.",
         variant: "destructive",
       });
       return;
     }
 
+    // Qualification gate (from KMTC engine)
+    if (!programme.qualified && !isSelected) {
+      toast({
+        title: "Cannot Select",
+        description: programme.qualification_details?.reason || 
+          "You do not meet the entry requirements for this programme yet.",
+        variant: "destructive",
+        duration: 5000,
+      });
+      return;
+    }
+
+    const willBeSelected = !isSelected;
+
     try {
-      // Convert Programme to Course-like object for store
+      // Convert Programme to a Course-like object for the store
       const courseLike = {
         id: programme.id,
         code: programme.code,
         name: programme.name,
-        university: { name: "Kenya Medical Training College (KMTC)", id: "kmtc" },
+        university: { name: "Kenya Medical Training College (KMTC)" },
         category: "Health Sciences",
-        duration_years: programme.duration.includes("year") 
+        duration_years: programme.duration?.includes("year") 
           ? parseInt(programme.duration) 
           : undefined,
         minimum_grade: undefined,
         tuition_fee_per_year: undefined,
         career_prospects: "",
-        is_selected: !isSelected,
+        is_selected: willBeSelected,
       } as any;
 
-      toggleCourseSelection(courseLike);
+      await toggleCourseSelection(courseLike);
 
       toast({
-        title: isSelected ? "Programme Removed" : "Programme Selected",
-        description: `${programme.name} has been ${isSelected ? "removed from" : "added to"} your selections.`,
+        title: willBeSelected ? "Programme Selected" : "Programme Removed",
+        description: `${programme.name} has been ${willBeSelected ? "added to" : "removed from"} your selections.`,
         duration: 3000,
       });
     } catch (err: any) {
       const msg = err?.message || "";
-      if (msg.toLowerCase().includes("already")) {
+      if (msg.toLowerCase().includes("already") || msg.includes("exists")) {
         toast({
           title: "Already Selected",
           description: `${programme.name} is already in your list.`,
+          duration: 3000,
         });
-      } else {
-        toast({
-          title: "Error",
-          description: "Failed to update selection. Please try again.",
-          variant: "destructive",
-        });
+        return;
       }
+
+      toast({
+        title: "Error",
+        description: msg || "Failed to update selection. Please try again.",
+        variant: "destructive",
+      });
     }
   };
 
   const handleViewDetails = (e: React.MouseEvent) => {
     e.stopPropagation();
-    console.log("[KMTCProgrammeRow] View button clicked for programme:", programme.code);
-    console.log("[KMTCProgrammeRow] Navigating to:", `/kmtc/programmes/${programme.code}`);
-  
     if (onViewDetails) {
       onViewDetails();
     } else {
       router.push(`/kmtc/programmes/${programme.code}`);
     }
   };
+
+  const toggleExpanded = (e: React.MouseEvent | React.KeyboardEvent) => {
+    if (e.type === "keydown" && (e as React.KeyboardEvent).key !== "Enter" && (e as React.KeyboardEvent).key !== " ") {
+      return;
+    }
+    e.stopPropagation();
+    setIsExpanded(!isExpanded);
+  };
+
+  // Qualification badge (from KMTC engine)
+  const qualificationDisplay = programme.qualified ? (
+    <div className="flex items-center gap-1.5 text-emerald-600 dark:text-emerald-400 font-medium">
+      <CheckCircle className="h-4 w-4" />
+      <span>Qualified</span>
+    </div>
+  ) : (
+    <div className="flex items-center gap-1.5 text-red-600 dark:text-red-400 font-medium">
+      <XCircle className="h-4 w-4" />
+      <span>Not Qualified</span>
+    </div>
+  );
 
   return (
     <>
@@ -118,6 +153,7 @@ export function KMTCProgrammeRow({ programme, onAuthRequired, onViewDetails }: K
         onKeyDown={toggleExpanded}
         role="button"
         tabIndex={0}
+        aria-expanded={isExpanded}
       >
         <td className="p-4">
           {isExpanded ? (
@@ -126,9 +162,11 @@ export function KMTCProgrammeRow({ programme, onAuthRequired, onViewDetails }: K
             <ChevronRight className="w-4 h-4 text-gray-400" />
           )}
         </td>
-        <td className="p-4 text-gray-900 dark:text-gray-100 font-medium">
+
+        <td className="p-4 font-medium text-gray-900 dark:text-gray-100">
           {programme.code}
         </td>
+
         <td className="p-4">
           <div className="flex items-center gap-3">
             <div className="w-8 h-8 bg-gradient-to-br from-emerald-500 to-green-400 rounded flex items-center justify-center">
@@ -141,82 +179,142 @@ export function KMTCProgrammeRow({ programme, onAuthRequired, onViewDetails }: K
             </span>
           </div>
         </td>
+
         <td className="p-4 text-gray-600 dark:text-gray-300">
-          {programme.department_name}
+          {programme.department_name || "—"}
         </td>
+
         <td className="p-4 text-center">
           <Badge variant="outline" className="border-emerald-500 text-emerald-600 dark:text-emerald-400">
-            {programme.offered_at.length === 0 ? "ALL" : `${programme.offered_at.length} KMTC ${programme.offered_at.length !== 1 ? "es" : ""}`} Campus{programme.offered_at.length !== 1 ? "es" : ""}
+            {programme.offered_at?.length === 0 ? "ALL CAMPUSES" : `${programme.offered_at?.length || 0} Campus${programme.offered_at?.length !== 1 ? "es" : ""}`}
           </Badge>
         </td>
+
         <td className="p-4 text-center">
           <Badge className="bg-emerald-100 text-emerald-800 dark:bg-emerald-900 dark:text-emerald-300">
-            {programme.level}
+            {programme.level?.charAt(0).toUpperCase() + programme.level?.slice(1) || "—"}
           </Badge>
         </td>
 
-        {/* SELECT BUTTON */}
-        <td className="p-4">
-          <Button
-            variant={isSelected ? "destructive" : "outline"}
-            size="sm"
-            onClick={handleSelect}
-            className={isSelected ? "bg-red-500 hover:bg-red-600 text-white" : ""}
-          >
-            {isSelected ? (
-              <>
-                <Trash2 className="h-4 w-4 mr-2" />
-                Deselect
-              </>
-            ) : (
-              "Select"
-            )}
-          </Button>
+        <td className="p-4 text-center">
+          <TooltipProvider delayDuration={300}>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <div className="inline-flex items-center cursor-help">{qualificationDisplay}</div>
+              </TooltipTrigger>
+              <TooltipContent side="right" className="max-w-xs p-3">
+                {programme.qualified ? (
+                  <p className="text-emerald-600 dark:text-emerald-400 font-medium">
+                    You meet the entry requirements for this programme.
+                  </p>
+                ) : (
+                  <>
+                    <p className="font-medium mb-1.5 text-red-600 dark:text-red-400">
+                      You do not currently qualify
+                    </p>
+                    <p className="text-sm text-muted-foreground">
+                      {programme.qualification_details?.reason || "Check your subjects and grades."}
+                    </p>
+
+                    {missingMandatory.length > 0 && (
+                      <ul className="text-sm text-gray-600 dark:text-gray-400 list-disc pl-5 mt-2">
+                        {missingMandatory.map((item, i) => (
+                          <li key={i}>
+                            {item.subject_or_group} ≥ {item.min_grade}
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                                      </>
+                )}
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
         </td>
 
         <td className="p-4">
+          <TooltipProvider delayDuration={300}>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant={isSelected ? "destructive" : "outline"}
+                  size="sm"
+                  onClick={handleSelect}
+                  disabled={!programme.qualified && !isSelected}
+                  className={
+                    isSelected
+                      ? "bg-red-600 hover:bg-red-700 text-white"
+                      : programme.qualified
+                        ? "border-emerald-600 text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/50"
+                        : "opacity-60 cursor-not-allowed border-gray-300 dark:border-gray-700"
+                  }
+                >
+                  {isSelected ? (
+                    <>
+                      <Trash2 className="h-4 w-4 mr-1.5" />
+                      Deselect
+                    </>
+                  ) : (
+                    "Select"
+                  )}
+                </Button>
+              </TooltipTrigger>
+              {!programme.qualified && !isSelected && (
+                <TooltipContent>
+                  <p className="text-sm">You do not qualify for this programme yet.</p>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Update your subjects or grades to check eligibility.
+                  </p>
+                </TooltipContent>
+              )}
+            </Tooltip>
+          </TooltipProvider>
+        </td>
+
+        <td className="p-4 text-right">
           <Button
+            variant="ghost"
             size="sm"
             className="bg-emerald-500 hover:bg-emerald-600 text-white"
             onClick={handleViewDetails}
           >
-            <GraduationCap className="h-4 w-4 mr-2" />
             View
           </Button>
         </td>
       </tr>
 
-      {/* EXPANDED ROW */}
+      {/* EXPANDED DETAILS ROW */}
       {isExpanded && (
-        <tr className="bg-muted/50">
-          <td colSpan={8} className="p-4">
-            <div className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div>
-                  <h4 className="font-semibold mb-2">Programme Details</h4>
-                  <div className="space-y-2 text-sm text-gray-600 dark:text-gray-400">
-                    <p><span className="font-medium">Duration:</span> {programme.duration}</p>
-                    <p><span className="font-medium">Qualification:</span> {programme.qualification}</p>
-                    <p><span className="font-medium">Faculty:</span> {programme.faculty_name}</p>
-                    <p><span className="font-medium">Department:</span> {programme.department_name}</p>
-                  </div>
+        <tr className="bg-muted/30">
+          <td colSpan={8} className="p-5">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              <div>
+                <h4 className="font-semibold mb-2 text-gray-700 dark:text-gray-300">Programme Details</h4>
+                <div className="space-y-2 text-sm text-gray-600 dark:text-gray-400">
+                  <p><span className="font-medium">Code:</span> {programme.code}</p>
+                  <p><span className="font-medium">Level:</span> {programme.level?.charAt(0).toUpperCase() + programme.level?.slice(1)}</p>
+                  <p><span className="font-medium">Duration:</span> {programme.duration || "—"}</p>
+                  <p><span className="font-medium">Qualification:</span> {programme.qualification || "—"}</p>
+                  <p><span className="font-medium">Faculty:</span> {programme.faculty_name || "—"}</p>
+                  <p><span className="font-medium">Department:</span> {programme.department_name || "—"}</p>
                 </div>
+              </div>
 
-                <div className="md:col-span-2">
-                  <h4 className="font-semibold mb-3 flex items-center gap-2">
-                    <MapPin className="h-5 w-5 text-emerald-600" />
-                    Offered at {programme.offered_at.length === 0 ? "ALL" : `${programme.offered_at.length} KMTC ${programme.offered_at.length !== 1 ? "es" : ""}`} Campus{programme.offered_at.length !== 1 ? "es" : ""}
-                  </h4>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  {programme.offered_at.map((offered, index) => (
+              <div className="md:col-span-2">
+                <h4 className="font-semibold mb-3 flex items-center gap-2">
+                  <MapPin className="h-5 w-5 text-emerald-600" />
+                  Offered at {programme.offered_at?.length === 0 ? "ALL KMTC CAMPUSES" : `${programme.offered_at?.length || 0} Campus${programme.offered_at?.length !== 1 ? "es" : ""}`}
+                </h4>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {programme.offered_at?.map((offered, index) => (
                     <div 
-                      key={`${programme.id}-${offered.campus_code}-${index}`} 
-                      className="p-4 bg-white dark:bg-gray-800 rounded-lg border"
+                      key={`${programme.id}-${index}`} 
+                      className="p-4 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700"
                     >
-                      <p className="font-medium text-base">{offered.campus_name}</p>
+                      <p className="font-medium text-base">{offered.campus_name || "Unknown Campus"}</p>
                       <p className="text-sm text-gray-600 dark:text-gray-400 flex items-center gap-2 mt-1">
-                        <MapPin className="h-4 " />
-                        {offered.city}
+                        <MapPin className="h-4 w-4" />
+                        {offered.city || "—"}
                       </p>
                       {offered.notes && (
                         <p className="text-xs text-gray-500 dark:text-gray-400 mt-2 italic">
@@ -224,33 +322,74 @@ export function KMTCProgrammeRow({ programme, onAuthRequired, onViewDetails }: K
                         </p>
                       )}
                     </div>
-                  ))}
-                  </div>
+                  )) || (
+                    <p className="text-gray-500 dark:text-gray-400 italic col-span-full">
+                      Offered at all KMTC campuses
+                    </p>
+                  )}
                 </div>
               </div>
 
-              <div className="pt-4 flex gap-4">
-                <Button
-                  variant={isSelected ? "destructive" : "outline"}
-                  onClick={handleSelect}
-                  className={isSelected ? "bg-red-500 hover:bg-red-600" : ""}
-                >
-                  {isSelected ? (
-                    <>
-                      <Trash2 className="h-4 w-4 mr-2" />
-                      Deselect Programme
-                    </>
-                  ) : (
-                    "Select Programme"
-                  )}
-                </Button>
-                <Button
-                  className="bg-emerald-500 hover:bg-emerald-600 text-white"
-                  onClick={handleViewDetails}
-                >
-                  View Full Details
-                </Button>
+              {/* Qualification Details in Expanded View */}
+              <div className="col-span-full mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+                <h4 className="font-semibold mb-3 flex items-center gap-2">
+                  <GraduationCap className="h-5 w-5 text-emerald-600" />
+                  Qualification Status
+                </h4>
+                {programme.qualified ? (
+                  <div className="flex items-center text-emerald-600 dark:text-emerald-400">
+                    <CheckCircle className="h-5 w-5 mr-2" />
+                    <span className="font-medium">You meet the entry requirements for this programme.</span>
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    <div className="flex items-center text-red-600 dark:text-red-400">
+                      <XCircle className="h-5 w-5 mr-2" />
+                      <span className="font-medium">You do not currently qualify</span>
+                    </div>
+                    {programme.qualification_details?.reason && (
+                      <p className="text-sm text-red-600 dark:text-red-400">
+                        <strong>Reason:</strong> {programme.qualification_details.reason}
+                      </p>
+                    )}
+                    {missingMandatory.length > 0 && (
+                      <ul className="text-sm text-gray-600 dark:text-gray-400 list-disc pl-5 mt-2">
+                        {missingMandatory.map((item, i) => (
+                          <li key={i}>
+                            {item.subject_or_group} ≥ {item.min_grade}
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
+                )}
               </div>
+            </div>
+
+            {/* ACTION BUTTONS */}
+            <div className="mt-6 flex flex-wrap gap-3">
+              <Button
+                variant={isSelected ? "destructive" : "outline"}
+                onClick={handleSelect}
+                disabled={!programme.qualified && !isSelected}
+                className={isSelected ? "bg-red-600 hover:bg-red-700" : ""}
+              >
+                {isSelected ? (
+                  <>
+                    <Trash2 className="h-4 w-4 mr-1.5" />
+                    Deselect Programme
+                  </>
+                ) : (
+                  "Select Programme"
+                )}
+              </Button>
+
+              <Button
+                className="bg-emerald-600 hover:bg-emerald-700 text-white"
+                onClick={handleViewDetails}
+              >
+                View Full Details
+              </Button>
             </div>
           </td>
         </tr>

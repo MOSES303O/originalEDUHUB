@@ -19,12 +19,36 @@ class ProgrammeSerializer(serializers.ModelSerializer):
     faculty_name = serializers.CharField(source='department.faculty.name', read_only=True)
     offered_at = OfferedAtSerializer(source='campuses_offered', many=True, read_only=True)
 
+    # Qualification fields — populated via context from view
+    qualified = serializers.SerializerMethodField(read_only=True)
+    qualification_details = serializers.SerializerMethodField(read_only=True)
+    reason = serializers.SerializerMethodField(read_only=True)
+    missing_mandatory = serializers.SerializerMethodField(read_only=True)
+    user_points = serializers.SerializerMethodField(read_only=True)
+
     class Meta:
         model = Programme
         fields = [
             'id', 'code', 'name', 'level', 'duration', 'qualification',
-            'description', 'department_name', 'faculty_name', 'offered_at'
+            'description', 'department_name', 'faculty_name', 'offered_at',
+            'qualified', 'qualification_details', 'reason', 'missing_mandatory',
+            'user_points'
         ]
+
+    def get_qualified(self, obj):
+        return self.context.get('qualified_data', {}).get(obj.code, {}).get('qualified', None)
+
+    def get_qualification_details(self, obj):
+        return self.context.get('qualified_data', {}).get(obj.code, {}).get('qualification_details', None)
+
+    def get_reason(self, obj):
+        return self.context.get('qualified_data', {}).get(obj.code, {}).get('reason', None)
+
+    def get_missing_mandatory(self, obj):
+        return self.context.get('qualified_data', {}).get(obj.code, {}).get('missing_mandatory', [])
+
+    def get_user_points(self, obj):
+        return self.context.get('qualified_data', {}).get(obj.code, {}).get('user_points', None)
 class DepartmentSerializer(serializers.ModelSerializer):
     faculty_name = serializers.CharField(source='faculty.name', read_only=True)
     programmes = ProgrammeSerializer(many=True, read_only=True)

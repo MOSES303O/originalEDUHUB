@@ -187,7 +187,30 @@ export interface Programme {
   duration_years?: string | number | undefined;
   minimum_grade?: string | number;
   duration: string;
-  qualification: string;
+  qualification?: string;
+  qualified?: boolean;
+  qualification_details?: {
+    [key: string]: any;
+    reason?: string | undefined;
+    missing_mandatory?: {
+    subject_or_group: string;
+    min_grade: string;
+  }[] | undefined;
+    missing_program_requirements?: Array<{
+        subject: string;
+        required_grade: string;
+    }>;
+    unmet_program_grades?: Array<{
+        subject: string;
+        user_grade: string;
+        required_grade: string;
+    }>;
+    user_points?: number;
+    required_points?: number;
+    points_source?: "stored" | "calculated";
+    subjects_count?: number;
+    message?: string;
+} | undefined;
   description: string;
   department_name: string;
   faculty_name: string;

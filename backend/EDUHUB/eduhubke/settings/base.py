@@ -183,6 +183,7 @@ ALLOWED_HOSTS = [
     '127.0.0.1',
     '.ngrok-free.dev',
     'originaleduhub.onrender.com',
+    'api.safaricom.co.ke',
 ]
 # CORS
 CORS_ALLOWED_ORIGINS = [
@@ -237,11 +238,16 @@ LOGGING = {
 }
 
 # === ALL MPESA CONFIG FROM .env ===
-MPESA_ENVIRONMENT = config('MPESA_ENVIRONMENT', default='sandbox')
+MPESA_ENVIRONMENT = config('MPESA_ENVIRONMENT', default='production')  # default to production if not set
+
 MPESA_CONSUMER_KEY = config('MPESA_CONSUMER_KEY')
 MPESA_CONSUMER_SECRET = config('MPESA_CONSUMER_SECRET')
 MPESA_SHORTCODE = config('MPESA_SHORTCODE')
 MPESA_PASSKEY = config('MPESA_PASSKEY')
+MPESA_EXPRESS_SHORTCODE = config('MPESA_EXPRESS_SHORTCODE')
+MPESA_INITIATOR_USERNAME = config('MPESA_INITIATOR_USERNAME')
+MPESA_INITIATOR_SECURITY_CREDENTIAL = config('MPESA_INITIATOR_SECURITY_CREDENTIAL')
+
 CALLBACK_URL = config(
     'CALLBACK_URL',
     default='https://brunilda-seminationalized-affinely.ngrok-free.dev/eduhub/payments/mpesa/callback/'

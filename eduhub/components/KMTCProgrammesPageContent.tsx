@@ -273,6 +273,7 @@ export default function KMTCProgrammesPageContent() {
                       <TableHead>Department</TableHead>
                       <TableHead className="text-center">Campuses</TableHead>
                       <TableHead className="text-center">Level</TableHead>
+                      <TableHead className="text-center">Qualification</TableHead>
                       <TableHead className="text-center">Select</TableHead>
                       <TableHead className="text-right">Actions</TableHead>
                     </TableRow>

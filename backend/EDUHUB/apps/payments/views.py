@@ -16,11 +16,11 @@ from apps.core.utils import (
     standardize_response,
     generate_reference,
     log_user_activity,
-    standardize_phone_number,
+    standardize_phone_number, 
 )
 from .models import Payment, Subscription, MpesaCallback, Transaction
 from .serializers import PaymentInitiationSerializer,SubscriptionSerializer
-from .utils import MpesaService
+from .utils import DarajaService
 
 logger = logging.getLogger(__name__)
 
@@ -41,8 +41,11 @@ class ActiveSubscriptionView(BaseAPIView):
         )
         for sub in expired:
             sub.active = False
-            sub.is_renewal_eligible = timezone.now() <= (sub.end_date + timedelta(hours=24))
-            sub.save()  # This triggers model save → deletes payments/transactions
+             # Only set eligibility if it hasn't been set yet (first expiration)
+            if sub.is_renewal_eligible is None:  # or use a separate "eligibility_set_at" field
+                sub.is_renewal_eligible = timezone.now() <= (sub.end_date + timedelta(hours=24))
+            
+            sub.save(update_fields=['active', 'is_renewal_eligible'])
 
         # 2. Get latest active (if any)
         active_sub = Subscription.objects.filter(
@@ -58,12 +61,27 @@ class ActiveSubscriptionView(BaseAPIView):
                 data=SubscriptionSerializer(active_sub).data,
                 status_code=200
             )
-         # No active sub → check if renewal eligible
+        # 3. Check latest (possibly expired) for renewal eligibility
         latest_sub = Subscription.objects.filter(user=user).order_by('-end_date').first()
         if latest_sub and latest_sub.is_renewal_eligible:
-            renewal_deadline = latest_sub.end_date + timedelta(hours=24)
-            hours_left = max(0, int((renewal_deadline - timezone.now()).total_seconds() // 3600))
+            grace_end = latest_sub.end_date + timedelta(hours=24)
+            if timezone.now() > grace_end:
+                # Grace period expired → disable eligibility permanently
+                latest_sub.is_renewal_eligible = False
+                latest_sub.save(update_fields=['is_renewal_eligible'])
 
+                return standardize_response(
+                    success=False,
+                    message="Premium expired. Full payment required.",
+                    data={
+                        "renewal_eligible": False,
+                        "allowed_amount": 210,
+                        "within_grace_period": False
+                    },
+                    status_code=402
+                )
+
+            hours_left = max(0, int((grace_end - timezone.now()).total_seconds() // 3600))
             return standardize_response(
                 success=False,
                 message=f"Premium expired. Renew for KSh 50 within {hours_left}h",
@@ -71,13 +89,13 @@ class ActiveSubscriptionView(BaseAPIView):
                     "renewal_eligible": True,
                     "renewal_price": 50,
                     "hours_remaining": hours_left,
-                    "renewal_deadline": renewal_deadline.isoformat(),
+                    "renewal_deadline": grace_end.isoformat(),
                     "premium_expires_at": latest_sub.end_date.isoformat(),
                 },
                 status_code=402
             )
 
-        # Fully expired → no renewal
+        # 4. No active, no grace → full premium
         return standardize_response(
             success=False,
             message="Payment required",
@@ -85,7 +103,7 @@ class ActiveSubscriptionView(BaseAPIView):
                 "subscription": {
                     "is_active": False,
                     "payment_required": True,
-                    "allowed_amount": 1,
+                    "allowed_amount": 210,
                     "within_grace_period": False
                 }
             },
@@ -119,6 +137,7 @@ class PaymentInitiationView(APIView):
 
         phone = standardize_phone_number(data["phone_number"])
         requested_amount = int(data["amount"])  
+        subjects = data.get("subjects", [])  # list of dicts or empty list
 
         # -------------------------------------------------
         # 1. RESOLVE USER (JWT FIRST, PHONE FALLBACK)
@@ -135,7 +154,7 @@ class PaymentInitiationView(APIView):
         # -------------------------------------------------
         # 2. DECIDE ALLOWED AMOUNT & PLAN TYPE (AUTHORITATIVE)
         # -------------------------------------------------
-        allowed_amount = 1           
+        allowed_amount = 210           
         plan_type = "PREMIUM"
 
         if user:
@@ -163,15 +182,15 @@ class PaymentInitiationView(APIView):
                     plan_type = "RENEWAL"
                 else:
                     # Expired > grace period → full price
-                    allowed_amount = 1
+                    allowed_amount = 210
                     plan_type = "PREMIUM"
             else:
                 # No previous subscription → new user, full price
-                allowed_amount = 1
+                allowed_amount = 210
                 plan_type = "PREMIUM"
         else:
             # No user found by phone → treat as new
-            allowed_amount = 1
+            allowed_amount = 210
             plan_type = "PREMIUM"
 
         # -------------------------------------------------
@@ -192,7 +211,7 @@ class PaymentInitiationView(APIView):
         # Always use backend's decided amount & plan (override frontend)
         final_amount = allowed_amount
         final_plan_type = plan_type
-        if final_amount not in [1,50]:
+        if final_amount not in [50,210]:
             return standardize_response(
                 success=False,
                 message="Invalid payment configuration. Contact support.",
@@ -223,7 +242,7 @@ class PaymentInitiationView(APIView):
         # -------------------------------------------------
         # 6. INITIATE STK PUSH
         # -------------------------------------------------
-        mpesa = MpesaService()
+        mpesa = DarajaService()
 
         try:
             result = mpesa.stk_push(
@@ -233,6 +252,7 @@ class PaymentInitiationView(APIView):
             )
         except Exception as exc:
             payment.mark_failed(str(exc))
+            logger.error(f"STK Push initiation failed: {exc}")
             return standardize_response(
                 success=False,
                 message="Failed to initiate M-Pesa STK Push",
@@ -265,14 +285,37 @@ class PaymentInitiationView(APIView):
             status_code=400
         )
 
-
 class PaymentStatusView(APIView):
     permission_classes = [permissions.AllowAny]
 
     def get(self, request, reference):
         try:
             payment = Payment.objects.get(reference=reference)
-            return Response({"status": payment.status})
+            
+            if payment.status == "pending" and payment.checkout_request_id:
+                mpesa = DarajaService()
+                query_result = mpesa.stk_push_query(payment.checkout_request_id)
+                
+                if query_result["success"] and query_result.get("result_code") == 0:
+                    payment.mark_completed(
+                        receipt_number=query_result.get("metadata", {}).get("MpesaReceiptNumber"),
+                        metadata=query_result.get("metadata", {})
+                    )
+                elif query_result.get("result_code") in [1032, 1037]:  # Cancelled / Timeout
+                    payment.mark_failed("Request cancelled or timed out")
+                else:
+                    payment.mark_failed(query_result.get("result_desc", "Unknown error"))
+            else:
+                payment.mark_failed(query_result.get("error", "Query failed"))
+
+            return Response({
+                "status": payment.status,
+                "reference": payment.reference,
+                "amount": payment.amount,
+                "checkout_request_id": payment.checkout_request_id,
+                "updated_at": payment.updated_at.isoformat() if hasattr(payment, 'updated_at') else None,
+            })
+            
         except Payment.DoesNotExist:
             return Response({"status": "not_found"}, status=404)
 @method_decorator(csrf_exempt, name='dispatch')
@@ -380,7 +423,7 @@ class MpesaCallbackView(APIView):
                     end_date=user.premium_expires_at,
                     active=True,
                     last_payment_at=now,
-                    is_renewal_eligible=True  
+                    is_renewal_eligible=False  
                 )
 
                 payment.subscription = subscription
