@@ -16,6 +16,7 @@ class DarajaService:
         self.shortcode = settings.MPESA_SHORTCODE
         self.passkey = settings.MPESA_PASSKEY
         self.callback_url = settings.CALLBACK_URL
+        self.EXPRESS_SHORTCODE = settings.MPESA_EXPRESS_SHORTCODE
 
     def get_access_token(self):
         """Get OAuth token from Safaricom"""
@@ -75,10 +76,10 @@ class DarajaService:
             "BusinessShortCode": self.shortcode,
             "Password": password,
             "Timestamp": timestamp,
-            "TransactionType": "CustomerPayBillOnline",
+            "TransactionType": "CustomerBuyGoodsOnline",
             "Amount": str(amount),
             "PartyA": phone_number,
-            "PartyB": self.shortcode,
+            "PartyB": self.EXPRESS_SHORTCODE,
             "PhoneNumber": phone_number,
             "CallBackURL": self.callback_url,
             "AccountReference": account_reference,
