@@ -125,7 +125,20 @@ export default function KMTCProgrammeDetailClient({
       </div>
     );
   }
+  // Helper: count total unique campuses across all offered_at entries
+  function getTotalCampuses(offeredAt: any[]): number {
+    const allCampuses = getAllCampuses(offeredAt);
+    // Optional: deduplicate by code or name
+    const unique = new Set(allCampuses.map(c => c.code || c.name));
+    return unique.size;
+  }
 
+  // Helper: flatten all campuses from nested structure
+  function getAllCampuses(offeredAt: any[]): any[] {
+    return offeredAt
+      .flatMap(entry => entry.campuses || [])
+      .filter(Boolean); // remove null/undefined
+  }
   return (
     <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white dark:from-gray-900 dark:to-gray-800">
       <Header />
@@ -182,38 +195,50 @@ export default function KMTCProgrammeDetailClient({
               </CardContent>
             </Card>
 
-            <Card>
+            <Card className="border-emerald-800 shadow-lg">
             <CardHeader>
-                <CardTitle className="text-2xl flex items-center gap-3">
-                  <Building className="h-7 w-7 text-emerald-600" />
-                  Offered at{" "}
-                  {programme.offered_at.length === 0
-                    ? "ALL KMTC Campuses"
-                    : `${programme.offered_at.length} KMTC Campus${programme.offered_at.length !== 1 ? "es" : ""}`}
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="grid md:grid-cols-2 gap-6">
-                  {programme.offered_at.map((campus, index) => (
+              <CardTitle className="text-2xl flex items-center gap-3">
+                <Building className="h-7 w-7 text-emerald-600" />
+                Offered at{" "}
+                {programme.offered_at?.some(o => o.offered_everywhere)
+                  ? "ALL KMTC Campuses"
+                  : programme.offered_at?.length > 0
+                  ? `${getTotalCampuses(programme.offered_at)} KMTC Campus${getTotalCampuses(programme.offered_at) !== 1 ? "es" : ""}`
+                  : "Not specified"}
+              </CardTitle>
+            </CardHeader>
+                
+            <CardContent>
+              {programme.offered_at?.some(o => o.offered_everywhere) ? (
+                <div className="p-6 bg-emerald-50 dark:bg-emerald-950/30 rounded-lg border border-emerald-200 dark:border-emerald-800">
+                  <p className="font-medium text-lg text-emerald-700 dark:text-emerald-300">
+                    Offered at all KMTC campuses across Kenya.
+                  </p>
+                </div>
+              ) : programme.offered_at?.length > 0 ? (
+                <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {getAllCampuses(programme.offered_at).map((campus, index) => (
                     <div
-                      key={`${programme.id}-${campus.campus_code}-${index}`}
-                      className="p-6 bg-gray-50 dark:bg-gray-800 rounded-lg border hover:shadow-md transition-shadow"
+                      key={`${campus.code}-${index}`}
+                      className="p-6 bg-gray-50 dark:bg-gray-800 rounded-lg border hover:shadow-md transition-all hover:border-emerald-500"
                     >
-                      <p className="font-bold text-xl mb-2">{campus.campus_name}</p>
+                      <p className="font-bold text-xl mb-2">{campus.name}</p>
                       <p className="text-gray-600 dark:text-gray-400 flex items-center gap-2">
-                        <MapPin className="h-5 w-5" />
+                        <MapPin className="h-5 w-5 text-emerald-600" />
                         {campus.city}
                       </p>
-                      {campus.notes && (
-                        <p className="text-sm text-gray-500 dark:text-gray-400 mt-3 italic">
-                          Note: {campus.notes}
-                        </p>
-                      )}
                     </div>
                   ))}
                 </div>
-              </CardContent>
-            </Card>
+              ) : (
+                <div className="p-6 bg-amber-50 dark:bg-amber-950/30 rounded-lg border border-amber-200 dark:border-amber-800 text-center">
+                  <p className="text-amber-700 dark:text-amber-300 font-medium">
+                    Campus information not available for this programme.
+                  </p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
           </div>
 
           {/* Right Column - Sidebar Info */}

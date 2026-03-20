@@ -1,8 +1,5 @@
 import { fetchKMTCProgrammes, fetchKMTCProgrammeByCode } from "@/lib/api";
 import KMTCProgrammeDetailClient from "@/components/kmtc-programme-detail-client";
-import Link from "next/link";
-import { Button } from "@/components/ui/button";
-import { Building2, GraduationCap } from "lucide-react";
 import type { NextPage } from "next";
 
 // Fetch initial data for the specific programme
@@ -55,21 +52,6 @@ const KMTCProgrammeDetailPage: NextPage<{ params: Promise<{ code: string }> }> =
 
   return (
     <>
-      {/* Top Right Navigation Bar */}
-      <div className="fixed top-16 right-4 z-40 flex gap-3">
-        <Button variant="outline" size="sm" asChild className="shadow-lg bg-white dark:bg-gray-800">
-          <Link href="/kmtc/faculties">
-            <Building2 className="mr-2 h-4 w-4" />
-            All Faculties
-          </Link>
-        </Button>
-        <Button variant="outline" size="sm" asChild className="shadow-lg bg-white dark:bg-gray-800">
-          <Link href="/kmtc/departments">
-            <GraduationCap className="mr-2 h-4 w-4" />
-            All Departments
-          </Link>
-        </Button>
-      </div>
 
       <KMTCProgrammeDetailClient
         initialProgramme={programme}

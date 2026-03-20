@@ -787,7 +787,7 @@ export async function fetchKMTCProgrammeByCode(code: string): Promise<Programme 
     // CORRECT PATH — NO /eduhub prefix
     const response = await apiClient.get(`/kmtc/programmes/${code}`);
 
-    const prog = response.data;
+    const prog = response.data?.data || response.data;
     for (let i = prog.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1));
       [prog[i], prog[j]] = [prog[j], prog[i]];

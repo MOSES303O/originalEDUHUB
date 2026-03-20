@@ -60,34 +60,112 @@ class DepartmentAdmin(admin.ModelAdmin):
         return format_html(f'<b style="color:#7c3aed;">{count}</b>')
     programmes_count.short_description = "Programmes"
 
-
 @admin.register(Programme)
 class ProgrammeAdmin(admin.ModelAdmin):
-    list_display = ('name', 'code', 'level', 'department', 'campuses_count', 'is_active')
-    list_filter = ('level', 'is_active', 'department__faculty')
-    search_fields = ('name', 'code', 'description', 'department__name', 'department__faculty__name')
-    autocomplete_fields = ('department',)
-    readonly_fields = ('campuses_count',)
-    inlines = [ProgramEntryRequirementInline]  # ← FIXED: now inside class
+    # ────────────────────────────────────────────────
+    # Show ALL fields — using custom methods where needed
+    # ────────────────────────────────────────────────
+    list_display = (
+        'name',
+        'code',
+        'level',
+        'department',
+        'subject',                      # ForeignKey → OK
+        'required_subjects_count',      # ManyToMany → count
+        'required_subjects_preview',    # ManyToMany → short preview
+        'min_mean_grade',
+        'is_any_from_group',
+        'required_count_from_group',
+        'duration',
+        'qualification_short',          # TextField → shortened
+        'description_short',            # TextField → shortened
+        'is_active',
+        'campuses_count',               # reverse relation → count
+    )
 
+    # Useful filters and search
+    list_filter = (
+        'level',
+        'is_active',
+        'department__faculty',
+        'min_mean_grade',
+        'is_any_from_group',
+    )
+    search_fields = (
+        'name', 'code', 'description',
+        'department__name', 'department__faculty__name',
+        'subject__name',
+    )
+    autocomplete_fields = ('department', 'subject')
+    readonly_fields = ('campuses_count',)
+
+    # Inlines
+    inlines = [ProgramEntryRequirementInline]
+
+    # Fieldsets in change form
     fieldsets = (
         (None, {
-            'fields': ('name', 'code', 'department', 'level', 'duration', 'qualification', 'is_active')
+            'fields': (
+                'name', 'code', 'department', 'level',
+                'duration', 'qualification', 'is_active'
+            )
+        }),
+        ('Entry Requirements', {
+            'fields': (
+                'subject', 'min_mean_grade',
+                'is_any_from_group', 'required_count_from_group'
+            )
         }),
         ('Description', {
             'fields': ('description',),
             'classes': ('collapse',)
         }),
-        ('Stats', {
+        ('Statistics', {
             'fields': ('campuses_count',),
             'classes': ('collapse',)
         }),
     )
 
+    # ────────────────────────────────────────────────
+    # Custom display methods for every field
+    # ────────────────────────────────────────────────
+
+    def required_subjects_count(self, obj):
+        return obj.required_subjects.count()
+    required_subjects_count.short_description = "Req. Subjects (count)"
+
+    def required_subjects_preview(self, obj):
+        subjects = obj.required_subjects.values_list('name', flat=True)[:5]
+        names = ", ".join(subjects)
+        more = f" (+{obj.required_subjects.count() - len(subjects)} more)" if obj.required_subjects.count() > 5 else ""
+        return names + more if names else "—"
+    required_subjects_preview.short_description = "Required Subjects"
+
+    def qualification_short(self, obj):
+        return (obj.qualification[:60] + "...") if obj.qualification else "—"
+    qualification_short.short_description = "Qualification"
+
+    def description_short(self, obj):
+        return (obj.description[:60] + "...") if obj.description else "—"
+    description_short.short_description = "Description"
+
     def campuses_count(self, obj):
         count = obj.offered_at.count()
         return format_html(f'<b style="color:#0891b2;">{count}</b> campuses')
     campuses_count.short_description = "Offered At"
+
+    # Optional: color-code some boolean/choice fields
+    def is_active(self, obj):
+        color = "#16a34a" if obj.is_active else "#dc2626"
+        return format_html(f'<span style="color:{color};">{obj.is_active}</span>')
+    is_active.boolean = True  # shows nice check/cross icon
+
+    def is_any_from_group(self, obj):
+        return format_html(
+            '<span style="color:#16a34a;">ANY</span>'
+            if obj.is_any_from_group else
+            '<span style="color:#dc2626;">ALL</span>'
+        )
 
 @admin.register(OfferedAt)
 class OfferedAtAdmin(admin.ModelAdmin):

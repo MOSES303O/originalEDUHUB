@@ -12,7 +12,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useToast } from "@/hooks/use-toast";
 import { login } from "@/lib/api";
 import { useAuth } from "@/lib/auth-context";
-import { FindCourseForm } from "@/components/find-course-form"; // ← import it
+import { FindCourseForm } from "@/components/find-course-form";
 
 interface AuthenticationModalProps {
   onClose: () => void;
@@ -27,14 +27,15 @@ export function AuthenticationModal({ onClose, canClose = true }: Authentication
   const [showFindCourseForm, setShowFindCourseForm] = useState(false);
   const RENEWAL_PRICE = 50;
 
-  const { 
-  checkActiveSubscription,
-  renewalEligible,
-  requirePayment,
-  initiatePayment,
-  validateToken
-} = useAuth();
-
+  // Use everything that's actually available in AuthContext
+  const {
+    checkActiveSubscription,
+    renewalEligible,
+    requirePayment,
+    initiatePayment,
+    validateToken,     
+    qualifiesForAdvanced,     
+  } = useAuth();
 
   const { toast } = useToast();
   const router = useRouter();
@@ -42,7 +43,7 @@ export function AuthenticationModal({ onClose, canClose = true }: Authentication
   // Auto-validate on mount
   useEffect(() => {
     validateToken();
-  }, []);
+  }, [validateToken]);
 
   // Countdown for renewal grace period
   useEffect(() => {
@@ -67,7 +68,6 @@ export function AuthenticationModal({ onClose, canClose = true }: Authentication
     }
   };
 
-
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
@@ -90,16 +90,21 @@ export function AuthenticationModal({ onClose, canClose = true }: Authentication
       localStorage.setItem("phone_number", response.user.phone_number);
 
       window.dispatchEvent(new Event("auth-change"));
-      await validateToken();
 
-      // After login, check subscription status
+      // Wait for context to fully update
       await validateToken();
 
       const sub = await checkActiveSubscription();
 
-      if (sub.active) {
-        onClose();
-        router.push("/courses");
+      // Final decision after everything is loaded
+      if (sub.active ) {
+        if (qualifiesForAdvanced) {
+          onClose();
+          router.push("/courses");
+        }else {
+          onClose();
+          router.push("/kmtc");
+        }        
       } else if (sub.renewal_eligible) {
         toast({
           title: "Premium Expired",
@@ -111,10 +116,10 @@ export function AuthenticationModal({ onClose, canClose = true }: Authentication
 
     } catch (err: any) {
       setError(err.message || "Login failed. Please check your number.");
-      toast({ 
-        title: "Login Error", 
-        description: err.message || "Something went wrong", 
-        variant: "destructive" 
+      toast({
+        title: "Login Error",
+        description: err.message || "Something went wrong",
+        variant: "destructive",
       });
     } finally {
       setIsSubmitting(false);
@@ -136,11 +141,11 @@ export function AuthenticationModal({ onClose, canClose = true }: Authentication
   // Show FindCourseForm when needed
   if (showFindCourseForm) {
     return (
-      <FindCourseForm 
+      <FindCourseForm
         onClose={() => {
           setShowFindCourseForm(false);
           if (!requirePayment) onClose();
-        }} 
+        }}
         setShowFindCourseForm={setShowFindCourseForm}
       />
     );
@@ -154,9 +159,9 @@ export function AuthenticationModal({ onClose, canClose = true }: Authentication
             <CardTitle className="text-2xl font-bold">
               {renewalEligible ? "Renew Premium (50 KES)" : "Login / Register"}
             </CardTitle>
-            <Button 
-              variant="ghost" 
-              size="icon" 
+            <Button
+              variant="ghost"
+              size="icon"
               onClick={handleClose}
               disabled={requirePayment && !canClose}
             >
@@ -164,8 +169,8 @@ export function AuthenticationModal({ onClose, canClose = true }: Authentication
             </Button>
           </div>
           <CardDescription className="text-base mt-1">
-            {renewalEligible 
-              ? `Premium expired – renew now for 50 KES (grace period: ${countdown}s remaining)` 
+            {renewalEligible
+              ? `Premium expired – renew now for 50 KES (grace period: ${countdown}s remaining)`
               : "Enter your 10-digit phone number starting with 0"}
           </CardDescription>
         </CardHeader>
@@ -268,8 +273,8 @@ export function AuthenticationModal({ onClose, canClose = true }: Authentication
         </CardContent>
 
         <CardFooter className="flex justify-center text-sm text-gray-400 pt-2 border-t border-emerald-800">
-          {renewalEligible 
-            ? "Renewal window: 24 hours after expiry" 
+          {renewalEligible
+            ? "Renewal window: 24 hours after expiry"
             : "First premium access: 210 KES | Renewal: 50 KES"}
         </CardFooter>
       </Card>

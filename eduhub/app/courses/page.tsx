@@ -27,6 +27,7 @@ import { Footer } from "@/components/footer";
 import { CourseRow } from "@/components/course-row";
 import { debounce } from "lodash";
 import { UserInfoPanel } from "@/components/panel";
+import ProtectedRoute from '@/components/ProtectedRoute';
 
 export default function CoursesPage() {
   const [coursesData, setCoursesData] = useState<Course[]>([]);
@@ -134,6 +135,7 @@ export default function CoursesPage() {
   }, [coursesData, searchTerm, categoryFilter]);
 
   return (
+    <ProtectedRoute requireAdvanced>
     <div className="flex min-h-screen flex-col bg-gradient-to-b from-blue-50 to-white dark:from-gray-900 dark:to-gray-800">
       <Header currentPage="courses" onGetStarted={handleGetStarted} user={user} />
       <main className="flex-1">
@@ -288,5 +290,6 @@ export default function CoursesPage() {
         />
       )}
     </div>
+    </ProtectedRoute>
   );
 }

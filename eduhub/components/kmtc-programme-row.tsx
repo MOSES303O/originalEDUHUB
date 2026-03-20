@@ -143,6 +143,30 @@ export function KMTCProgrammeRow({ programme, onAuthRequired, onViewDetails }: K
       <span>Not Qualified</span>
     </div>
   );
+  // Helper: flatten all campuses from the nested offered_at structure
+  function getAllCampuses(offeredAt: any[]): any[] {
+    return offeredAt
+      .flatMap(entry => entry.campuses || [])
+      .filter(c => c && (c.name || c.code)); // remove null/empty entries
+  }
+
+  // Helper: count total campuses (optional deduplication by code/name)
+  function getTotalCampuses(offeredAt: any[]): number {
+    const campuses = getAllCampuses(offeredAt);
+    const unique = new Set(campuses.map(c => c.code || c.name || JSON.stringify(c)));
+    return unique.size;
+  }
+  function getCampusCount(offeredAt: any[] | undefined): number {
+    if (!offeredAt || offeredAt.length === 0) return 0;
+
+    // Flatten all campuses across all offered_at entries
+    const campuses = offeredAt.flatMap(entry => entry.campuses || []);
+
+    // Optional: deduplicate by code or name to avoid double-counting
+    const unique = new Set(campuses.map(c => c.code || c.name || JSON.stringify(c)));
+
+    return unique.size;
+  }
 
   return (
     <>
@@ -185,9 +209,14 @@ export function KMTCProgrammeRow({ programme, onAuthRequired, onViewDetails }: K
         </td>
 
         <td className="p-4 text-center">
-          <Badge variant="outline" className="border-emerald-500 text-emerald-600 dark:text-emerald-400">
-            {programme.offered_at?.length === 0 ? "ALL CAMPUSES" : `${programme.offered_at?.length || 0} Campus${programme.offered_at?.length !== 1 ? "es" : ""}`}
-          </Badge>
+         <Badge 
+           variant="outline" 
+           className="border-emerald-500 text-emerald-600 dark:text-emerald-400 px-3 py-1"
+         >
+           {programme.offered_at?.some(o => o.offered_everywhere) || !programme.offered_at?.length
+             ? "ALL CAMPUSES"
+             : `${getCampusCount(programme.offered_at)} Campus${getCampusCount(programme.offered_at) !== 1 ? "es" : ""}`}
+         </Badge>
         </td>
 
         <td className="p-4 text-center">
@@ -303,28 +332,42 @@ export function KMTCProgrammeRow({ programme, onAuthRequired, onViewDetails }: K
               <div className="md:col-span-2">
                 <h4 className="font-semibold mb-3 flex items-center gap-2">
                   <MapPin className="h-5 w-5 text-emerald-600" />
-                  Offered at {programme.offered_at?.length === 0 ? "ALL KMTC CAMPUSES" : `${programme.offered_at?.length || 0} Campus${programme.offered_at?.length !== 1 ? "es" : ""}`}
+                  Offered at{" "}
+                  {programme.offered_at?.some(o => o.offered_everywhere)
+                    ? "ALL KMTC CAMPUSES"
+                    : programme.offered_at?.length > 0
+                    ? `${getTotalCampuses(programme.offered_at)} Campus${getTotalCampuses(programme.offered_at) !== 1 ? "es" : ""}`
+                    : "Not specified"}
                 </h4>
+                  
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  {programme.offered_at?.map((offered, index) => (
-                    <div 
-                      key={`${programme.id}-${index}`} 
-                      className="p-4 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700"
-                    >
-                      <p className="font-medium text-base">{offered.campus_name || "Unknown Campus"}</p>
-                      <p className="text-sm text-gray-600 dark:text-gray-400 flex items-center gap-2 mt-1">
-                        <MapPin className="h-4 w-4" />
-                        {offered.city || "—"}
+                  {programme.offered_at?.some(o => o.offered_everywhere) ? (
+                    <div className="p-4 bg-emerald-50 dark:bg-emerald-950/30 rounded-lg border border-emerald-200 dark:border-emerald-800 col-span-full">
+                      <p className="text-emerald-700 dark:text-emerald-300 font-medium">
+                        This programme is offered at all KMTC campuses nationwide.
                       </p>
-                      {offered.notes && (
-                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-2 italic">
-                          Note: {offered.notes}
-                        </p>
-                      )}
                     </div>
-                  )) || (
+                  ) : programme.offered_at?.length > 0 ? (
+                    getAllCampuses(programme.offered_at).map((campus, index) => (
+                      <div
+                        key={`${campus.code || campus.name}-${index}`}
+                        className="p-4 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 hover:shadow-md transition-shadow"
+                      >
+                        <p className="font-medium text-base">{campus.name || "Unknown Campus"}</p>
+                        <p className="text-sm text-gray-600 dark:text-gray-400 flex items-center gap-2 mt-1">
+                          <MapPin className="h-4 w-4" />
+                          {campus.city || "—"}
+                        </p>
+                        {campus.notes && (
+                          <p className="text-xs text-gray-500 dark:text-gray-400 mt-2 italic">
+                            Note: {campus.notes}
+                          </p>
+                        )}
+                      </div>
+                    ))
+                  ) : (
                     <p className="text-gray-500 dark:text-gray-400 italic col-span-full">
-                      Offered at all KMTC campuses
+                      Campus information not available for this programme
                     </p>
                   )}
                 </div>

@@ -214,7 +214,12 @@ export interface Programme {
   description: string;
   department_name: string;
   faculty_name: string;
-  offered_at: OfferedAt[];
+  offered_at: [
+  {
+    campuses: [],
+    offered_everywhere: true
+  }
+]
 }
 interface User {
   id: string

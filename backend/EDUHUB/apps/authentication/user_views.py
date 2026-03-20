@@ -483,14 +483,20 @@ class TokenRefreshView(APIResponseMixin, APIView):
             return x_forwarded_for.split(',')[0]
         return request.META.get('REMOTE_ADDR')
 
+# Points mapping (same as your property — can be moved to constants.py later)
+KCSE_POINTS = {
+    'A': 12, 'A-': 11, 'B+': 10, 'B': 9, 'B-': 8,
+    'C+': 7, 'C': 6, 'C-': 5, 'D+': 4, 'D': 3,
+    'D-': 2, 'E': 1,
+}
 class UserSubjectViewSet(APIResponseMixin, viewsets.ModelViewSet):
     queryset = UserSubject.objects.all()
     serializer_class = UserSubjectSerializer
     permission_classes = [IsAuthenticated]
-    
+
     def get_queryset(self):
         return UserSubject.objects.filter(user=self.request.user).order_by('subject__name')
-    
+
     def perform_create(self, serializer):
         serializer.save(user=self.request.user)
         log_user_activity(
@@ -499,37 +505,84 @@ class UserSubjectViewSet(APIResponseMixin, viewsets.ModelViewSet):
             ip_address=self.get_client_ip(self.request),
             details={'subject_id': serializer.validated_data['subject'].id}
         )
-    
+
     @action(detail=False, methods=['post'], url_path='bulk_create')
     def bulk_create(self, request):
         try:
             subjects_data = request.data.get('subjects', [])
             if not subjects_data:
-                return self.error_response(
-                    message="No subjects provided",
-                    status_code=status.HTTP_400_BAD_REQUEST
+                return Response(
+                    {"error": "No subjects provided"},
+                    status=status.HTTP_400_BAD_REQUEST
                 )
-            
+
             if not 7 <= len(subjects_data) <= 9:
-                return self.error_response(
-                    message="You must provide 7 to 9 subjects.",
-                    status_code=status.HTTP_400_BAD_REQUEST
+                return Response(
+                    {"error": "You must provide between 7 and 9 subjects."},
+                    status=status.HTTP_400_BAD_REQUEST
                 )
-            
+
             created_subjects = []
             errors = []
-            
+
+            # Step 1: Create / update subjects
             for subject_data in subjects_data:
                 serializer = self.get_serializer(data=subject_data, context={'request': request})
                 if serializer.is_valid():
-                    subject = serializer.save(user=request.user)
-                    created_subjects.append(serializer.data)
+                    # Use update_or_create to avoid duplicates
+                    obj, created = UserSubject.objects.update_or_create(
+                        user=request.user,
+                        subject=serializer.validated_data['subject'],
+                        defaults={
+                            'grade': serializer.validated_data['grade'],
+                        }
+                    )
+                    created_subjects.append(UserSubjectSerializer(obj).data)
                 else:
                     errors.append({
                         'subject_data': subject_data,
                         'errors': serializer.errors
                     })
-            
+
+            # Step 2: After successful creation → calculate qualification
+            qualification_data = None
+            if len(created_subjects) >= 7:
+                # Get current grades (after this bulk operation)
+                current_subjects = UserSubject.objects.filter(user=request.user)
+                grades = [us.grade.upper() for us in current_subjects if us.grade]
+
+                if len(grades) >= 7:
+                    points_list = [KCSE_POINTS.get(g, 0) for g in grades]
+                    points_list.sort(reverse=True)
+                    best_7_points = sum(points_list[:7])
+
+                    qualified = best_7_points >= 46
+
+                    qualification_data = {
+                        "best_7_points": best_7_points,
+                        "qualified": qualified,
+                        "redirect_to": "/courses" if qualified else "/kmtc",
+                        "message": (
+                            f"Congratulations! {best_7_points} points — eligible for advanced courses"
+                            if qualified else
+                            f"{best_7_points} points — explore KMTC programmes"
+                        )
+                    }
+
+            # Step 3: Build final response
+            response_data = {
+                'created': created_subjects,
+                'errors': errors,
+                'summary': {
+                    'total_provided': len(subjects_data),
+                    'created_or_updated_count': len(created_subjects),
+                    'error_count': len(errors),
+                }
+            }
+
+            if qualification_data:
+                response_data['qualification'] = qualification_data
+
             if created_subjects:
                 log_user_activity(
                     user=request.user,
@@ -537,31 +590,22 @@ class UserSubjectViewSet(APIResponseMixin, viewsets.ModelViewSet):
                     ip_address=self.get_client_ip(request),
                     details={'count': len(created_subjects)}
                 )
-            
-            response_data = {
-                'created': created_subjects,
-                'errors': errors,
-                'summary': {
-                    'total_provided': len(subjects_data),
-                    'created_count': len(created_subjects),
-                    'error_count': len(errors)
-                }
-            }
-            
-            return self.success_response(
-                message=f"Created {len(created_subjects)} subjects successfully",
-                data=response_data,
-                status_code=status.HTTP_201_CREATED
+
+            return Response(
+                {
+                    "message": f"Processed {len(created_subjects)} subjects successfully",
+                    "data": response_data
+                },
+                status=status.HTTP_201_CREATED if created_subjects else status.HTTP_200_OK
             )
-            
+
         except Exception as e:
-            logger.error(f"Bulk subject creation error: {str(e)}")
-            return self.error_response(
-                message="Bulk creation failed",
-                errors={'detail': str(e)},
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR
+            logger.error(f"Bulk subject creation error: {str(e)}", exc_info=True)
+            return Response(
+                {"error": "Bulk creation failed", "detail": str(e)},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
-    
+
     def get_client_ip(self, request):
         x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
         if x_forwarded_for:

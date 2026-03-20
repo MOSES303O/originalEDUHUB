@@ -9,6 +9,18 @@ from apps.courses.models import Subject, CourseOffering  # ← CHANGED: CourseOf
 from .models import User, UserProfile, UserSubject, UserSelectedCourse
 from apps.core.utils import validate_kenyan_phone, standardize_phone_number
 from decimal import Decimal, InvalidOperation, ROUND_HALF_UP
+from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
+
+class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
+    @classmethod
+    def get_token(cls, user):
+        token = super().get_token(user)
+
+        token['qualifies_for_advanced'] = user.qualifies_for_advanced
+        token['kcse_points'] = user.get_best_7_kcse_points()
+        token['has_premium'] = user.has_premium_access
+
+        return token
 
 class UserSubjectSerializer(serializers.Serializer):
     subject_id = serializers.UUIDField()

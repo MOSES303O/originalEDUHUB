@@ -105,6 +105,24 @@ class User(AbstractBaseUser, PermissionsMixin):
         super().clean()
         if self.phone_number:
             self.phone_number = standardize_phone_number(self.phone_number)
+    def get_best_7_kcse_points(self):
+        subjects = self.subjects.all()[:9]  # UserSubject relation
+
+        if subjects.count() < 7:
+            return 0
+
+        points = [s.grade_points for s in subjects]
+        points.sort(reverse=True)
+        return sum(points[:7])
+
+    @property
+    def qualifies_for_advanced(self):
+        return self.get_best_7_kcse_points() >= 46
+
+    @property
+    def has_premium_access(self):
+        # your subscription check logic
+        return self.subscription_set.filter(is_active=True).exists()
 class UserProfile(models.Model):
     """
     Extended user profile information.

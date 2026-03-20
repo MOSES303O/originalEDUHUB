@@ -20,6 +20,13 @@ import { Programme } from "@/types";
 import { fetchKMTCProgrammes } from "@/lib/api";
 import apiClient from "@/lib/api";
 import { UserInfoPanel } from "@/components/panel";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 export default function KMTCProgrammesPageContent() {
   const [programmes, setProgrammes] = useState<Programme[]>([]);
@@ -30,6 +37,34 @@ export default function KMTCProgrammesPageContent() {
   const [searchTerm, setSearchTerm] = useState("");
   const [editingClusterPoints, setEditingClusterPoints] = useState(false);
   const [tempClusterPoints, setTempClusterPoints] = useState("00.000");
+
+  const [facultyFilter, setFacultyFilter] = useState("all");
+  const [departmentFilter, setDepartmentFilter] = useState("all");
+  const faculties = useMemo(() => {
+  const unique = [
+    ...new Set(
+      programmes
+        .map(p => p.faculty_name)
+        .filter(Boolean)
+    ),
+  ];
+  return ["all", ...unique.sort()];
+}, [programmes]);
+
+const departments = useMemo(() => {
+  let deps = programmes.map(p => p.department_name ).filter(Boolean);
+
+  // If you want only departments under selected faculty:
+  if (facultyFilter !== "all") {
+    deps = programmes
+      .filter(p => (p.faculty_name ) === facultyFilter)
+      .map(p => p.department_name )
+      .filter(Boolean);
+  }
+
+  const unique = [...new Set(deps)];
+  return ["all", ...unique.sort()];
+}, [programmes, facultyFilter]);
 
   const router = useRouter();
   const { toast } = useToast();
@@ -118,17 +153,27 @@ export default function KMTCProgrammesPageContent() {
   };
 
   const filteredProgrammes = useMemo(() => {
-    return programmes.filter((prog) => {
-      const term = searchTerm.toLowerCase();
-      return (
-        !searchTerm ||
-        prog.name.toLowerCase().includes(term) ||
-        prog.code.toLowerCase().includes(term) ||
-        prog.department_name.toLowerCase().includes(term) ||
-        prog.faculty_name.toLowerCase().includes(term)
-      );
-    });
-  }, [programmes, searchTerm]);
+  return programmes.filter(prog => {
+    const term = searchTerm.toLowerCase();
+
+    const matchesSearch =
+      !searchTerm ||
+      prog.name.toLowerCase().includes(term) ||
+      prog.code.toLowerCase().includes(term) ||
+      (prog.department_name || "").toLowerCase().includes(term) ||
+      (prog.faculty_name || "").toLowerCase().includes(term);
+
+    const matchesFaculty =
+      facultyFilter === "all" ||
+      (prog.faculty_name) === facultyFilter;
+
+    const matchesDepartment =
+      departmentFilter === "all" ||
+      (prog.department_name ) === departmentFilter;
+
+    return matchesSearch && matchesFaculty && matchesDepartment;
+  });
+}, [programmes, searchTerm, facultyFilter, departmentFilter]);
 
   const saveClusterPoints = async () => {
     const newValue = parseFloat(tempClusterPoints);
@@ -227,15 +272,58 @@ export default function KMTCProgrammesPageContent() {
               </div>
             </div>
 
-            {/* SEARCH BAR */}
-            <div className="flex-1 relative w-full mb-6">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-              <Input
-                placeholder="Search by programme name, code, department or faculty..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10 h-9 sm:h-10 bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-700"
-              />
+            {/* SEARCH + FACULTY + DEPARTMENT FILTER ROW */}
+            <div className="flex flex-col sm:flex-row gap-4 w-full mb-6">
+              {/* Search */}
+              <div className="flex-1 relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                <Input
+                  placeholder="Search by programme name, code, department or faculty..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-10 bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-700"
+                  disabled={loading}
+                />
+              </div>
+                            
+              {/* Faculty Dropdown */}
+              <Select
+                value={facultyFilter}
+                onValueChange={(value) => {
+                  setFacultyFilter(value);
+                  setDepartmentFilter("all"); // reset department when faculty changes
+                }}
+                disabled={loading}
+              >
+                <SelectTrigger className="w-full sm:w-[220px] bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700">
+                  <SelectValue placeholder="All Faculties" />
+                </SelectTrigger>
+                <SelectContent className="bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 max-h-60 overflow-auto">
+                  {faculties.map((fac) => (
+                    <SelectItem key={fac} value={fac} className="capitalize">
+                      {fac === "all" ? "All Faculties" : fac}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+                
+              {/* Department Dropdown */}
+              <Select
+                value={departmentFilter}
+                onValueChange={setDepartmentFilter}
+                disabled={loading || facultyFilter === "all"}
+              >
+                <SelectTrigger className="w-full sm:w-[220px] bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700">
+                  <SelectValue placeholder="All Departments" />
+                </SelectTrigger>
+                <SelectContent className="bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 max-h-60 overflow-auto">
+                  {departments.map((dep) => (
+                    <SelectItem key={dep} value={dep} className="capitalize">
+                      {dep === "all" ? "All Departments" : dep}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
 
             {/* POINTS BADGE */}

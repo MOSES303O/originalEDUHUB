@@ -21,6 +21,7 @@ import { debounce } from "lodash";
 import { UniversityRow } from "@/components/university-row";
 import { UserInfoPanel } from "@/components/panel";
 import { useSelectedCourses } from "@/lib/course-store";
+import ProtectedRoute from "@/components/ProtectedRoute";
 
 function UniversitiesPageContent() {
   const [universities, setUniversities] = useState<UniversityWithCourses[]>([]);
@@ -168,6 +169,7 @@ function UniversitiesPageContent() {
   }, [universities, searchTerm, cityFilter]);
 
   return (
+    <ProtectedRoute requireAdvanced>
     <div className="flex min-h-screen flex-col bg-white dark:bg-gray-900">
       <Header currentPage="universities" onGetStarted={handleGetStarted} user={user} />
       <main className="flex-1">
@@ -312,6 +314,7 @@ function UniversitiesPageContent() {
         />
       )}
     </div>
+    </ProtectedRoute>
   );
 }
 
