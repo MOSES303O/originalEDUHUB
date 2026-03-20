@@ -122,7 +122,10 @@ class Programme(models.Model):
         ordering = ['name']
 
     def __str__(self):
-        return f"{self.name} ({self.code})"
+        # Defensive: check if we have the expected fields
+        name = getattr(self, 'name', 'Unnamed Programme')
+        code = getattr(self, 'code', '—')
+        return f"{name} ({code})"
 
 
 class OfferedAt(models.Model):
@@ -205,13 +208,17 @@ class ProgramEntryRequirement(models.Model):
 
     def __str__(self):
         parts = []
-        if self.min_mean_grade:
-            parts.append(f"Mean ≥ {self.min_mean_grade}")
         if self.subject:
-            grade = self.min_grade or 'D'
-            parts.append(f"{self.subject} ≥ {grade}")
+            grade = self.min_grade if self.min_grade else "—"
+            parts.append(f"{self.subject.name} ≥ {grade}")
+        else:
+            parts.append("No subject specified")
+        
         if self.alternatives.exists():
-            alts = ", ".join(str(s) for s in self.alternatives.all())
-            count = self.required_count_from_group or 1
-            parts.append(f"OR any {count} from: {alts}")
-        return f"{self.programme} → {'; '.join(parts)}" or "No requirement"           
+            alts = ", ".join(s.name for s in self.alternatives.all())
+            parts.append(f"OR alternatives: {alts}")
+        
+        if self.is_mandatory:
+            parts.append("(Mandatory)")
+        
+        return f"Requirement for {self.programme}: {'; '.join(parts)}" or "Empty requirement"          

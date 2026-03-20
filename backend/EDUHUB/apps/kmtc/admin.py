@@ -10,8 +10,10 @@ class ProgramEntryRequirementInline(admin.TabularInline):
     model = ProgramEntryRequirement
     extra = 1
     autocomplete_fields = ['subject']
-    fields = ('subject', 'min_grade', 'is_mandatory')
+    fields = ('subject', 'min_grade', 'is_mandatory', 'alternatives')
     readonly_fields = ('id',)
+    verbose_name = "Entry Requirement"
+    verbose_name_plural = "Entry Requirements"
 
 
 @admin.register(Campus)
