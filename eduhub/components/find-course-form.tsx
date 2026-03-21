@@ -11,7 +11,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useRouter } from "next/navigation";
-import apiClient, { fetchSubjects, login } from "@/lib/api";
+import apiClient, {fetchSubjects, login } from "@/lib/api"; 
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/lib/auth-context";
 
@@ -36,6 +36,39 @@ const grades = [
   { value: "E", label: "E", points: 1 },
 ];
 
+// Hard-coded subjects list — all 29 from your API response (exact IDs and names)
+const HARDCODED_SUBJECTS = [
+  { id: "a49519c0-9c9f-480c-8366-c5a997e35a50", name: "Agriculture" },
+  { id: "80e4ebcf-be91-4a67-a0ac-511eda1004ac", name: "Arabic" },
+  { id: "a2721a53-f579-41b6-8d6d-c947fdb82502", name: "Art & Design" },
+  { id: "7098a249-9452-4649-8837-3fae58bfbb3e", name: "Aviation Technology" },
+  { id: "0778aa58-5877-4daf-b511-e1f491028546", name: "Biology" },
+  { id: "a61808fd-1de5-4e6a-9706-62ad4e35a0ba", name: "Building Construction" },
+  { id: "41cf1f35-5abf-46bf-aa68-5e6152559126", name: "Business Studies" },
+  { id: "759f0114-6601-4b42-b62c-aa04f999e82c", name: "Chemistry" },
+  { id: "351e8226-9d8e-457d-88e0-331a707bf6ce", name: "Computer Studies" },
+  { id: "7194743c-d90e-4559-961d-7dc804db4798", name: "CRE" },
+  { id: "779d8cd5-6cb2-46c0-a8b8-bdc8444af8e8", name: "Drawing & Design" },
+  { id: "d0f5c5f8-5984-4190-8cd9-a882319c0d7b", name: "Electricity" },
+  { id: "7f1368de-3edc-48f8-ad39-738e0b1ab6c5", name: "English" },
+  { id: "2707d3e9-4a1f-4a97-b993-c472056b9737", name: "French" },
+  { id: "bd35cce6-754b-41d9-a4e5-b848929041e2", name: "Geography" },
+  { id: "049c3699-b2dd-42df-9f43-ca0f4020f2c8", name: "German" },
+  { id: "6af99c04-c741-4848-9b9e-953188fe94bf", name: "History & Government" },
+  { id: "69ba4e4e-3e13-41d8-bd23-aa765fb438c4", name: "Home Science" },
+  { id: "a846da75-b902-4873-9255-7b55adfed948", name: "HRE" },
+  { id: "5c18048e-d72c-4a67-95c9-4735149098b9", name: "IRE" },
+  { id: "226cfe0a-d2a3-4c47-929e-05f5152f49e3", name: "Kiswahili" },
+  { id: "11346ade-c560-4b71-8b60-5ff8352c6518", name: "Mathematics" },
+  { id: "3ceb7234-a2fb-4e60-8ab9-c98cb94e52be", name: "Metalwork" },
+  { id: "c8531d93-72a0-485d-ae8e-0d18b7a67433", name: "Music" },
+  { id: "d0e2c0cb-0a26-4a9c-a92c-fb73b4f81971", name: "Physical science" },
+  { id: "be727607-6a77-4ab8-9120-075b6cb983ce", name: "Physics" },
+  { id: "ea2b1511-cf4f-4916-a767-94f62c21876e", name: "Power Mechanics" },
+  { id: "3a6e4bc4-83eb-40f3-ae31-3f391bfdb9f0", name: "Sign Language" },
+  { id: "51f7904d-35aa-4a84-b062-68e191648c19", name: "Woodwork" },
+];
+
 interface FindCourseFormProps {
   onClose: () => void;
   setShowFindCourseForm?: (show: boolean) => void;
@@ -46,9 +79,6 @@ export function FindCourseForm({ onClose, setShowFindCourseForm }: FindCourseFor
   const { toast } = useToast();
   const { renewalEligible, validateToken, isPremiumActive, checkActiveSubscription } = useAuth();
 
-  const [availableSubjects, setAvailableSubjects] = useState<
-    { id: string; name: string }[]
-  >([]);
   const [selectedSubjects, setSelectedSubjects] = useState<Subject[]>([]);
   const [isSubjectsDropdownOpen, setIsSubjectsDropdownOpen] = useState(false);
   const [totalPoints, setTotalPoints] = useState(0);
@@ -67,22 +97,13 @@ export function FindCourseForm({ onClose, setShowFindCourseForm }: FindCourseFor
   const RENEWAL_PRICE = 50;
   const MAX_REINITIATE = 3;
 
-  // Load subjects
-  useEffect(() => {
-    fetchSubjects()
-      .then(setAvailableSubjects)
-      .catch(() => {
-        toast({
-          title: "Error",
-          description: "Failed to load subjects.",
-          variant: "destructive",
-        });
-      });
-  }, [toast]);
-
+  // Subjects are now hard-coded — no fetch needed
+  const availableSubjects = HARDCODED_SUBJECTS;
+  fetchSubjects()
   // Real-time validation & points calculation
   useEffect(() => {
     const trimmed = phoneNumber.trim();
+    fetchSubjects()
 
     // Phone validation
     if (trimmed) {
@@ -386,7 +407,7 @@ export function FindCourseForm({ onClose, setShowFindCourseForm }: FindCourseFor
                 </p>
               </div>
 
-              {/* Subjects Selection */}
+              {/* Subjects Selection – now using hard-coded list */}
               <div className="space-y-4">
                 <div className="flex justify-between items-center text-sm">
                   <span>Select subjects ({MIN_SUBJECTS}–{MAX_SUBJECTS})</span>

@@ -11,12 +11,11 @@ const inter = Inter({ subsets: ["latin"] });
 export const metadata: Metadata = {
   // CORE
   title: {
-    default: "EduHub Kenya - Find Your Best University & KMTC Course 2025",
+    default: "EduHub Kenya - Find Your Best University & Colleges Course 2026",
     template: "%s | EduHub Kenya",
   },
   description:
-    "Best KCSE course finder in Kenya. Get personalized university & KMTC course recommendations based on your KCSE subjects, points & cluster requirements. Free & updated for 2025 intake.",
-
+    "Best KCSE course finder in Kenya. Get personalized university & Colleges course recommendations based on your KCSE subjects, points & cluster requirements. Free & updated for 2026 intake.",
   // KEYWORDS — TOP SEARCH TERMS IN KENYA
   keywords: [
     "kuccps courses 2026",
