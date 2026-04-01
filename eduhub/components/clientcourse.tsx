@@ -16,6 +16,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/lib/auth-context";
 import { AuthenticationModal } from "@/components/authentication-modal";
 import { fetchCourseById } from "@/lib/api";
+import ProtectedRoute from '@/components/ProtectedRoute';
 
 interface CourseDetailClientProps {
   initialCourse: Course | null;
@@ -220,6 +221,7 @@ export default function CourseDetailClient({ initialCourse, initialError }: Cour
   const university = course.university || {};
 
   return (
+    <ProtectedRoute requireAdvanced>
     <div className="flex min-h-screen flex-col bg-gradient-to-b from-blue-50 to-white dark:from-gray-900 dark:to-gray-800">
       <Header />
       {showAuthModal && (
@@ -440,5 +442,6 @@ export default function CourseDetailClient({ initialCourse, initialError }: Cour
       </main>
       <Footer />
     </div>
+    </ProtectedRoute>
   );
 }

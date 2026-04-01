@@ -17,6 +17,7 @@ import { useAuth } from "@/lib/auth-context";
 import { Course } from "@/types";
 import { useDebounce } from "use-debounce";
 import { fetchCoursesByUniversity } from "@/lib/api";
+import ProtectedRoute from '@/components/ProtectedRoute';
 
 interface UniversityCoursesClientProps {
   initialUniversity: { name: string } | null;
@@ -118,6 +119,7 @@ export default function UniversityCoursesClient({
   }, [courses, debouncedSearchTerm, categoryFilter]);
 
   return (
+    <ProtectedRoute requireAdvanced>
     <div className="min-h-screen bg-white dark:bg-gray-900">
       <Header currentPage="universities" onGetStarted={handleGetStarted} user={user} />
       <div className="container px-4 sm:px-6 md:px-8 lg:px-12 max-w-7xl py-6 sm:py-8 md:py-12">
@@ -221,5 +223,6 @@ export default function UniversityCoursesClient({
       </div>
       <Footer />
     </div>
+    </ProtectedRoute>
   );
 }

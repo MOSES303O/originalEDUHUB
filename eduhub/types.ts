@@ -196,30 +196,37 @@ export interface Programme {
     subject_or_group: string;
     min_grade: string;
   }[] | undefined;
-    missing_program_requirements?: Array<{
+  missing_program_requirements?: Array<{
         subject: string;
         required_grade: string;
     }>;
-    unmet_program_grades?: Array<{
+  unmet_program_grades?: Array<{
         subject: string;
         user_grade: string;
         required_grade: string;
     }>;
-    user_points?: number;
-    required_points?: number;
-    points_source?: "stored" | "calculated";
-    subjects_count?: number;
-    message?: string;
+  user_points?: number;
+  required_points?: number;
+  points_source?: "stored" | "calculated";
+  subjects_count?: number;
+  message?: string;
+  debug?: any;
 } | undefined;
   description: string;
   department_name: string;
   faculty_name: string;
-  offered_at: [
-  {
-    campuses: [],
-    offered_everywhere: true
-  }
-]
+  offered_at: Array<{
+    campuses: Array<{
+      name: string;
+      code?: string;
+      city?: string;
+      notes?: string;
+    }>;
+    offered_everywhere: boolean;
+  }>;
+  subjects_count?: number;
+  [key: string]: any; 
+
 }
 interface User {
   id: string

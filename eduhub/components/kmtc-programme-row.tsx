@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -8,7 +8,7 @@ import { ChevronRight, ChevronDown, MapPin, GraduationCap, Trash2, CheckCircle, 
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/lib/auth-context";
 import { useSelectedCourses } from "@/lib/course-store";
-import { Programme } from "@/types"; // ← Assuming Programme type includes qualified & qualification_details from engine
+import { Programme } from "@/types";
 import {
   Tooltip,
   TooltipContent,
@@ -29,9 +29,51 @@ export function KMTCProgrammeRow({ programme, onAuthRequired, onViewDetails }: K
   const { user, requirePayment } = useAuth();
   const { toggleCourseSelection, isCourseSelected } = useSelectedCourses();
 
-  // Live selected state from store (using code as identifier)
+    // ==================== AGGRESSIVE DEBUG ====================
+  useEffect(() => {
+    console.group(`🚨 FULL RAW PROGRAMME DEBUG - ${programme.code}`);
+    console.log("Raw programme:", JSON.stringify(programme, null, 2));
+    console.log("Keys in programme:", Object.keys(programme));
+    console.log("qualified value:", programme.qualified);
+    console.log("typeof qualified:", typeof programme.qualified);
+    console.log("qualification_details:", programme.qualification_details);
+    console.log("reason:", programme.reason);
+    console.log("missing_mandatory:", programme.missing_mandatory);
+    console.groupEnd();
+  }, [programme]);
+   // Live selected state from store
   const isSelected = isCourseSelected(String(programme.code));
-  const missingMandatory = programme.qualification_details?.missing_mandatory ?? [];
+
+  // === DEFENSIVE QUALIFICATION LOGIC ===
+  const rawQualified = programme.qualified;
+  const qualDetails = programme.qualification_details || {};
+
+  const isQualified = Boolean(
+    rawQualified === true || 
+    qualDetails.qualified === true ||
+    qualDetails.qualified === "true"
+  );
+
+  const missingMandatory = [
+    ...(Array.isArray(programme.missing_mandatory) ? programme.missing_mandatory : []),
+    ...(Array.isArray(qualDetails.missing_mandatory) ? qualDetails.missing_mandatory : [])
+  ];
+
+  const reason = programme.reason || 
+                 qualDetails.reason || 
+                 (isQualified ? null : "You do not meet the entry requirements for this programme yet.");
+  // Qualification badge display
+  const qualificationDisplay = isQualified ? (
+    <div className="flex items-center gap-1.5 text-emerald-600 dark:text-emerald-400 font-medium">
+      <CheckCircle className="h-4 w-4" />
+      <span>Qualified</span>
+    </div>
+  ) : (
+    <div className="flex items-center gap-1.5 text-red-600 dark:text-red-400 font-medium">
+      <XCircle className="h-4 w-4" />
+      <span>Not Qualified</span>
+    </div>
+  );
 
   const handleSelect = async (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -57,12 +99,11 @@ export function KMTCProgrammeRow({ programme, onAuthRequired, onViewDetails }: K
       return;
     }
 
-    // Qualification gate (from KMTC engine)
-    if (!programme.qualified && !isSelected) {
+    // Qualification gate
+    if (!isQualified && !isSelected) {
       toast({
         title: "Cannot Select",
-        description: programme.qualification_details?.reason || 
-          "You do not meet the entry requirements for this programme yet.",
+        description: reason,
         variant: "destructive",
         duration: 5000,
       });
@@ -72,7 +113,6 @@ export function KMTCProgrammeRow({ programme, onAuthRequired, onViewDetails }: K
     const willBeSelected = !isSelected;
 
     try {
-      // Convert Programme to a Course-like object for the store
       const courseLike = {
         id: programme.id,
         code: programme.code,
@@ -131,40 +171,17 @@ export function KMTCProgrammeRow({ programme, onAuthRequired, onViewDetails }: K
     setIsExpanded(!isExpanded);
   };
 
-  // Qualification badge (from KMTC engine)
-  const qualificationDisplay = programme.qualified ? (
-    <div className="flex items-center gap-1.5 text-emerald-600 dark:text-emerald-400 font-medium">
-      <CheckCircle className="h-4 w-4" />
-      <span>Qualified</span>
-    </div>
-  ) : (
-    <div className="flex items-center gap-1.5 text-red-600 dark:text-red-400 font-medium">
-      <XCircle className="h-4 w-4" />
-      <span>Not Qualified</span>
-    </div>
-  );
-  // Helper: flatten all campuses from the nested offered_at structure
+  // Helper functions for campuses
   function getAllCampuses(offeredAt: any[]): any[] {
     return offeredAt
       .flatMap(entry => entry.campuses || [])
-      .filter(c => c && (c.name || c.code)); // remove null/empty entries
+      .filter(c => c && (c.name || c.code));
   }
 
-  // Helper: count total campuses (optional deduplication by code/name)
-  function getTotalCampuses(offeredAt: any[]): number {
-    const campuses = getAllCampuses(offeredAt);
-    const unique = new Set(campuses.map(c => c.code || c.name || JSON.stringify(c)));
-    return unique.size;
-  }
   function getCampusCount(offeredAt: any[] | undefined): number {
     if (!offeredAt || offeredAt.length === 0) return 0;
-
-    // Flatten all campuses across all offered_at entries
     const campuses = offeredAt.flatMap(entry => entry.campuses || []);
-
-    // Optional: deduplicate by code or name to avoid double-counting
     const unique = new Set(campuses.map(c => c.code || c.name || JSON.stringify(c)));
-
     return unique.size;
   }
 
@@ -225,6 +242,7 @@ export function KMTCProgrammeRow({ programme, onAuthRequired, onViewDetails }: K
           </Badge>
         </td>
 
+        {/* Qualification Column */}
         <td className="p-4 text-center">
           <TooltipProvider delayDuration={300}>
             <Tooltip>
@@ -232,7 +250,7 @@ export function KMTCProgrammeRow({ programme, onAuthRequired, onViewDetails }: K
                 <div className="inline-flex items-center cursor-help">{qualificationDisplay}</div>
               </TooltipTrigger>
               <TooltipContent side="right" className="max-w-xs p-3">
-                {programme.qualified ? (
+                {isQualified ? (
                   <p className="text-emerald-600 dark:text-emerald-400 font-medium">
                     You meet the entry requirements for this programme.
                   </p>
@@ -242,25 +260,27 @@ export function KMTCProgrammeRow({ programme, onAuthRequired, onViewDetails }: K
                       You do not currently qualify
                     </p>
                     <p className="text-sm text-muted-foreground">
-                      {programme.qualification_details?.reason || "Check your subjects and grades."}
+                      {reason || "Check your subjects and grades."}
                     </p>
 
                     {missingMandatory.length > 0 && (
                       <ul className="text-sm text-gray-600 dark:text-gray-400 list-disc pl-5 mt-2">
-                        {missingMandatory.map((item, i) => (
-                          <li key={i}>
-                            {item.subject_or_group} ≥ {item.min_grade}
-                          </li>
-                        ))}
+                        {missingMandatory.map((item, i) => {
+                          const text = typeof item === 'string' 
+                            ? item 
+                            : `${item.subject_or_group} ≥ ${item.min_grade || 'required'}`;
+                          return <li key={i}>{text}</li>;
+                        })}
                       </ul>
                     )}
-                                      </>
+                  </>
                 )}
               </TooltipContent>
             </Tooltip>
           </TooltipProvider>
         </td>
 
+        {/* Select Button */}
         <td className="p-4">
           <TooltipProvider delayDuration={300}>
             <Tooltip>
@@ -269,11 +289,11 @@ export function KMTCProgrammeRow({ programme, onAuthRequired, onViewDetails }: K
                   variant={isSelected ? "destructive" : "outline"}
                   size="sm"
                   onClick={handleSelect}
-                  disabled={!programme.qualified && !isSelected}
+                  disabled={!isQualified && !isSelected}
                   className={
                     isSelected
                       ? "bg-red-600 hover:bg-red-700 text-white"
-                      : programme.qualified
+                      : isQualified
                         ? "border-emerald-600 text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/50"
                         : "opacity-60 cursor-not-allowed border-gray-300 dark:border-gray-700"
                   }
@@ -288,7 +308,7 @@ export function KMTCProgrammeRow({ programme, onAuthRequired, onViewDetails }: K
                   )}
                 </Button>
               </TooltipTrigger>
-              {!programme.qualified && !isSelected && (
+              {!isQualified && !isSelected && (
                 <TooltipContent>
                   <p className="text-sm">You do not qualify for this programme yet.</p>
                   <p className="text-xs text-muted-foreground mt-1">
@@ -312,7 +332,7 @@ export function KMTCProgrammeRow({ programme, onAuthRequired, onViewDetails }: K
         </td>
       </tr>
 
-      {/* EXPANDED DETAILS ROW */}
+      {/* EXPANDED DETAILS ROW - unchanged */}
       {isExpanded && (
         <tr className="bg-muted/30">
           <td colSpan={8} className="p-5">
@@ -336,10 +356,10 @@ export function KMTCProgrammeRow({ programme, onAuthRequired, onViewDetails }: K
                   {programme.offered_at?.some(o => o.offered_everywhere)
                     ? "ALL KMTC CAMPUSES"
                     : programme.offered_at?.length > 0
-                    ? `${getTotalCampuses(programme.offered_at)} Campus${getTotalCampuses(programme.offered_at) !== 1 ? "es" : ""}`
+                    ? `${getCampusCount(programme.offered_at)} Campus${getCampusCount(programme.offered_at) !== 1 ? "es" : ""}`
                     : "Not specified"}
                 </h4>
-                  
+                
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   {programme.offered_at?.some(o => o.offered_everywhere) ? (
                     <div className="p-4 bg-emerald-50 dark:bg-emerald-950/30 rounded-lg border border-emerald-200 dark:border-emerald-800 col-span-full">
@@ -379,7 +399,7 @@ export function KMTCProgrammeRow({ programme, onAuthRequired, onViewDetails }: K
                   <GraduationCap className="h-5 w-5 text-emerald-600" />
                   Qualification Status
                 </h4>
-                {programme.qualified ? (
+                {isQualified ? (
                   <div className="flex items-center text-emerald-600 dark:text-emerald-400">
                     <CheckCircle className="h-5 w-5 mr-2" />
                     <span className="font-medium">You meet the entry requirements for this programme.</span>
@@ -390,18 +410,19 @@ export function KMTCProgrammeRow({ programme, onAuthRequired, onViewDetails }: K
                       <XCircle className="h-5 w-5 mr-2" />
                       <span className="font-medium">You do not currently qualify</span>
                     </div>
-                    {programme.qualification_details?.reason && (
+                    {reason && (
                       <p className="text-sm text-red-600 dark:text-red-400">
-                        <strong>Reason:</strong> {programme.qualification_details.reason}
+                        <strong>Reason:</strong> {reason}
                       </p>
                     )}
                     {missingMandatory.length > 0 && (
                       <ul className="text-sm text-gray-600 dark:text-gray-400 list-disc pl-5 mt-2">
-                        {missingMandatory.map((item, i) => (
-                          <li key={i}>
-                            {item.subject_or_group} ≥ {item.min_grade}
-                          </li>
-                        ))}
+                        {missingMandatory.map((item, i) => {
+                          const text = typeof item === 'string' 
+                            ? item 
+                            : `${item.subject_or_group} ≥ ${item.min_grade || 'required'}`;
+                          return <li key={i}>{text}</li>;
+                        })}
                       </ul>
                     )}
                   </div>
@@ -414,7 +435,7 @@ export function KMTCProgrammeRow({ programme, onAuthRequired, onViewDetails }: K
               <Button
                 variant={isSelected ? "destructive" : "outline"}
                 onClick={handleSelect}
-                disabled={!programme.qualified && !isSelected}
+                disabled={!isQualified && !isSelected}
                 className={isSelected ? "bg-red-600 hover:bg-red-700" : ""}
               >
                 {isSelected ? (

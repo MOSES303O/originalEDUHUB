@@ -14,41 +14,27 @@ class OfferedAtSerializer(serializers.ModelSerializer):
         model = OfferedAt
         fields = ['campuses', 'offered_everywhere']
 
+# kmtc/serializers.py
 class ProgrammeSerializer(serializers.ModelSerializer):
     department_name = serializers.CharField(source='department.name', read_only=True)
     faculty_name = serializers.CharField(source='department.faculty.name', read_only=True)
     offered_at = OfferedAtSerializer(source='campuses_offered', many=True, read_only=True)
 
-    # Qualification fields — populated via context from view
-    qualified = serializers.SerializerMethodField(read_only=True)
-    qualification_details = serializers.SerializerMethodField(read_only=True)
-    reason = serializers.SerializerMethodField(read_only=True)
-    missing_mandatory = serializers.SerializerMethodField(read_only=True)
-    user_points = serializers.SerializerMethodField(read_only=True)
+    # These fields will be injected manually in the view (not from model)
+    qualified = serializers.BooleanField(read_only=True, allow_null=True, default=False)
+    qualification_details = serializers.DictField(read_only=True, allow_null=True, default=dict)
+    reason = serializers.CharField(read_only=True, allow_null=True, default=None)
+    missing_mandatory = serializers.ListField(read_only=True, default=list)
+    subjects_count = serializers.IntegerField(read_only=True, default=0)
 
     class Meta:
         model = Programme
         fields = [
             'id', 'code', 'name', 'level', 'duration', 'qualification',
             'description', 'department_name', 'faculty_name', 'offered_at',
-            'qualified', 'qualification_details', 'reason', 'missing_mandatory',
-            'user_points'
+            'qualified', 'qualification_details', 'reason', 
+            'missing_mandatory', 'subjects_count'
         ]
-
-    def get_qualified(self, obj):
-        return self.context.get('qualified_data', {}).get(obj.code, {}).get('qualified', None)
-
-    def get_qualification_details(self, obj):
-        return self.context.get('qualified_data', {}).get(obj.code, {}).get('qualification_details', None)
-
-    def get_reason(self, obj):
-        return self.context.get('qualified_data', {}).get(obj.code, {}).get('reason', None)
-
-    def get_missing_mandatory(self, obj):
-        return self.context.get('qualified_data', {}).get(obj.code, {}).get('missing_mandatory', [])
-
-    def get_user_points(self, obj):
-        return self.context.get('qualified_data', {}).get(obj.code, {}).get('user_points', None)
 class DepartmentSerializer(serializers.ModelSerializer):
     faculty_name = serializers.CharField(source='faculty.name', read_only=True)
     programmes = ProgrammeSerializer(many=True, read_only=True)

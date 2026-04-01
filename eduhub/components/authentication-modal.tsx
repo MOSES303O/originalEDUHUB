@@ -27,6 +27,10 @@ export function AuthenticationModal({ onClose, canClose = true }: Authentication
   const [showFindCourseForm, setShowFindCourseForm] = useState(false);
   const RENEWAL_PRICE = 50;
 
+  // 5-minute delay timer for FindCourseForm
+  const [findCourseDelayTimer, setFindCourseDelayTimer] = useState<NodeJS.Timeout | null>(null);
+  const FIND_COURSE_DELAY = 5 * 60 * 1000; // 5 minutes in milliseconds
+
   // Use everything that's actually available in AuthContext
   const {
     checkActiveSubscription,
@@ -52,6 +56,20 @@ export function AuthenticationModal({ onClose, canClose = true }: Authentication
       return () => clearTimeout(timer);
     }
   }, [requirePayment, renewalEligible, countdown]);
+
+  // NEW: Delay logic for showing FindCourseForm (5 minutes)
+  const delayFindCourseForm = () => {
+    // Clear any existing timer first
+    if (findCourseDelayTimer) {
+      clearTimeout(findCourseDelayTimer);
+    }
+
+    const timer = setTimeout(() => {
+      setShowFindCourseForm(true);
+    }, FIND_COURSE_DELAY);
+
+    setFindCourseDelayTimer(timer);
+  };
 
   const handleRenew = async () => {
     setIsSubmitting(true);
@@ -91,17 +109,16 @@ export function AuthenticationModal({ onClose, canClose = true }: Authentication
 
       window.dispatchEvent(new Event("auth-change"));
 
-      // Wait for context to fully update
       await validateToken();
 
       const sub = await checkActiveSubscription();
 
       // Final decision after everything is loaded
-      if (sub.active ) {
+      if (sub.active) {
         if (qualifiesForAdvanced) {
           onClose();
           router.push("/courses");
-        }else {
+        } else {
           onClose();
           router.push("/kmtc");
         }        
@@ -111,7 +128,8 @@ export function AuthenticationModal({ onClose, canClose = true }: Authentication
           description: "Renew for 50 KES to continue",
         });
       } else {
-        setShowFindCourseForm(true);
+        // DELAY the FindCourseForm by 5 minutes
+        delayFindCourseForm();
       }
 
     } catch (err: any) {

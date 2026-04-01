@@ -27,7 +27,6 @@ import { Footer } from "@/components/footer";
 import { CourseRow } from "@/components/course-row";
 import { debounce } from "lodash";
 import { UserInfoPanel } from "@/components/panel";
-import ProtectedRoute from '@/components/ProtectedRoute';
 
 export default function CoursesPage() {
   const [coursesData, setCoursesData] = useState<Course[]>([]);
@@ -49,6 +48,7 @@ export default function CoursesPage() {
     () => debounce((value: string) => setSearchTerm(value), 300),
     []
   );
+
   const categories = useMemo(() => {
     const unique = [
       ...new Set(
@@ -60,6 +60,7 @@ export default function CoursesPage() {
     return unique.sort();
   }, [coursesData]);
 
+  // UPDATED: Delay showing FindCourseForm by 5 minutes
   const handleGetStarted = () => {
     if (!user) {
       setShowAuthModal(true);
@@ -78,7 +79,10 @@ export default function CoursesPage() {
         duration: 3000,
       });
     } else {
-      setShowFindCourseForm(true);
+      // DELAY the FindCourseForm by 5 minutes
+      setTimeout(() => {
+        setShowFindCourseForm(true);
+      }, 5 * 60 * 1000); // 5 minutes
     }
   };
 
@@ -106,7 +110,7 @@ export default function CoursesPage() {
     }
 
     loadData();
-  }, [subjectParams ,user, authLoading, requirePayment]);
+  }, [subjectParams, user, authLoading, requirePayment]);
 
   useEffect(() => {
     if (!authLoading && (!user || requirePayment)) {
@@ -135,7 +139,6 @@ export default function CoursesPage() {
   }, [coursesData, searchTerm, categoryFilter]);
 
   return (
-    <ProtectedRoute requireAdvanced>
     <div className="flex min-h-screen flex-col bg-gradient-to-b from-blue-50 to-white dark:from-gray-900 dark:to-gray-800">
       <Header currentPage="courses" onGetStarted={handleGetStarted} user={user} />
       <main className="flex-1">
@@ -290,6 +293,5 @@ export default function CoursesPage() {
         />
       )}
     </div>
-    </ProtectedRoute>
   );
 }

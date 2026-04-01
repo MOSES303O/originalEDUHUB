@@ -749,18 +749,20 @@ export async function fetchKMTCProgrammes(): Promise<Programme[]> {
   try {
     const response = await apiClient.get('/kmtc/programmes');
     const list = getResponseData(response.data);
-    for (let i = list.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [list[i], list[j]] = [list[j], list[i]];
-    }
 
     if (!Array.isArray(list)) {
       console.warn('[fetchKMTCProgrammes] Expected array but got:', list);
       return [];
     }
 
+    // Shuffle (keep your random logic if you want it)
+    for (let i = list.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [list[i], list[j]] = [list[j], list[i]];
+    }
+
     return list.map((prog: any) => ({
-      id: prog.id.toString(),
+      id: prog.id?.toString() || "",
       code: prog.code || "N/A",
       name: prog.name || "Unknown Programme",
       level: prog.level || "N/A",
@@ -769,7 +771,14 @@ export async function fetchKMTCProgrammes(): Promise<Programme[]> {
       description: prog.description || "",
       department_name: prog.department_name || "General",
       faculty_name: prog.faculty_name || "N/A",
-      offered_at: prog.offered_at || [], // array of { campus_name, city, campus_code, notes }
+      offered_at: prog.offered_at || [],
+
+      // ←←← THESE ARE THE MISSING FIELDS (Critical!)
+      qualified: prog.qualified,
+      reason: prog.reason,
+      missing_mandatory: prog.missing_mandatory,
+      qualification_details: prog.qualification_details,
+      subjects_count: prog.subjects_count,
     }));
   } catch (error: any) {
     const errorDetails = extractErrorDetails(error);

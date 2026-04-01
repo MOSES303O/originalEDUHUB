@@ -14,6 +14,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/lib/auth-context";
 import { useSelectedCourses } from "@/lib/course-store";
 import type { Programme } from "@/types";
+import ProtectedRoute from '@/components/ProtectedRoute';
 interface KMTCProgrammeDetailClientProps {
   initialProgramme: Programme | null;
   initialError: string | null;
@@ -140,6 +141,7 @@ export default function KMTCProgrammeDetailClient({
       .filter(Boolean); // remove null/undefined
   }
   return (
+    <ProtectedRoute requireAdvanced>
     <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white dark:from-gray-900 dark:to-gray-800">
       <Header />
       <main className="container mx-auto px-4 py-12">
@@ -280,5 +282,6 @@ export default function KMTCProgrammeDetailClient({
       </main>
       <Footer />
     </div>
+    </ProtectedRoute>
   );
 }

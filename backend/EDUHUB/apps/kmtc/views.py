@@ -1,8 +1,7 @@
-# kmtc/views.py — ADD THESE EXTRA VIEWS
+# kmtc/views.py
 from rest_framework import viewsets, generics, filters
-from rest_framework.exceptions import NotFound
-from django.db.models import Prefetch
 from django.db import models
+from django.db.models import Prefetch
 from django.shortcuts import get_object_or_404
 from .models import Campus, Faculty, Department, Programme, OfferedAt
 from .serializers import (
@@ -13,13 +12,13 @@ from .serializers import (
 from apps.core.utils import standardize_response
 from rest_framework import status
 from rest_framework.permissions import AllowAny
-from rest_framework.response import Response
 import logging
 
 logger = logging.getLogger(__name__)
 
-# ← Your KMTC engine
+# CORRECT IMPORT - Engine is in kmtc app
 from apps.courses.utils import KMTCCourseMatchingEngine
+
 
 class CampusViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Campus.objects.filter(is_active=True).prefetch_related('programmes_offered__programme')
@@ -43,13 +42,10 @@ class DepartmentViewSet(viewsets.ReadOnlyModelViewSet):
     lookup_field = 'slug'
 
 
-# Updated ProgrammeViewSet only (replace the whole class)
 class ProgrammeViewSet(viewsets.ReadOnlyModelViewSet):
     """
-    GET /eduhub/kmtc/programmes/          → list all active KMTC programmes
-                                          → includes qualification status if user is authenticated
-    GET /eduhub/kmtc/programmes/{code}/   → detail of one programme with all campuses
-                                          → includes qualification status if user is authenticated
+    GET /eduhub/kmtc/programmes/          → list all active KMTC programmes + qualification
+    GET /eduhub/kmtc/programmes/{code}/   → detail of one programme + qualification
     """
     serializer_class = ProgrammeSerializer
     lookup_field = 'code'
@@ -69,50 +65,60 @@ class ProgrammeViewSet(viewsets.ReadOnlyModelViewSet):
 
     def list(self, request, *args, **kwargs):
         queryset = self.filter_queryset(self.get_queryset())
-
+    
         qualified_data = {}
-        user_identifier = "anonymous"
-
-        # Qualification engine — only for authenticated users
+    
         if request.user.is_authenticated:
             try:
-                user_identifier = request.user.phone_number or request.user.id
+                user_identifier = request.user.phone_number or str(request.user.id)
                 engine = KMTCCourseMatchingEngine()
-
+    
+                logger.info(f"Starting KMTC qualification check for user: {user_identifier} | {len(queryset)} programmes")
+    
                 for programme in queryset:
+                    code_key = str(programme.code).strip()
+    
                     qualified, details = engine.check_user_qualification_for_kmtc_programme(
                         request.user, programme
                     )
-                    qualified_data[programme.code] = {
+    
+                    qualified_data[code_key] = {
                         "qualified": qualified,
                         "qualification_details": details,
                         "reason": details.get("reason"),
                         "missing_mandatory": details.get("missing_mandatory", []),
                         "subjects_count": details.get("subjects_count", 0),
-                        "user_points": details.get("mean_points"),  # renamed for consistency
                     }
+    
+                    logger.info(f"QUALIFIED: {qualified} for {programme.name} ({code_key}) | Reason: {details.get('reason')}")
+    
             except Exception as e:
                 logger.exception(f"KMTC Qualification failed for user {user_identifier}")
-
-        # Pass qualified_data to serializer via context
-        serializer = self.get_serializer(
-            queryset,
-            many=True,
-            context={'request': request, 'qualified_data': qualified_data}
-        )
-
+    
+        # Serialize first
+        serializer = self.get_serializer(queryset, many=True, context={'request': request})
+        data = serializer.data
+    
+        # MANUAL MERGE - This is what makes university courses work
+        for item in data:
+            code_key = str(item.get('code', '')).strip()
+            if code_key in qualified_data:
+                item.update(qualified_data[code_key])
+    
+        logger.info(f"Final qualified_data keys: {list(qualified_data.keys())}")
+        if data:
+            logger.info(f"Serialized data sample (first item): {data[0]}")
+    
         return standardize_response(
             success=True,
             message="KMTC programmes retrieved successfully",
-            data=serializer.data,
+            data=data,
             status_code=status.HTTP_200_OK
         )
-
     def retrieve(self, request, *args, **kwargs):
         instance = self.get_object()
         qualified_data = {}
 
-        # Qualification for single programme
         if request.user.is_authenticated:
             try:
                 engine = KMTCCourseMatchingEngine()
@@ -125,10 +131,10 @@ class ProgrammeViewSet(viewsets.ReadOnlyModelViewSet):
                     "reason": details.get("reason"),
                     "missing_mandatory": details.get("missing_mandatory", []),
                     "subjects_count": details.get("subjects_count", 0),
-                    "user_points": details.get("mean_points"),
+                    "user_points": None,
                 }
             except Exception as e:
-                logger.exception("KMTC Qualification failed for single programme")
+                logger.exception(f"KMTC Qualification failed for programme {instance.code}")
 
         serializer = self.get_serializer(
             instance,
@@ -141,28 +147,23 @@ class ProgrammeViewSet(viewsets.ReadOnlyModelViewSet):
             data=serializer.data,
             status_code=status.HTTP_200_OK
         )
-# Extra: Get all programmes in a campus
+
+
+# Extra Views (unchanged - they look good)
 class CampusProgrammesView(generics.ListAPIView):
     serializer_class = ProgrammeSerializer
 
     def get_queryset(self):
         code = self.kwargs['code']
+        campus = get_object_or_404(Campus, code__iexact=code)
 
-        try:
-            campus = Campus.objects.get(code__iexact=code)
-        except Campus.DoesNotExist:
-            raise NotFound(detail=f"Campus with code '{code}' not found")
-
-        # NEW CORRECT QUERY FOR ManyToMany
-        # Find OfferedAt entries that include this campus OR are offered everywhere
         offered_entries = OfferedAt.objects.filter(
             models.Q(campuses=campus) | models.Q(offered_everywhere=True)
         ).select_related('programme__department__faculty')
 
-        # Extract distinct programmes
-        programmes = [entry.programme for entry in offered_entries]
-        return programmes
-# Extra: Get all campuses offering a programme
+        return [entry.programme for entry in offered_entries]
+
+
 class ProgrammeCampusesView(generics.ListAPIView):
     serializer_class = OfferedAtSerializer
 
@@ -172,7 +173,6 @@ class ProgrammeCampusesView(generics.ListAPIView):
         return OfferedAt.objects.filter(programme=programme)
 
 
-# Global search across all KMTC data
 class KMTCSearchView(generics.ListAPIView):
     serializer_class = ProgrammeSerializer
     filter_backends = [filters.SearchFilter]
