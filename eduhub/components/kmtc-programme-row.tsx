@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -29,18 +29,6 @@ export function KMTCProgrammeRow({ programme, onAuthRequired, onViewDetails }: K
   const { user, requirePayment } = useAuth();
   const { toggleCourseSelection, isCourseSelected } = useSelectedCourses();
 
-    // ==================== AGGRESSIVE DEBUG ====================
-  useEffect(() => {
-    console.group(`🚨 FULL RAW PROGRAMME DEBUG - ${programme.code}`);
-    console.log("Raw programme:", JSON.stringify(programme, null, 2));
-    console.log("Keys in programme:", Object.keys(programme));
-    console.log("qualified value:", programme.qualified);
-    console.log("typeof qualified:", typeof programme.qualified);
-    console.log("qualification_details:", programme.qualification_details);
-    console.log("reason:", programme.reason);
-    console.log("missing_mandatory:", programme.missing_mandatory);
-    console.groupEnd();
-  }, [programme]);
    // Live selected state from store
   const isSelected = isCourseSelected(String(programme.code));
 
