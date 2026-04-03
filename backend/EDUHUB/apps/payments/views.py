@@ -75,7 +75,7 @@ class ActiveSubscriptionView(BaseAPIView):
                     message="Premium expired. Full payment required.",
                     data={
                         "renewal_eligible": False,
-                        "allowed_amount": 5,
+                        "allowed_amount": 210,
                         "within_grace_period": False
                     },
                     status_code=402
@@ -103,7 +103,7 @@ class ActiveSubscriptionView(BaseAPIView):
                 "subscription": {
                     "is_active": False,
                     "payment_required": True,
-                    "allowed_amount": 5,
+                    "allowed_amount": 210,
                     "within_grace_period": False
                 }
             },
@@ -154,7 +154,7 @@ class PaymentInitiationView(APIView):
         # -------------------------------------------------
         # 2. DECIDE ALLOWED AMOUNT & PLAN TYPE (AUTHORITATIVE)
         # -------------------------------------------------
-        allowed_amount = 5           
+        allowed_amount = 210           
         plan_type = "PREMIUM"
 
         if user:
@@ -182,15 +182,15 @@ class PaymentInitiationView(APIView):
                     plan_type = "RENEWAL"
                 else:
                     # Expired > grace period → full price
-                    allowed_amount = 5
+                    allowed_amount = 210
                     plan_type = "PREMIUM"
             else:
                 # No previous subscription → new user, full price
-                allowed_amount = 5
+                allowed_amount = 210
                 plan_type = "PREMIUM"
         else:
             # No user found by phone → treat as new
-            allowed_amount = 5
+            allowed_amount = 210
             plan_type = "PREMIUM"
 
         # -------------------------------------------------
@@ -211,7 +211,7 @@ class PaymentInitiationView(APIView):
         # Always use backend's decided amount & plan (override frontend)
         final_amount = allowed_amount
         final_plan_type = plan_type
-        if final_amount not in [5 ,50]:
+        if final_amount not in [50,210]:
             return standardize_response(
                 success=False,
                 message="Invalid payment configuration. Contact support.",

@@ -73,8 +73,6 @@ class ProgrammeViewSet(viewsets.ReadOnlyModelViewSet):
                 user_identifier = request.user.phone_number or str(request.user.id)
                 engine = KMTCCourseMatchingEngine()
     
-                logger.info(f"Starting KMTC qualification check for user: {user_identifier} | {len(queryset)} programmes")
-    
                 for programme in queryset:
                     code_key = str(programme.code).strip()
     
@@ -90,8 +88,6 @@ class ProgrammeViewSet(viewsets.ReadOnlyModelViewSet):
                         "subjects_count": details.get("subjects_count", 0),
                     }
     
-                    logger.info(f"QUALIFIED: {qualified} for {programme.name} ({code_key}) | Reason: {details.get('reason')}")
-    
             except Exception as e:
                 logger.exception(f"KMTC Qualification failed for user {user_identifier}")
     
@@ -104,10 +100,6 @@ class ProgrammeViewSet(viewsets.ReadOnlyModelViewSet):
             code_key = str(item.get('code', '')).strip()
             if code_key in qualified_data:
                 item.update(qualified_data[code_key])
-    
-        logger.info(f"Final qualified_data keys: {list(qualified_data.keys())}")
-        if data:
-            logger.info(f"Serialized data sample (first item): {data[0]}")
     
         return standardize_response(
             success=True,

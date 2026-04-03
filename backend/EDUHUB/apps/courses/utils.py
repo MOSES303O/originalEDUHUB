@@ -809,7 +809,6 @@ class KMTCCourseMatchingEngine:
             self.normalize_subject_name(us.subject.name): us.grade.upper()
             for us in user_subjects
         }
-        logger.info(f"USER GRADES - Phone: {user.phone_number} | Subjects Count: {len(grade_map)} | Grades: {grade_map}")
         return grade_map
 
     def has_subject_or_alternatives(self, grade_map: Dict[str, str], req) -> bool:
@@ -845,8 +844,6 @@ class KMTCCourseMatchingEngine:
             "message": "",
         }
 
-        logger.info(f"CHECKING PROGRAMME: {programme.name} ({programme.code})")
-
         grade_map = self.get_user_grade_map(user)
         details["subjects_count"] = len(grade_map)
 
@@ -859,11 +856,9 @@ class KMTCCourseMatchingEngine:
         if programme.min_mean_grade:
             required_points = self.GRADE_POINTS.get(programme.min_mean_grade.upper(), 0)
             user_mean = sum(self.GRADE_POINTS.get(g, 0) for g in grade_map.values()) / len(grade_map)
-            logger.info(f"MEAN GRADE CHECK - Required: {programme.min_mean_grade} | User Mean: {user_mean:.2f}")
 
             if user_mean < required_points:
                 details["reason"] = f"Mean grade too low. Required: {programme.min_mean_grade}"
-                logger.warning(details["reason"])
                 return False, details
 
         # Subject Requirements
