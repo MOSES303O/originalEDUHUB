@@ -78,7 +78,7 @@ useEffect(() => {
             <div className="grid gap-6 sm:gap-8 md:grid-cols-1 lg:grid-cols-2 lg:gap-12">
               <div className="flex flex-col justify-center space-y-4 sm:space-y-6">
                 <div className="space-y-2 sm:space-y-4">
-                  <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold tracking-tight text-gray-900 dark:text-gray-100">
+                  <h1 className="text-3xl font-bold tracking-tighter sm:text-4xl md:text-5xl gradient-text">
                     Find Your Perfect Campus Course
                   </h1>
                   <p className="max-w-[600px] text-gray-700 dark:text-gray-200 text-sm sm:text-base md:text-lg">
@@ -97,8 +97,8 @@ useEffect(() => {
                     variant="outline"
                     className="text-xs sm:text-sm border-gray-300 dark:border-gray-600"
                     onClick={() => scrollToSection("how-it-works")}
-                  >
-                    Learn More
+                  > 
+                    <p className="text-gray-700 dark:text-gray-200">Learn More</p>
                   </Button>
                 </div>
               </div>
@@ -119,7 +119,7 @@ useEffect(() => {
                 <div className="inline-block rounded-lg bg-app-bg-light/80 dark:bg-app-bg-dark/80 px-3 py-1 text-xs sm:text-sm text-gray-900 dark:text-gray-100">
                   HOW IT WORKS
                 </div>
-                <h2 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold tracking-tight text-gray-900 dark:text-gray-100">
+                <h2 className="text-3xl font-bold tracking-tighter sm:text-4xl md:text-5xl gradient-text">
                   Your Path to the Right Campus Course
                 </h2>
                 <p className="max-w-[900px] text-gray-700 dark:text-gray-200 text-sm sm:text-base md:text-lg">
@@ -192,7 +192,7 @@ useEffect(() => {
                 <div className="inline-block rounded-lg bg-emerald-100 dark:bg-emerald-800 px-3 py-1 text-xs sm:text-sm text-gray-900 dark:text-gray-100">
                   TESTIMONIALS
                 </div>
-                <h2 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold tracking-tight text-gray-900 dark:text-gray-100">
+                <h2 className="text-3xl font-bold tracking-tighter sm:text-4xl md:text-5xl gradient-text">
                   What Our Users Say
                 </h2>
                 <p className="max-w-[900px] text-gray-700 dark:text-gray-200 text-sm sm:text-base md:text-lg">
@@ -239,7 +239,7 @@ useEffect(() => {
                 <div className="inline-block rounded-lg bg-emerald-100 dark:bg-emerald-800 px-3 py-1 text-xs sm:text-sm text-gray-900 dark:text-gray-100">
                   FAQ
                 </div>
-                <h2 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold tracking-tight text-gray-900 dark:text-gray-100">
+                <h2 className="text-3xl font-bold tracking-tighter sm:text-4xl md:text-5xl gradient-text">
                   Frequently Asked Questions
                 </h2>
                 <p className="max-w-[900px] text-gray-700 dark:text-gray-200 text-sm sm:text-base md:text-lg">

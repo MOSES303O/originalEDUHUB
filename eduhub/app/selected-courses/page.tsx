@@ -141,7 +141,7 @@ export default function SelectedCoursesPage() {
           variant="outline"
           size="sm"
           onClick={() => router.back()}
-          className="mb-6"
+          className="mb-2 font-bold bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-200" 
         >
           <ArrowLeft className="mr-2 h-4 w-4" />
           Back
@@ -170,34 +170,13 @@ export default function SelectedCoursesPage() {
 
         {/* USER INFO PANEL */}
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-5 border border-gray-200 dark:border-gray-700 mb-8">
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-            <div>
-              <p className="text-sm font-medium text-gray-600 dark:text-gray-300">Status</p>
-              {user ? (
-                <Badge variant="secondary" className="mt-1 text-xs">
-                  Logged in
-                </Badge>
-              ) : (
-                <Badge variant="outline" className="mt-1 text-xs">
-                  Guest
-                </Badge>
-              )}
-            </div>
-
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">        
             <div>
               <p className="text-sm font-medium text-gray-600 dark:text-gray-300">Phone</p>
-              <Badge variant="outline" className="mt-1 text-sm">
+              <Badge variant="outline" className="mt-1 bg-emerald-600 flex items-center gap-1 text-xs">
                 {user ? user.phone_number : "Not logged in"}
               </Badge>
             </div>
-
-            <div>
-              <p className="text-sm font-medium text-gray-600 dark:text-gray-300">Total Points</p>
-              <Badge variant="outline" className="mt-1 text-lg font-bold border-emerald-500 text-emerald-600 dark:text-emerald-400">
-                {user ? (user.points || "N/A") : "N/A"}
-              </Badge>
-            </div>
-
             <div>
               <p className="text-sm font-medium text-gray-600 dark:text-gray-300">Subscription</p>
               {user ? (
@@ -271,7 +250,7 @@ export default function SelectedCoursesPage() {
               <div className="overflow-x-auto">
                 <Table>
                   <TableHeader>
-                    <TableRow className="bg-gray-50 dark:bg-gray-900">
+                    <TableRow className="bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-700 font-bold text-gray-700 dark:text-gray-200">
                       <TableHead className="font-bold">Code</TableHead>
                       <TableHead className="font-bold">Course Name</TableHead>
                       <TableHead className="font-bold">Institution</TableHead>
@@ -287,7 +266,7 @@ export default function SelectedCoursesPage() {
                       return (
                         <TableRow
                           key={courseKey}
-                          className="hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors"
+                          className=" bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-700 font-bold text-gray-700 dark:text-gray-200"
                         >
                           <TableCell className="font-mono font-semibold">
                             {course.code || "N/A"}
@@ -318,6 +297,7 @@ export default function SelectedCoursesPage() {
                               variant="destructive"
                               onClick={() => handleRemove(course)}
                               disabled={isRemoving}
+                              className="bg-red-500 hover:bg-red-600 text-white"
                             >
                               {isRemoving ? (
                                 <>

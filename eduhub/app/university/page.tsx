@@ -185,7 +185,7 @@ function UniversitiesPageContent() {
                 className="w-fit border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100 text-xs sm:text-sm"
               >
                 <Link href="/">
-                  <ArrowLeft className="mr-2 h-4 w-4 sm:h-5 sm:w-5" />
+                  <ArrowLeft className="mb-2 font-bold bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-200" />
                   Back to Home
                 </Link>
               </Button>
@@ -206,7 +206,7 @@ function UniversitiesPageContent() {
 
                   <Button
                     variant="outline"
-                    className="flex items-center gap-2 w-full md:w-auto"
+                    className="bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-700 flex items-center gap-2 w-full md:w-auto text-gray-700 dark:text-gray-200"
                     onClick={() => {
                       if (!user || requirePayment) {
                         setShowAuthModal(true);
@@ -228,7 +228,7 @@ function UniversitiesPageContent() {
               </div>
 
               {/* Search + Filter */}
-              <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 w-full">
+              <div className="bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-700 flex flex-col sm:flex-row gap-4 w-full md:w-auto p-4 rounded-lg">
                 <div className="relative flex-1">
                   <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4 sm:w-5 sm:h-5" />
                   <Input
@@ -239,10 +239,10 @@ function UniversitiesPageContent() {
                   />
                 </div>
                 <Select value={cityFilter} onValueChange={setCityFilter}>
-                  <SelectTrigger className="w-full sm:w-[180px] md:w-[200px] bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-700 text-gray-900 dark:text-gray-100 text-xs sm:text-sm">
+                  <SelectTrigger className="w-full sm:w-[220px]  font-bold text-gray-700 dark:text-gray-200">
                     <SelectValue placeholder="Filter by city" />
                   </SelectTrigger>
-                  <SelectContent className="bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-700 max-h-[50vh] overflow-y-auto">
+                  <SelectContent className="bg-white dark:bg-gray-800 dark:border-gray-700  border-emerald-600 font-bold text-emerald-600 max-h-60 overflow-auto">
                     <SelectItem value="all" className="text-xs sm:text-sm">All Cities</SelectItem>
                     {cities.map((city) => (
                       <SelectItem key={city} value={city.toLowerCase()} className="text-xs sm:text-sm capitalize">
@@ -279,7 +279,7 @@ function UniversitiesPageContent() {
               <div className="relative overflow-x-auto rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm card-hover">
                 <Table>
                   <TableHeader>
-                    <TableRow>
+                    <TableRow  className="bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-700 font-bold text-gray-700 dark:text-gray-200">
                       <TableHead className="w-[40px] sm:w-[50px]"></TableHead>
                       <TableHead className="text-xs sm:text-sm">University Code</TableHead>
                       <TableHead className="text-xs sm:text-sm min-w-[150px] sm:min-w-[200px]">University Name</TableHead>

@@ -295,7 +295,7 @@ export function FindCourseForm({ onClose, setShowFindCourseForm }: FindCourseFor
           {/* Header */}
           <div className="flex justify-between items-center">
             <div className="text-center space-y-1 flex-1">
-              <h2 className="text-2xl md:text-3xl font-bold">Find Your Course</h2>
+              <h2 className="text-2xl md:text-3xl font-bold text-gray-700 dark:text-gray-200">Find Your Course</h2>
               <p className="text-sm md:text-base text-gray-600 dark:text-gray-400">
                 Select subjects to discover matching university & KMTC programmes
               </p>

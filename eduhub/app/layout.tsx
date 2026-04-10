@@ -109,6 +109,7 @@ export const metadata: Metadata = {
     shortcut: "/favicon-32x32.png",
     apple: "/apple-touch-icon.png",
   },
+  themeColor: "#10b981",
 };
 
 export const viewport: Viewport = {
@@ -124,7 +125,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="en" suppressHydrationWarning className="dark">
       <head>
         {/* STRUCTURED DATA — GOOGLE LOVES THIS */}
         <script

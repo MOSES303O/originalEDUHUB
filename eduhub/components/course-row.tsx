@@ -225,7 +225,7 @@ export function CourseRow({ course, showUniversity = true, onAuthRequired }: Cou
       {isExpanded && (
         <tr className="bg-muted/50">
           <td colSpan={showUniversity ? 8 : 7} className="p-4">
-            <div className="space-y-4">
+            <div className="space-y-2 text-sm text-gray-600 dark:text-gray-400">
               <div className="grid grid-cols-2 gap-4 md:grid-cols-3">
                 <div>
                   <h4 className="text-sm font-semibold">Program Code</h4>
@@ -275,7 +275,7 @@ export function CourseRow({ course, showUniversity = true, onAuthRequired }: Cou
                   variant={isSelected ? "destructive" : "outline"}
                   onClick={handleSelect}
                   disabled={!course.qualified && !isSelected}
-                  className={isSelected ? "bg-red-500 hover:bg-red-600 text-white" : ""}
+                  className={isSelected ? "bg-red-500 hover:bg-red-600 text-white" : "border-emerald-600 font-bold text-emerald-600"}
                 >
                   {isSelected ? (
                     <>

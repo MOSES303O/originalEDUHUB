@@ -47,7 +47,7 @@ export default function AboutPage() {
         <section className="w-full py-12 sm:py-16 md:py-24 lg:py-32">
           <div className="container px-4 sm:px-6 md:px-8 lg:px-12 max-w-7xl">
             <div className="flex flex-col items-center gap-4 text-center">
-              <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold tracking-tighter">
+              <h1 className="text-3xl font-bold tracking-tighter sm:text-4xl md:text-5xl gradient-text">
                 About EduHub Kenya
               </h1>
               <p className="max-w-[700px] text-gray-600 dark:text-gray-300 text-sm sm:text-base md:text-xl">
@@ -66,7 +66,7 @@ export default function AboutPage() {
                 />
               </div>
               <div className="space-y-4 order-1 lg:order-2">
-                <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">Our Mission</h2>
+                <h2 className="text-3xl font-bold tracking-tighter sm:text-4xl md:text-5xl gradient-text">Our Mission</h2>
                 <p className="text-gray-600 dark:text-gray-300 text-sm sm:text-base">
                   We believe every KCSE student in Kenya deserves to know exactly which university, KMTC, TVET or polytechnic course they qualify for — and which one is truly right for them.
                 </p>
@@ -83,7 +83,7 @@ export default function AboutPage() {
           <div className="container px-4 sm:px-6 md:px-8 lg:px-12 max-w-7xl">
             <div className="grid gap-8 sm:gap-12 lg:grid-cols-2 lg:gap-16 items-center">
               <div className="space-y-4 order-2 lg:order-1">
-                <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">Our Journey</h2>
+                <h2 className="text-3xl font-bold tracking-tighter sm:text-4xl md:text-5xl gradient-text">Our Journey</h2>
                 <p className="text-gray-600 dark:text-gray-300 text-sm sm:text-base">
                   EduHub Kenya started in 2020 when a group of former KCSE students realized how hard it was to get clear, honest advice about university and college courses.
                 </p>
@@ -111,7 +111,7 @@ export default function AboutPage() {
         <section className="w-full py-12 sm:py-16 md:py-24 lg:py-32">
           <div className="container px-4 sm:px-6 md:px-8 lg:px-12 max-w-7xl">
             <div className="flex flex-col items-center gap-4 text-center mb-10 sm:mb-12">
-              <h2 className="text-3xl sm:text-4xl font-bold tracking-tighter text-gray-900 dark:text-white">
+              <h2 className="text-3xl font-bold tracking-tighter sm:text-4xl md:text-5xl gradient-text">
                 Our Values
               </h2>
               <p className="max-w-[700px] text-gray-600 dark:text-gray-300 text-sm sm:text-base md:text-xl">
@@ -202,20 +202,20 @@ export default function AboutPage() {
         </section>
 
         {/* CTA Section — BLUE gradient */}
-        <section className="w-full py-12 sm:py-16 md:py-24 lg:py-32 bg-gradient-to-r text-gray-900 dark:text-white">
+        <section className="w-full py-12 sm:py-16 md:py-24 lg:py-32 bg-gradient-to-r ">
           <div className="container px-4 sm:px-6 md:px-8 lg:px-12 max-w-7xl text-center">
             <div className="flex flex-col items-center justify-center space-y-4">
               <div className="space-y-2">
-                <h2 className="text-3xl sm:text-4xl font-bold tracking-tighter text-white">
+                <h2 className="text-3xl sm:text-4xl font-bold tracking-tighter text-gray-900 dark:text-white">
                   Ready to Find Your Perfect Course?
                 </h2>
-                <p className="max-w-[700px] text-blue-100 text-sm sm:text-base md:text-xl mx-auto">
+                <p className="max-w-[700px] text-gray-600 dark:text-gray-300 text-sm sm:text-base md:text-xl mx-auto">
                   Join over 100,000 Kenyan students who found their dream course with EduHub
                 </p>
               </div>
-              <div className="w-full max-w-xs sm:max-w-sm space-y-2">
+              <div className="w-full max-w-xs sm:max-w-sm space-y-2 ">
                 <Button
-                  className="w-full bg-white text-blue-600 hover:bg-gray-100 font-medium text-sm sm:text-base"
+                  className="w-full bg-green-600 text-white hover:bg-green-700 font-medium text-sm sm:text-base"
                   size="lg"
                   asChild
                 >

@@ -280,10 +280,10 @@ export function KMTCProgrammeRow({ programme, onAuthRequired, onViewDetails }: K
                   disabled={!isQualified && !isSelected}
                   className={
                     isSelected
-                      ? "bg-red-600 hover:bg-red-700 text-white"
+                      ? "bg-red-600 hover:bg-red-700 font-bold text-white"
                       : isQualified
-                        ? "border-emerald-600 text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/50"
-                        : "opacity-60 cursor-not-allowed border-gray-300 dark:border-gray-700"
+                        ? "border-emerald-600 font-bold text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/50"
+                        : "opacity-60 cursor-not-allowed font-bold border-gray-300 dark:border-gray-700"
                   }
                 >
                   {isSelected ? (
@@ -338,7 +338,7 @@ export function KMTCProgrammeRow({ programme, onAuthRequired, onViewDetails }: K
               </div>
 
               <div className="md:col-span-2">
-                <h4 className="font-semibold mb-3 flex items-center gap-2">
+                <h4 className="font-semibold mb-3 flex items-center gap-2 text-gray-700 dark:text-gray-200">
                   <MapPin className="h-5 w-5 text-emerald-600" />
                   Offered at{" "}
                   {programme.offered_at?.some(o => o.offered_everywhere)
@@ -348,7 +348,7 @@ export function KMTCProgrammeRow({ programme, onAuthRequired, onViewDetails }: K
                     : "Not specified"}
                 </h4>
                 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 font-bold text-gray-700 dark:text-gray-200">
                   {programme.offered_at?.some(o => o.offered_everywhere) ? (
                     <div className="p-4 bg-emerald-50 dark:bg-emerald-950/30 rounded-lg border border-emerald-200 dark:border-emerald-800 col-span-full">
                       <p className="text-emerald-700 dark:text-emerald-300 font-medium">
@@ -383,7 +383,7 @@ export function KMTCProgrammeRow({ programme, onAuthRequired, onViewDetails }: K
 
               {/* Qualification Details in Expanded View */}
               <div className="col-span-full mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
-                <h4 className="font-semibold mb-3 flex items-center gap-2">
+                <h4 className="font-semibold mb-3 flex items-center gap-2 text-gray-700 dark:text-gray-200">
                   <GraduationCap className="h-5 w-5 text-emerald-600" />
                   Qualification Status
                 </h4>
@@ -419,12 +419,12 @@ export function KMTCProgrammeRow({ programme, onAuthRequired, onViewDetails }: K
             </div>
 
             {/* ACTION BUTTONS */}
-            <div className="mt-6 flex flex-wrap gap-3">
+            <div className="mt-6 flex flex-wrap gap-3 font-bold text-gray-700 dark:text-gray-200">
               <Button
                 variant={isSelected ? "destructive" : "outline"}
                 onClick={handleSelect}
                 disabled={!isQualified && !isSelected}
-                className={isSelected ? "bg-red-600 hover:bg-red-700" : ""}
+                className={isSelected ? "bg-red-600 hover:bg-red-700" : "border-emerald-600 font-bold text-emerald-600"}
               >
                 {isSelected ? (
                   <>

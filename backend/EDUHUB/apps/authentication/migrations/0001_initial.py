@@ -78,7 +78,7 @@ class Migration(migrations.Migration):
                     models.DecimalField(
                         blank=True,
                         decimal_places=3,
-                        default=51.0,
+                        default=00.000,
                         help_text="User's KCSE cluster points (editable)",
                         max_digits=6,
                         null=True,

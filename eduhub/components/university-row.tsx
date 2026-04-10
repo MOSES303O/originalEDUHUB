@@ -128,7 +128,7 @@ export function UniversityRow({ university }: UniversityRowProps) {
                         Accreditation: {university.accreditation || "N/A"}
                       </span>
                     </div>
-                    <div><h4 className="text-sm font-semibold">DESCRIPTIONS:</h4><p>{university.description}</p></div>
+                    <div><h4 className="text-sm font-semibold text-gray-700 dark:text-gray-300">DESCRIPTIONS:</h4><p className="text-gray-700 dark:text-gray-300">{university.description}</p></div>
                   </div>
                 </div>
 

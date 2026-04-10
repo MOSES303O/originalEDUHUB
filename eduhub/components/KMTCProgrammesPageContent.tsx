@@ -228,7 +228,7 @@ const departments = useMemo(() => {
             <div className="flex flex-col md:flex-row md:items-center md:justify-between w-full gap-6 mb-8">
               {/* Left: Back + Title */}
               <div className="flex flex-col items-start gap-4 mb-8">
-                <Button variant="outline" size="sm" asChild className="mb-2">
+                <Button variant="outline" size="sm" asChild className="mb-2 font-bold bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-200">
                   <Link href="/">
                     <ArrowLeft className="mr-2 h-4 w-4" />
                     Back to Home
@@ -251,7 +251,7 @@ const departments = useMemo(() => {
 
                 <Button
                   variant="outline"
-                  className="flex items-center gap-2 w-full md:w-auto"
+                  className="bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-700 flex items-center gap-2 w-full md:w-auto text-gray-700 dark:text-gray-200"
                   onClick={() => {
                     if (!user || requirePayment) {
                       setShowAuthModal(true);
@@ -273,7 +273,7 @@ const departments = useMemo(() => {
             </div>
 
             {/* SEARCH + FACULTY + DEPARTMENT FILTER ROW */}
-            <div className="flex flex-col sm:flex-row gap-4 w-full mb-6">
+            <div className="bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-700 flex flex-col sm:flex-row gap-4 w-full mb-6">
               {/* Search */}
               <div className="flex-1 relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
@@ -295,10 +295,10 @@ const departments = useMemo(() => {
                 }}
                 disabled={loading}
               >
-                <SelectTrigger className="w-full sm:w-[220px] bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700">
+                <SelectTrigger className="w-full sm:w-[220px]  font-bold text-gray-700 dark:text-gray-200">
                   <SelectValue placeholder="All Faculties" />
                 </SelectTrigger>
-                <SelectContent className="bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 max-h-60 overflow-auto">
+                <SelectContent className="bg-white dark:bg-gray-800 dark:border-gray-700  border-emerald-600 font-bold text-emerald-600 max-h-60 overflow-auto">
                   {faculties.map((fac) => (
                     <SelectItem key={fac} value={fac} className="capitalize">
                       {fac === "all" ? "All Faculties" : fac}
@@ -313,10 +313,10 @@ const departments = useMemo(() => {
                 onValueChange={setDepartmentFilter}
                 disabled={loading || facultyFilter === "all"}
               >
-                <SelectTrigger className="w-full sm:w-[220px] bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700">
+                <SelectTrigger className="w-full sm:w-[220px]  font-bold text-gray-700 dark:text-gray-200">
                   <SelectValue placeholder="All Departments" />
                 </SelectTrigger>
-                <SelectContent className="bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 max-h-60 overflow-auto">
+                <SelectContent className="bg-white dark:bg-gray-800 dark:border-gray-700  border-emerald-600 font-bold text-emerald-600 max-h-60 overflow-auto">
                   {departments.map((dep) => (
                     <SelectItem key={dep} value={dep} className="capitalize">
                       {dep === "all" ? "All Departments" : dep}
@@ -354,7 +354,7 @@ const departments = useMemo(() => {
               <div className="rounded-md border overflow-hidden">
                 <Table>
                   <TableHeader>
-                    <TableRow>
+                    <TableRow className="bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-700 font-bold text-gray-700 dark:text-gray-200">
                       <TableHead className="w-[50px]"></TableHead>
                       <TableHead>Code</TableHead>
                       <TableHead>Programme Name</TableHead>

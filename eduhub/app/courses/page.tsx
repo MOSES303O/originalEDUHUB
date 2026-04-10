@@ -145,7 +145,7 @@ export default function CoursesPage() {
         <section className="w-full py-12 md:py-24 lg:py-32">
           <div className="container px-4 md:px-6">
             <div className="flex flex-col items-start gap-4 mb-8">
-              <Button variant="outline" size="sm" asChild className="mb-2">
+              <Button variant="outline" size="sm" asChild className="mb-2 font-bold bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-200" >
                 <Link href="/">
                   <ArrowLeft className="mr-2 h-4 w-4" />
                   Back to Home
@@ -154,7 +154,7 @@ export default function CoursesPage() {
 
               <div className="flex flex-col md:flex-row md:items-center md:justify-between w-full gap-6">
                 <div>
-                  <h1 className="text-3xl font-bold tracking-tighter sm:text-4xl md:text-5xl">
+                  <h1 className="text-3xl font-bold tracking-tighter sm:text-4xl md:text-5xl gradient-text">
                     Available Courses
                   </h1>
                   <p className="text-gray-500 md:text-xl mt-2">
@@ -167,7 +167,7 @@ export default function CoursesPage() {
 
                   <Button
                     variant="outline"
-                    className="flex items-center gap-2 w-full md:w-auto"
+                    className="bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-700 flex items-center gap-2 w-full md:w-auto text-gray-700 dark:text-gray-200"
                     onClick={() => {
                       if (!user || requirePayment) {
                         setShowAuthModal(true);
@@ -193,7 +193,7 @@ export default function CoursesPage() {
               </div>
 
               {/* SEARCH + CATEGORY FILTER ROW */}
-              <div className="flex flex-col sm:flex-row gap-4 w-full mb-6">
+              <div className="bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-700 flex flex-col sm:flex-row gap-4 w-full mb-6">
                 {/* Search */}
                 <div className="flex-1 relative">
                   <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
@@ -212,10 +212,10 @@ export default function CoursesPage() {
                   onValueChange={setCategoryFilter}
                   disabled={loading}
                 >
-                  <SelectTrigger className="w-full sm:w-[220px] bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700">
+                  <SelectTrigger className="w-full sm:w-[220px]  font-bold text-gray-700 dark:text-gray-200">
                     <SelectValue placeholder="All Categories" />
                   </SelectTrigger>
-                  <SelectContent className="bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 max-h-60 overflow-auto">
+                  <SelectContent className="bg-white dark:bg-gray-800 dark:border-gray-700  border-emerald-600 font-bold text-emerald-600 max-h-60 overflow-auto">
                     <SelectItem value="all">All Categories</SelectItem>
                     {categories.map((cat) => (
                       <SelectItem key={cat} value={cat} className="capitalize">
@@ -250,7 +250,7 @@ export default function CoursesPage() {
               <div className="rounded-md border overflow-hidden">
                 <Table>
                   <TableHeader>
-                    <TableRow>
+                    <TableRow className="bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-700 font-bold text-gray-700 dark:text-gray-200">
                       <TableHead className="w-[50px]"></TableHead>
                       <TableHead>Course Code</TableHead>
                       <TableHead>Course Name</TableHead>

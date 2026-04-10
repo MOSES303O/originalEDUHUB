@@ -77,7 +77,7 @@ export function UserInfoPanel({ className = "" }: UserInfoPanelProps) {
       {/* Logged in as */}
       <div className="flex items-center justify-between mb-3">
         <span className="text-sm font-medium text-gray-600 dark:text-gray-300">Logged in as</span>
-        <Badge variant="secondary" className="text-xs">
+        <Badge variant="secondary" className="bg-emerald-600 flex items-center gap-1 text-xs">
           {user.phone_number}
         </Badge>
       </div>

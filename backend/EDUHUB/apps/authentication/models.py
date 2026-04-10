@@ -60,7 +60,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     cluster_points = models.DecimalField(
         max_digits=6,
         decimal_places=3,
-        default=51.000,
+        default=00.000,
         null=True,
         blank=True,
         editable=True,

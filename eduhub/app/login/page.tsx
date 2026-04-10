@@ -132,12 +132,11 @@ export default function LoginPage() {
       )}
 
       <main className="flex-1 flex items-center justify-center p-4">
-        <Card className="w-full max-w-md">
-          <CardHeader className="text-center">
-            <CardTitle className="text-2xl font-bold">Sign in to EduHub</CardTitle>
-            <CardDescription>Log in with your phone number</CardDescription>
+        <Card className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-5 border border-gray-200 dark:border-gray-700 w-full md:w-auto">
+          <CardHeader className="text-center text-gray-700 dark:text-gray-300">
+            <CardTitle className="text-3xl font-bold tracking-tighter sm:text-4xl md:text-5xl gradient-text">Sign in to EduHub</CardTitle>
+            <CardDescription >Log in with your phone number</CardDescription>
           </CardHeader>
-
           <CardContent>
             {paymentStatus === "success" ? (
               <div className="text-center space-y-6">
@@ -159,10 +158,9 @@ export default function LoginPage() {
                     <AlertDescription>{errorMessage}</AlertDescription>
                   </Alert>
                 )}
-
                 {/* PHONE INPUT */}
                 <div className="space-y-2">
-                  <label className="text-sm font-medium">Phone Number (M-Pesa)</label>
+                  <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Phone Number (M-Pesa)</label>
                   <div className="flex">
                     <span className="inline-flex items-center px-4 rounded-l-md border border-r-0 bg-emerald-800 text-white font-semibold">
                       +254
@@ -188,9 +186,9 @@ export default function LoginPage() {
 
                 {/* PRICING BOXES — UNCHANGED */}
                 <div className="space-y-3">
-                  <div className="flex items-center justify-between p-4 border rounded-md bg-muted/50">
+                  <div className="flex items-center justify-between p-4 border rounded-md bg-muted/50 text-sm text-gray-600 dark:text-gray-400">
                     <div>
-                      <p className="font-medium">EduHub Premium</p>
+                      <p className="font-medium ">EduHub Premium</p>
                       <p className="text-sm text-gray-500">One-time payment</p>
                     </div>
                     <div className="text-right">
@@ -199,7 +197,7 @@ export default function LoginPage() {
                   </div>
                   <div className="flex items-center justify-between p-4 border rounded-md bg-muted/50">
                     <div>
-                      <p className="font-medium">EduHub Renew</p>
+                      <p className="font-medium text-gray-700 dark:text-gray-300">EduHub Renew</p>
                       <p className="text-sm text-gray-500">upon premium expiry</p>
                     </div>
                     <div className="text-right">
